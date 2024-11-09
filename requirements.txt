@@ -1,0 +1,6 @@
+pyyaml==6.0
+boto3==1.26.137
+azure-identity==1.12.0
+google-cloud-core==2.3.2
+paramiko==2.12.0
+pywinrm==0.4.3

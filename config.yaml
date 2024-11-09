@@ -1,0 +1,59 @@
+# NIST 800-53 Compliance Scanner Configuration
+
+# Cloud Provider Configurations
+aws:
+  enabled: true
+  access_key: ${AWS_ACCESS_KEY}
+  secret_key: ${AWS_SECRET_KEY}
+  regions:
+    - us-east-1
+    - us-west-2
+
+azure:
+  enabled: true
+  tenant_id: ${AZURE_TENANT_ID}
+  client_id: ${AZURE_CLIENT_ID}
+  subscription_id: ${AZURE_SUBSCRIPTION_ID}
+
+gcp:
+  enabled: true
+  project_id: ${GCP_PROJECT_ID}
+  credentials_path: /path/to/gcp/credentials.json
+
+# On-Premise Configurations
+on_premise:
+  linux:
+    enabled: true
+    hosts:
+      - 192.168.1.100
+      - 192.168.1.101
+    ssh_key_path: /path/to/ssh/private_key
+
+  windows:
+    enabled: true
+    hosts:
+      - 192.168.1.200
+      - 192.168.1.201
+    domain: example.com
+
+# Scanning Options
+scan_options:
+  # Enable or disable specific control categories
+  access_control: true
+  audit_logging: true
+  network_security: true
+  configuration_management: true
+  incident_response: true
+
+  # Depth of scanning
+  depth: comprehensive  # Options: light, moderate, comprehensive
+
+# Reporting Preferences
+reporting:
+  output_format: 
+    - markdown
+    - json
+  email_notifications:
+    enabled: false
+    recipients:
+      - security_team@example.com
