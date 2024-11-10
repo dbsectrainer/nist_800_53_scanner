@@ -1,0 +1,142 @@
+# Startup Cloud-Native Security Configuration
+
+# Global Settings
+global:
+  tenant_id: startup-tech-org
+  environment: cloud
+  log_level: INFO
+  deployment_stage: development
+
+# Security Configuration
+security:
+  authentication:
+    method: oidc
+    provider: azure_ad
+    max_api_key_age: 30  # days
+    password_policy:
+      min_length: 12
+      require_complexity: true
+  
+  encryption:
+    sensitive_data: true
+    key_rotation_interval: 30  # days
+    algorithms:
+      data_at_rest: AES-256-GCM
+      data_in_transit: TLS-1.3
+  
+  rate_limiting:
+    max_requests: 100
+    time_window: 3600  # seconds
+    per_ip: true
+    per_api_key: true
+
+# Cloud Provider Configuration
+cloud_providers:
+  aws:
+    enabled: true
+    credentials:
+      method: ecs_task_role
+    regions:
+      - us-east-1
+      - us-west-2
+  
+  gcp:
+    enabled: true
+    credentials:
+      method: workload_identity
+    projects:
+      - startup-project
+
+# Kubernetes Configuration
+kubernetes:
+  enabled: true
+  cluster_scanning:
+    namespaces:
+      - default
+      - development
+      - staging
+    resource_types:
+      - deployments
+      - pods
+      - services
+      - networkpolicies
+
+# Scanning Options
+scan_options:
+  distributed_scanning: true
+  parallel_scanning: true
+  max_concurrent_scans: 5
+  scan_timeout: 1800  # seconds
+  
+  scan_categories:
+    - access_control
+    - network_security
+    - cloud_configuration
+  
+  control_filters:
+    severity:
+      - high
+    tags:
+      - cloud_native
+      - microservices
+
+# Monitoring and Observability
+monitoring:
+  enabled: true
+  metrics:
+    prometheus:
+      enabled: true
+      endpoint: /metrics
+    
+    tracing:
+      opentelemetry:
+        enabled: true
+        collector_endpoint: https://otel-collector.startup.local
+
+# Logging Configuration
+logging:
+  cloud_native:
+    enabled: true
+    provider: azure_log_analytics
+    workspace_id: ${LOG_ANALYTICS_WORKSPACE_ID}
+
+# Notification Channels
+notifications:
+  slack:
+    enabled: true
+    webhook_url: ${SLACK_STARTUP_WEBHOOK}
+  
+  email:
+    enabled: false
+
+# Development and CI/CD Security
+ci_cd_security:
+  enabled: true
+  scan_pipelines: true
+  check_dependencies: true
+  secrets_management:
+    provider: hashicorp_vault
+    auto_rotation: true
+
+# Advanced Security Policies
+security_policies:
+  pod_security:
+    prevent_privileged_pods: true
+    restrict_host_namespace: true
+    read_only_root_filesystem: true
+  
+  network_policies:
+    default_deny: true
+    allow_internal_dns: true
+
+# Performance Optimization
+performance:
+  worker_threads: auto
+  chunk_size: 50
+  timeout_strategy: aggressive
+
+# Compliance Frameworks
+compliance:
+  frameworks:
+    - startup_security_baseline
+    - cloud_native_best_practices

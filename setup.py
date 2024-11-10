@@ -1,31 +1,78 @@
 from setuptools import setup, find_packages
 
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 setup(
-    name='nist_800_53_scanner',
-    version='0.1.0',
-    description='NIST 800-53 Security Compliance Scanner',
-    author='Security Engineering Team',
-    packages=find_packages(),
+    name="nist-800-53-compliance-scanner",
+    version="0.1.0",
+    author="Enterprise Security Team",
+    author_email="security@example.com",
+    description="A comprehensive NIST 800-53 security compliance scanning platform",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/your-org/nist-800-53-scanner",
+    packages=find_packages(exclude=['tests*']),
     install_requires=[
-        'pyyaml>=6.0',
-        'boto3>=1.26.137',
-        'azure-identity>=1.12.0',
-        'google-cloud-core>=2.3.2',
-        'paramiko>=2.12.0',
-        'pywinrm>=0.4.3'
+        'boto3',
+        'azure-identity',
+        'google-cloud-iam',
+        'paramiko',
+        'winrm',
+        'pywinrm',
+        'scikit-learn',
+        'numpy',
+        'pandas',
+        'fastapi',
+        'uvicorn',
+        'pydantic',
+        'python-jose[cryptography]',
+        'passlib[bcrypt]',
+        'sqlalchemy',
+        'alembic',
+        'redis',
+        'celery',
+        'prometheus-client',
+        'opentelemetry-api',
+        'opentelemetry-sdk',
+        'jaeger-client'
     ],
+    extras_require={
+        'dev': [
+            'pytest',
+            'pytest-asyncio',
+            'pytest-cov',
+            'black',
+            'isort',
+            'mypy'
+        ],
+        'cloud': [
+            'kubernetes',
+            'docker',
+            'azure-functions',
+            'google-cloud-functions',
+            'aws-lambda-powertools'
+        ]
+    },
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "Intended Audience :: System Administrators",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Topic :: Security",
+        "Topic :: Software Development :: Libraries :: Python Modules"
+    ],
+    python_requires='>=3.8',
     entry_points={
         'console_scripts': [
             'nist-scanner=scan:main',
         ],
     },
-    classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Information Technology',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Topic :: Security',
-    ],
-    python_requires='>=3.8',
+    project_urls={
+        'Bug Reports': 'https://github.com/your-org/nist-800-53-scanner/issues',
+        'Source': 'https://github.com/your-org/nist-800-53-scanner',
+    },
 )

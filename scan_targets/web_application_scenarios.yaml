@@ -1,0 +1,218 @@
+# Web Application Scanning Scenarios
+
+# E-Commerce Platform Security Assessment
+ecommerce_app:
+  - target: https://shop.company.com
+    scan_types:
+      - web_vulnerability
+      - authentication_review
+      - data_exposure_check
+      - payment_system_security
+    options:
+      check_owasp_top_10: true
+      test_authentication_flows: true
+      verify_data_protection: true
+      payment_card_compliance: true
+    sensitive_endpoints:
+      - /checkout
+      - /account
+      - /admin
+      - /payment
+    compliance_frameworks:
+      - pci_dss
+      - gdpr
+    security_focus:
+      - user_data_protection
+      - transaction_security
+      - session_management
+
+# Financial Services Web Portal
+financial_portal:
+  - target: https://banking.company.com
+    scan_types:
+      - security_headers
+      - ssl_tls_configuration
+      - input_validation
+      - authentication_mechanism
+    options:
+      minimum_tls_version: TLS_1_2
+      check_csp_headers: true
+      verify_xss_protection: true
+      multi_factor_authentication_audit: true
+    sensitive_paths:
+      - /login
+      - /transfer
+      - /account-details
+      - /investment-management
+    compliance_requirements:
+      - sox
+      - glba
+      - nist_800_53
+    security_focus:
+      - financial_data_protection
+      - secure_transactions
+      - identity_verification
+
+# Healthcare Patient Portal
+healthcare_portal:
+  - target: https://patient.healthcare.org
+    scan_types:
+      - hipaa_compliance
+      - data_privacy
+      - secure_communication
+      - access_control
+    options:
+      check_phi_protection: true
+      verify_encryption: true
+      audit_access_controls: true
+      patient_data_isolation: true
+    compliance_requirements:
+      - hipaa
+      - hitech
+    sensitive_resources:
+      - medical_records
+      - appointment_scheduling
+      - telehealth_consultation
+    security_focus:
+      - patient_data_confidentiality
+      - secure_communication_channels
+      - role_based_access
+
+# API-Driven Microservices Platform
+microservices_api:
+  - base_url: https://api.company.com
+    endpoints:
+      - /users
+      - /payments
+      - /orders
+      - /analytics
+    scan_types:
+      - api_security
+      - rate_limiting
+      - authentication_mechanism
+      - data_validation
+    options:
+      test_jwt_tokens: true
+      verify_oauth_flows: true
+      check_cors_configuration: true
+      validate_input_parameters: true
+    security_focus:
+      - api_authentication
+      - request_validation
+      - data_integrity
+    compliance_frameworks:
+      - oauth_2_0
+      - openid_connect
+
+# Research Collaboration Platform
+research_platform:
+  - target: https://collaborate.research.edu
+    scan_types:
+      - international_access_review
+      - data_sharing_security
+      - collaborative_environment_audit
+      - cross_border_access_check
+    options:
+      verify_international_collaboration_security: true
+      audit_data_sharing_mechanisms: true
+      review_cross_border_access: true
+    sensitive_resources:
+      - research_datasets
+      - grant_management
+      - collaborative_tools
+    security_focus:
+      - research_data_protection
+      - secure_collaboration
+      - access_control
+
+# Government Services Web Application
+government_services:
+  - target: https://services.government.org
+    scan_types:
+      - citizen_data_protection
+      - authentication_review
+      - secure_communication
+      - access_control_audit
+    options:
+      check_personal_data_protection: true
+      verify_government_standard_encryption: true
+      audit_citizen_access_controls: true
+    compliance_requirements:
+      - federal_information_security_management_act
+      - privacy_act
+    sensitive_endpoints:
+      - /personal-information
+      - /tax-services
+      - /benefits-application
+    security_focus:
+      - citizen_data_confidentiality
+      - secure_government_services
+
+# Educational Institution Learning Management System
+education_lms:
+  - target: https://learn.university.edu
+    scan_types:
+      - student_data_protection
+      - authentication_mechanism
+      - secure_communication
+      - access_control_review
+    options:
+      check_student_data_privacy: true
+      verify_encryption: true
+      audit_access_controls: true
+      review_multi_tenant_isolation: true
+    compliance_requirements:
+      - ferpa
+      - student_privacy
+    sensitive_resources:
+      - student_records
+      - grade_management
+      - course_materials
+    security_focus:
+      - educational_data_protection
+      - secure_learning_environment
+
+# Startup User Management Platform
+startup_user_platform:
+  - target: https://auth.startup.com
+    scan_types:
+      - authentication_review
+      - identity_management
+      - secure_registration
+      - password_policy_audit
+    options:
+      test_registration_flows: true
+      verify_password_complexity: true
+      check_account_recovery_mechanism: true
+      audit_social_login_integration: true
+    security_focus:
+      - user_authentication
+      - secure_onboarding
+      - identity_protection
+    sensitive_endpoints:
+      - /register
+      - /login
+      - /reset-password
+      - /profile
+
+# IoT Device Management Platform
+iot_management_platform:
+  - target: https://devices.iot-company.com
+    scan_types:
+      - device_authentication
+      - secure_device_registration
+      - data_transmission_security
+      - access_control
+    options:
+      verify_device_authentication: true
+      check_device_registration_process: true
+      audit_data_transmission_channels: true
+      review_device_access_controls: true
+    security_focus:
+      - iot_device_security
+      - secure_device_management
+      - data_protection
+    sensitive_resources:
+      - device_registry
+      - telemetry_data
+      - device_configuration

@@ -1,59 +1,155 @@
-# NIST 800-53 Compliance Scanner Configuration
+# NIST 800-53 Security Compliance Scanner Configuration
 
-# Cloud Provider Configurations
-aws:
-  enabled: true
-  access_key: ${AWS_ACCESS_KEY}
-  secret_key: ${AWS_SECRET_KEY}
-  regions:
-    - us-east-1
-    - us-west-2
+# Global Scanner Settings
+global:
+  tenant_id: default-tenant
+  environment: cloud  # cloud or onprem
+  log_level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
-azure:
-  enabled: true
-  tenant_id: ${AZURE_TENANT_ID}
-  client_id: ${AZURE_CLIENT_ID}
-  subscription_id: ${AZURE_SUBSCRIPTION_ID}
+# Security Configuration
+security:
+  authentication:
+    method: api_key  # api_key, oauth, saml
+    max_api_key_age: 90  # days before API key rotation
+    password_policy:
+      min_length: 12
+      require_complexity: true
+      max_failed_attempts: 5
+  
+  encryption:
+    sensitive_data: true
+    key_rotation_interval: 30  # days
+    algorithms:
+      data_at_rest: AES-256-GCM
+      data_in_transit: TLS-1.3
+  
+  rate_limiting:
+    max_requests: 100
+    time_window: 3600  # seconds
+    per_ip: true
+    per_api_key: true
 
-gcp:
-  enabled: true
-  project_id: ${GCP_PROJECT_ID}
-  credentials_path: /path/to/gcp/credentials.json
-
-# On-Premise Configurations
-on_premise:
-  linux:
+# Cloud Provider Integrations
+cloud_providers:
+  aws:
     enabled: true
-    hosts:
-      - 192.168.1.100
-      - 192.168.1.101
-    ssh_key_path: /path/to/ssh/private_key
-
-  windows:
+    credentials:
+      method: assume_role  # static, assume_role, instance_profile
+      access_key: ${AWS_ACCESS_KEY}
+      secret_key: ${AWS_SECRET_KEY}
+      role_arn: arn:aws:iam::123456789012:role/ComplianceScanRole
+    regions:
+      - us-east-1
+      - us-west-2
+  
+  azure:
     enabled: true
-    hosts:
-      - 192.168.1.200
-      - 192.168.1.201
-    domain: example.com
+    credentials:
+      method: service_principal
+      tenant_id: ${AZURE_TENANT_ID}
+      client_id: ${AZURE_CLIENT_ID}
+      client_secret: ${AZURE_CLIENT_SECRET}
+    subscriptions:
+      - 00000000-0000-0000-0000-000000000000
+  
+  gcp:
+    enabled: true
+    credentials:
+      method: service_account
+      credentials_path: /path/to/gcp/credentials.json
+    projects:
+      - my-compliance-project
 
 # Scanning Options
 scan_options:
-  # Enable or disable specific control categories
-  access_control: true
-  audit_logging: true
-  network_security: true
-  configuration_management: true
-  incident_response: true
+  # Parallel and Distributed Scanning
+  distributed_scanning: true
+  parallel_scanning: true
+  max_concurrent_scans: 10
+  scan_timeout: 3600  # seconds
 
-  # Depth of scanning
-  depth: comprehensive  # Options: light, moderate, comprehensive
+  # Control Categories to Scan
+  scan_categories:
+    - access_control
+    - audit_logging
+    - network_security
+    - configuration_management
+    - incident_response
 
-# Reporting Preferences
-reporting:
-  output_format: 
-    - markdown
-    - json
-  email_notifications:
-    enabled: false
+  # Specific Control Filters
+  control_filters:
+    severity:
+      - high
+      - critical
+    compliance_status:
+      - non_compliant
+    tags:
+      - cloud
+      - network
+
+# Monitoring and Observability
+monitoring:
+  enabled: true
+  
+  # Metrics Collection
+  metrics:
+    prometheus:
+      enabled: true
+      port: 9090
+    
+    # Distributed Tracing
+    tracing:
+      jaeger:
+        enabled: true
+        agent_host: localhost
+        agent_port: 6831
+  
+  # Log Management
+  logging:
+    # Local Logging
+    local:
+      enabled: true
+      path: ./logs
+      max_size: 50  # MB
+      backup_count: 5
+    
+    # Remote Logging
+    remote:
+      enabled: false
+      provider: splunk  # splunk, elk, datadog
+      endpoint: https://logs.example.com
+      
+# Notification Channels
+notifications:
+  email:
+    enabled: true
+    smtp:
+      host: smtp.example.com
+      port: 587
+      username: ${SMTP_USERNAME}
+      from_address: scanner@example.com
     recipients:
-      - security_team@example.com
+      - admin@example.com
+      - security@example.com
+  
+  slack:
+    enabled: false
+    webhook_url: ${SLACK_WEBHOOK_URL}
+
+# Advanced Scanning Parameters
+advanced:
+  # Network Scanning
+  network_scan:
+    cidr_ranges:
+      - 10.0.0.0/16
+      - 192.168.1.0/24
+    excluded_ips:
+      - 10.0.0.1
+      - 10.0.0.2
+  
+  # Custom Compliance Checks
+  custom_checks:
+    - name: Custom Security Rule
+      description: Additional organizational security requirement
+      severity: high
+      script: /path/to/custom/check.py

@@ -1,0 +1,99 @@
+# Cloud Security Scanning Configuration
+
+# Global Scanning Settings
+global:
+  tenant_id: multi-cloud-org
+  environment: hybrid
+  log_level: INFO
+
+# Cloud Provider Targets
+targets:
+  - target: arn:aws:ec2:us-east-1:123456789012:vpc/vpc-example
+    provider: aws
+    scan_type: infrastructure_security
+    regions:
+      - us-east-1
+      - us-west-2
+    compliance_frameworks:
+      - nist_800_53
+      - pci_dss
+    sensitive_resources:
+      - production_vpc
+      - customer_data_subnet
+
+  - target: /subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/example-rg
+    provider: azure
+    scan_type: network_security
+    regions:
+      - eastus
+      - westus
+    compliance_frameworks:
+      - hipaa
+      - sox
+    sensitive_resources:
+      - financial_services_network
+      - customer_management_system
+
+  - target: projects/example-project/global/networks/default
+    provider: gcp
+    scan_type: cloud_configuration
+    regions:
+      - us-central1
+      - us-west1
+    compliance_frameworks:
+      - gdpr
+      - iso_27001
+    sensitive_resources:
+      - research_data_network
+      - collaborative_platform
+
+# Scanning Options
+scan_options:
+  distributed_scanning: true
+  parallel_scanning: true
+  max_concurrent_scans: 5
+  scan_timeout: 3600  # seconds
+
+  control_filters:
+    severity:
+      - high
+      - critical
+    compliance_status:
+      - non_compliant
+    tags:
+      - cloud_infrastructure
+      - network_security
+
+# Security Configuration
+security:
+  authentication:
+    method: api_key
+    max_api_key_age: 60  # days
+  
+  encryption:
+    sensitive_data: true
+    key_rotation_interval: 30  # days
+
+# Monitoring Configuration
+monitoring:
+  enabled: true
+  metrics:
+    prometheus:
+      enabled: true
+    
+    tracing:
+      jaeger:
+        enabled: true
+        agent_host: jaeger.monitoring.local
+
+# Notification Channels
+notifications:
+  email:
+    enabled: true
+    recipients:
+      - security-team@company.com
+      - cloud-ops@company.com
+  
+  slack:
+    enabled: true
+    webhook_url: ${SLACK_CLOUD_SECURITY_WEBHOOK}

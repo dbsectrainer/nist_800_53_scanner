@@ -1,0 +1,164 @@
+# Production Environment Configuration for NIST 800-53 Dashboard
+
+# Application Settings
+app:
+  name: NIST 800-53 Compliance Dashboard
+  environment: production
+  debug: false
+  secret_key: ${DASHBOARD_SECRET_KEY}  # Must be set as environment variable
+  port: 443  # HTTPS port
+
+# Authentication Configuration
+authentication:
+  method: saml  # Recommended: SAML or LDAP for enterprise
+  token:
+    expiration: 1800  # 30 minutes
+    algorithm: RS256
+  
+  saml:
+    idp_metadata_url: https://your-identity-provider.com/metadata
+    entity_id: https://dashboard.your-company.com
+    assertion_consumer_service_url: https://dashboard.your-company.com/saml/acs
+  
+  multi_factor:
+    enabled: true
+    providers:
+      - type: totp
+      - type: push_notification
+
+# Database Configuration
+database:
+  type: postgresql
+  host: ${DB_HOST}
+  port: 5432
+  name: nist_dashboard
+  username: ${DB_USERNAME}
+  password: ${DB_PASSWORD}
+  ssl_mode: require
+  connection_pool:
+    max_connections: 50
+    min_connections: 10
+
+# Logging Configuration
+logging:
+  level: INFO
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  handlers:
+    - type: file
+      filename: /var/log/nist_dashboard/production.log
+    - type: syslog
+      address: /dev/log
+  
+  audit_logging:
+    enabled: true
+    retention_days: 365
+
+# CORS Configuration
+cors:
+  enabled: true
+  allowed_origins:
+    - https://dashboard.your-company.com
+  max_age: 3600
+
+# Security Hardening
+security:
+  ssl:
+    enforce: true
+    hsts: true
+    min_tls_version: TLSv1.2
+  
+  headers:
+    x_frame_options: DENY
+    x_xss_protection: 1; mode=block
+    content_security_policy: default-src 'self'
+  
+  rate_limiting:
+    enabled: true
+    window: 60  # seconds
+    max_requests: 100
+
+# Feature Flags
+features:
+  machine_learning_insights: true
+  advanced_visualization: true
+  demo_mode: false
+
+# External Services
+external_services:
+  threat_intelligence:
+    enabled: true
+    providers:
+      - name: misp
+        url: ${MISP_URL}
+        api_key: ${MISP_API_KEY}
+      - name: osint
+        url: ${OSINT_FEED_URL}
+  
+  compliance_sync:
+    enabled: true
+    platforms:
+      - splunk
+      - elastic_siem
+    sync_interval: 3600  # seconds
+
+# Performance Monitoring
+performance:
+  profiling: false
+  max_concurrent_requests: 100
+  
+  caching:
+    enabled: true
+    backend: redis
+    host: ${REDIS_HOST}
+    port: 6379
+    ttl: 3600  # seconds
+
+# Compliance Frameworks
+compliance:
+  active_frameworks:
+    - nist_800_53
+    - hipaa
+    - pci_dss
+    - sox
+  
+  framework_sync:
+    enabled: true
+    frequency: daily
+
+# Notification Channels
+notifications:
+  email:
+    enabled: true
+    smtp:
+      host: ${SMTP_HOST}
+      port: 587
+      username: ${SMTP_USERNAME}
+      password: ${SMTP_PASSWORD}
+      use_tls: true
+  
+  slack:
+    enabled: true
+    webhook_url: ${SLACK_WEBHOOK_URL}
+  
+  pagerduty:
+    enabled: true
+    service_key: ${PAGERDUTY_SERVICE_KEY}
+
+# Backup and Disaster Recovery
+backup:
+  enabled: true
+  type: s3
+  bucket: nist-dashboard-backups
+  frequency: daily
+  retention_days: 30
+  encryption: true
+
+# Advanced Machine Learning
+ml_services:
+  threat_prediction:
+    enabled: true
+    model_path: /opt/nist_dashboard/ml_models/threat_predictor.h5
+  
+  anomaly_detection:
+    enabled: true
+    sensitivity: 0.7

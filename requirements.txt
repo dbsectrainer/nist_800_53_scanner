@@ -1,6 +1,66 @@
-pyyaml==6.0
-boto3==1.26.137
-azure-identity==1.12.0
-google-cloud-core==2.3.2
-paramiko==2.12.0
-pywinrm==0.4.3
+# Core Cloud Providers
+boto3
+azure-identity
+google-cloud-iam
+paramiko
+winrm
+pywinrm
+
+# Machine Learning & Data Processing
+scikit-learn
+numpy
+pandas
+
+# SaaS Platform Technologies
+fastapi
+uvicorn
+pydantic
+python-jose[cryptography]
+passlib[bcrypt]
+sqlalchemy
+alembic
+redis
+celery
+flower
+
+# Cloud Native & Microservices
+kubernetes
+docker
+grpcio
+protobuf
+
+# Authentication & Security
+python-multipart
+oauth2
+authlib
+
+# Monitoring & Observability
+prometheus-client
+opentelemetry-api
+opentelemetry-sdk
+jaeger-client
+
+# Async & Concurrency
+asyncio
+httpx
+
+# Testing & Development
+pytest
+pytest-asyncio
+pytest-cov
+black
+isort
+mypy
+
+# Serverless & Cloud Functions
+azure-functions
+google-cloud-functions
+aws-lambda-powertools
+
+# Message Queues & Distributed Systems
+kafka-python
+rabbitmq-python
+
+# Advanced Security
+cryptography
+python-dotenv

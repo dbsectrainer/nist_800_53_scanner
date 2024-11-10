@@ -1,0 +1,191 @@
+# Healthcare Compliance Security Configuration
+
+# Global Settings
+global:
+  tenant_id: healthcare-org
+  environment: hybrid
+  log_level: DEBUG
+  compliance_frameworks:
+    - hipaa
+    - hitech
+    - gdpr
+
+# Security Configuration
+security:
+  authentication:
+    method: multi_factor
+    providers:
+      - type: password
+      - type: smart_card
+      - type: biometric
+    max_api_key_age: 45  # days
+    password_policy:
+      min_length: 16
+      complexity_requirements:
+        - uppercase
+        - lowercase
+        - numbers
+        - special_characters
+      max_failed_attempts: 3
+      lockout_duration: 30  # minutes
+  
+  encryption:
+    sensitive_data: true
+    phi_protection: true
+    key_rotation_interval: 30  # days
+    algorithms:
+      data_at_rest: AES-256-GCM
+      data_in_transit: TLS-1.3
+    key_management:
+      provider: healthcare_hsm
+      compliance: hipaa_compliant
+  
+  access_control:
+    role_based_access: true
+    minimum_privilege: true
+    audit_logging: true
+
+# Cloud Provider Configuration
+cloud_providers:
+  azure:
+    enabled: true
+    credentials:
+      method: managed_identity
+      tenant_id: ${AZURE_TENANT_ID}
+    regions:
+      - eastus
+      - westus2
+    compliance_zones:
+      - hipaa_compliant_region
+  
+  aws:
+    enabled: true
+    credentials:
+      method: assume_role
+      role_arn: arn:aws:iam::healthcare-account-id:role/HIPAAComplianceRole
+    regions:
+      - us-east-1
+    compliance_controls:
+      - phi_data_protection
+
+# Kubernetes and Container Security
+kubernetes:
+  enabled: true
+  cluster_scanning:
+    namespaces:
+      - patient-management
+      - medical-records
+      - telehealth
+    resource_types:
+      - deployments
+      - pods
+      - networkpolicies
+    phi_protection:
+      enabled: true
+      audit_level: strict
+
+# Scanning and Compliance Options
+scan_options:
+  distributed_scanning: true
+  parallel_scanning: true
+  max_concurrent_scans: 3
+  scan_timeout: 7200  # seconds
+  
+  scan_categories:
+    - patient_data_protection
+    - access_control
+    - network_security
+    - audit_logging
+  
+  control_filters:
+    sensitivity:
+      - phi
+      - high_risk
+    compliance_status:
+      - non_compliant
+    tags:
+      - healthcare
+      - patient_data
+
+# Monitoring and Observability
+monitoring:
+  enabled: true
+  phi_protection: true
+  metrics:
+    prometheus:
+      enabled: true
+      endpoint: /metrics
+      phi_sanitization: true
+    
+    tracing:
+      opentelemetry:
+        enabled: true
+        collector_endpoint: https://otel-collector.healthcare.local
+        data_masking: true
+
+# Logging Configuration
+logging:
+  compliance_logging:
+    enabled: true
+    provider: healthcare_log_analytics
+    workspace_id: ${HEALTHCARE_LOG_WORKSPACE_ID}
+    retention_period: 7  # years (HIPAA requirement)
+    phi_protection: true
+
+# Notification Channels
+notifications:
+  email:
+    enabled: true
+    smtp:
+      host: smtp.healthcare.local
+      port: 587
+      username: ${SMTP_USERNAME}
+      from_address: compliance-scanner@healthcare.org
+    recipients:
+      - security-team@healthcare.org
+      - compliance-officers@healthcare.org
+  
+  secure_messaging:
+    enabled: true
+    provider: hipaa_compliant_messaging
+
+# Data Protection Policies
+data_protection:
+  phi_handling:
+    encryption_required: true
+    access_logging: true
+    minimal_data_exposure: true
+  
+  data_sharing:
+    external_sharing_allowed: false
+    audit_trail_required: true
+    explicit_consent_needed: true
+
+# Compliance Reporting
+reporting:
+  formats:
+    - pdf
+    - csv
+  
+  distribution:
+    internal_share: true
+    external_audit: true
+  
+  retention:
+    period: 7  # years
+    archive_method: encrypted_storage
+    compliance_frameworks:
+      - hipaa
+      - hitech
+
+# Advanced Security Policies
+security_policies:
+  patient_data:
+    prevent_unauthorized_access: true
+    data_minimization: true
+    purpose_limitation: true
+  
+  network_security:
+    default_deny: true
+    strict_segmentation: true
+    encrypted_communication: true

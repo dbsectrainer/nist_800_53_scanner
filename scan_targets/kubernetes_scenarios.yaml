@@ -1,0 +1,206 @@
+# Kubernetes Cluster Scanning Scenarios
+
+# Development Cluster Security Assessment
+dev_cluster:
+  - cluster_name: dev-eks-cluster
+    provider: aws
+    namespaces:
+      - default
+      - dev
+      - staging
+    scan_types:
+      - pod_security
+      - network_policy
+      - rbac_review
+      - image_security
+    options:
+      check_privileged_pods: true
+      verify_network_isolation: true
+      audit_service_accounts: true
+      scan_image_vulnerabilities: true
+    sensitive_resources:
+      - dev-database
+      - staging-api
+      - ci-cd-tools
+
+# Production Cluster Comprehensive Security Audit
+prod_cluster:
+  - cluster_name: prod-gke-cluster
+    provider: gcp
+    namespaces:
+      - default
+      - kube-system
+      - monitoring
+      - application-services
+    scan_types:
+      - full_cluster_security_audit
+      - container_image_scan
+      - secrets_management
+      - compliance_review
+    options:
+      vulnerability_threshold: critical
+      check_image_signatures: true
+      review_admission_controllers: true
+      verify_pod_security_policies: true
+    compliance_frameworks:
+      - pci_dss
+      - hipaa
+      - nist_800_53
+    sensitive_resources:
+      - production-database
+      - payment-gateway
+      - customer-api
+
+# Multi-Tenant Kubernetes Environment
+multi_tenant_cluster:
+  - cluster_name: shared-aks-cluster
+    provider: azure
+    namespaces:
+      - team-alpha
+      - team-beta
+      - team-gamma
+      - shared-services
+    scan_types:
+      - tenant_isolation
+      - resource_quota
+      - network_segmentation
+      - cross_tenant_access_review
+    options:
+      verify_namespace_boundaries: true
+      check_cross_tenant_access: true
+      audit_resource_limits: true
+      review_network_policies: true
+    tenant_configurations:
+      team_alpha:
+        allowed_resources: 
+          - cpu: 16
+          - memory: 64Gi
+      team_beta:
+        allowed_resources:
+          - cpu: 8
+          - memory: 32Gi
+
+# Financial Services Kubernetes Deployment
+financial_services_cluster:
+  - cluster_name: finance-eks-cluster
+    provider: aws
+    namespaces:
+      - regulated-apps
+      - compliance
+      - risk-management
+    scan_types:
+      - regulatory_compliance
+      - data_protection
+      - access_control
+      - audit_logging
+    options:
+      compliance_standard: 
+        - sox
+        - glba
+        - pci_dss
+      check_pii_protection: true
+      verify_data_encryption: true
+      audit_sensitive_workloads: true
+    sensitive_resources:
+      - customer_data_service
+      - transaction_processing
+      - risk_calculation_engine
+
+# Healthcare Kubernetes Environment
+healthcare_cluster:
+  - cluster_name: hospital-gke-cluster
+    provider: gcp
+    namespaces:
+      - patient-management
+      - medical-records
+      - telehealth
+      - monitoring
+    scan_types:
+      - hipaa_compliance
+      - patient_data_protection
+      - secure_communication
+      - audit_trail
+    options:
+      check_phi_protection: true
+      verify_encryption: true
+      audit_access_controls: true
+      review_communication_channels: true
+    compliance_requirements:
+      - hipaa
+      - hitech
+    sensitive_resources:
+      - patient_records_service
+      - medical_imaging
+      - telehealth_platform
+
+# Research and Education Kubernetes Cluster
+research_cluster:
+  - cluster_name: university-aks-cluster
+    provider: azure
+    namespaces:
+      - research-data
+      - collaborative-platforms
+      - data-processing
+      - international-collaboration
+    scan_types:
+      - research_data_protection
+      - collaborative_environment_security
+      - international_access_review
+      - data_sharing_audit
+    options:
+      check_research_data_access: true
+      verify_international_collaboration_security: true
+      audit_data_sharing_mechanisms: true
+      review_cross_border_access: true
+    sensitive_resources:
+      - research_datasets
+      - collaborative_research_platforms
+      - grant_management_systems
+
+# Startup Microservices Kubernetes Environment
+startup_microservices_cluster:
+  - cluster_name: startup-eks-cluster
+    provider: aws
+    namespaces:
+      - core-services
+      - user-management
+      - payment-integration
+      - analytics
+    scan_types:
+      - microservices_security
+      - ci_cd_pipeline_review
+      - secrets_management
+      - api_security
+    options:
+      check_service_communication: true
+      verify_api_authentication: true
+      review_deployment_practices: true
+      audit_secrets_rotation: true
+    development_resources:
+      - user_authentication_service
+      - payment_gateway_integration
+      - analytics_platform
+
+# Edge Computing and IoT Kubernetes Cluster
+edge_iot_cluster:
+  - cluster_name: iot-gke-cluster
+    provider: gcp
+    namespaces:
+      - device-management
+      - data-ingestion
+      - edge-processing
+      - monitoring
+    scan_types:
+      - iot_device_security
+      - edge_computing_review
+      - data_transmission_security
+      - device_authentication
+    options:
+      check_device_authentication: true
+      verify_data_encryption_in_transit: true
+      audit_edge_device_access: true
+      review_data_transmission_channels: true
+    sensitive_resources:
+      - device_registry
+      - telemetry_data_service
+      - edge_processing_nodes

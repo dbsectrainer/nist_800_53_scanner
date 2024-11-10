@@ -1,0 +1,180 @@
+# Network Scanning Scenarios
+
+# Corporate Network Infrastructure Scan
+corporate_network:
+  - targets:
+      - 192.168.1.0/24  # Internal network
+      - 10.0.0.0/16     # Corporate network
+    scan_type: network_discovery
+    options:
+      port_scan: true
+      service_detection: true
+      os_fingerprinting: true
+      banner_grabbing: true
+    sensitive_segments:
+      - finance_subnet
+      - hr_subnet
+      - executive_network
+
+# DMZ and Perimeter Network Security Assessment
+dmz_perimeter:
+  - targets:
+      - firewall.company.com
+      - web-lb.company.com
+      - vpn-gateway.company.com
+      - mail-server.company.com
+    scan_type: security_audit
+    options:
+      vulnerability_scan: true
+      configuration_check: true
+      ssl_tls_check: true
+      certificate_validation: true
+    security_focus:
+      - external_facing_services
+      - network_boundary_protection
+      - service_hardening
+
+# Remote Office Network Scan
+remote_offices:
+  - targets:
+      - london-office.company.net
+      - tokyo-office.company.net
+      - sydney-office.company.net
+      - home-office-vpn.company.com
+    scan_type: compliance_check
+    options:
+      network_segmentation: true
+      access_control_review: true
+      patch_level_audit: true
+      remote_access_security: true
+    compliance_frameworks:
+      - nist_800_53
+      - iso_27001
+      - gdpr
+
+# Cloud Provider Network Interfaces
+cloud_networks:
+  - targets:
+      - aws-vpc-1.company.com
+      - azure-vnet-2.company.com
+      - gcp-network-3.company.com
+    scan_type: cloud_network_security
+    options:
+      network_policy_audit: true
+      security_group_review: true
+      routing_table_check: true
+      interconnect_security: true
+    cloud_security_focus:
+      - vpc_configuration
+      - network_isolation
+      - cross_cloud_connectivity
+
+# Industrial Control Systems (ICS) Network
+industrial_network:
+  - targets:
+      - scada-master.factory.local
+      - plc-network.manufacturing.com
+      - iot-sensor-network.plant.internal
+    scan_type: industrial_security
+    options:
+      protocol_analysis: true
+      device_inventory: true
+      vulnerability_assessment: true
+      anomaly_detection: true
+    sensitive_systems:
+      - production_control_systems
+      - safety_instrumented_systems
+      - critical_infrastructure
+
+# Healthcare Network Segment
+healthcare_network:
+  - targets:
+      - hospital-network.healthcare.org
+      - medical-records-server.hospital.local
+      - telehealth-platform.healthcare.net
+    scan_type: hipaa_compliance
+    options:
+      phi_protection: true
+      access_control_audit: true
+      encryption_review: true
+      communication_channel_security: true
+    compliance_requirements:
+      - hipaa
+      - hitech
+      - pci_dss
+    sensitive_resources:
+      - patient_records_network
+      - medical_imaging_systems
+      - telehealth_infrastructure
+
+# Financial Services Network
+financial_network:
+  - targets:
+      - trading-network.finance.com
+      - payment-gateway.bank.local
+      - risk-management-system.financial.net
+    scan_type: financial_security
+    options:
+      transaction_security: true
+      pci_dss_audit: true
+      encryption_verification: true
+      access_control_review: true
+    compliance_frameworks:
+      - pci_dss
+      - sox
+      - glba
+    sensitive_segments:
+      - high_frequency_trading
+      - payment_processing
+      - customer_financial_data
+
+# Research and Education Network
+research_network:
+  - targets:
+      - research-campus-network.university.edu
+      - collaborative-platform.research.org
+      - international-data-sharing.academic.net
+    scan_type: research_data_protection
+    options:
+      collaborative_environment_security: true
+      international_access_review: true
+      data_sharing_audit: true
+      cross_border_access_check: true
+    sensitive_resources:
+      - research_data_repositories
+      - grant_management_systems
+      - collaborative_research_platforms
+
+# IoT and Edge Computing Network
+iot_edge_network:
+  - targets:
+      - iot-gateway.edge-computing.com
+      - sensor-network.industrial-iot.local
+      - edge-processing-cluster.distributed.net
+    scan_type: iot_edge_security
+    options:
+      device_authentication: true
+      data_transmission_security: true
+      edge_node_vulnerability_scan: true
+      protocol_security_review: true
+    sensitive_systems:
+      - device_management_platform
+      - telemetry_data_service
+      - edge_processing_nodes
+
+# Startup and Microservices Network
+startup_network:
+  - targets:
+      - api-gateway.startup.com
+      - microservices-cluster.application.net
+      - ci-cd-pipeline.devops.local
+    scan_type: microservices_security
+    options:
+      api_security_review: true
+      service_communication_audit: true
+      secrets_management: true
+      deployment_practice_review: true
+    development_resources:
+      - user_authentication_service
+      - payment_integration
+      - analytics_platform

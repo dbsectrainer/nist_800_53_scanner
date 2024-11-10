@@ -1,0 +1,115 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+.env
+.venv
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs and Databases
+*.log
+*.sqlite3
+logs/
+*.db
+
+# Secrets and Credentials
+*.key
+*.pem
+*.crt
+secrets.yaml
+.secrets/
+
+# Compliance Reports and Sensitive Data
+reports/
+*.report
+*.compliance
+
+# Cloud Provider Credentials
+*credentials.json
+*credentials.yml
+*credentials.yaml
+
+# Monitoring and Metrics
+grafana_data/
+prometheus_data/
+
+# Temporary Files
+.tmp/
+tmp/
+*.tmp
+*.bak
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Coverage and Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+
+# Compiled Source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Package Management
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment-specific
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*

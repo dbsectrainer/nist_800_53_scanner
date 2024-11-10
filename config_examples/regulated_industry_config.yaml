@@ -1,0 +1,169 @@
+# Regulated Industry Comprehensive Security Configuration
+
+# Global Security Settings
+global:
+  tenant_id: regulated-financial-org
+  environment: hybrid
+  log_level: DEBUG
+  compliance_frameworks:
+    - pci_dss
+    - sox
+    - glba
+    - nist_800_53
+
+# Advanced Security Configuration
+security:
+  authentication:
+    method: multi_factor
+    providers:
+      - type: password
+      - type: hardware_token
+      - type: biometric
+    max_api_key_age: 60  # days
+    password_policy:
+      min_length: 16
+      complexity_requirements:
+        - uppercase
+        - lowercase
+        - numbers
+        - special_characters
+      max_failed_attempts: 3
+      lockout_duration: 30  # minutes
+  
+  encryption:
+    sensitive_data: true
+    key_rotation_interval: 45  # days
+    algorithms:
+      data_at_rest: AES-256-GCM
+      data_in_transit: TLS-1.3
+    key_management:
+      provider: hsm
+      compliance: fips_140_2
+  
+  access_control:
+    role_based_access: true
+    privileged_access_management: true
+    just_in_time_access: true
+
+# Scanning and Compliance Options
+scan_options:
+  distributed_scanning: true
+  parallel_scanning: true
+  max_concurrent_scans: 5
+  scan_timeout: 3600  # seconds
+  
+  scan_categories:
+    - access_control
+    - audit_logging
+    - network_security
+    - system_configuration
+    - incident_response
+  
+  control_filters:
+    severity:
+      - high
+      - critical
+    compliance_status:
+      - non_compliant
+    tags:
+      - financial_services
+      - regulated_data
+
+# Cloud Provider Integrations
+cloud_providers:
+  aws:
+    enabled: true
+    credentials:
+      method: assume_role
+      role_arn: arn:aws:iam::123456789012:role/RegulatedComplianceRole
+    regions:
+      - us-east-1
+      - us-west-2
+  
+  azure:
+    enabled: true
+    credentials:
+      method: service_principal
+      tenant_id: ${AZURE_TENANT_ID}
+      client_id: ${AZURE_CLIENT_ID}
+    subscriptions:
+      - financial-compliance-subscription
+  
+  gcp:
+    enabled: false  # Disabled for this configuration
+
+# Monitoring and Observability
+monitoring:
+  enabled: true
+  metrics:
+    prometheus:
+      enabled: true
+      port: 9090
+    
+    tracing:
+      jaeger:
+        enabled: true
+        agent_host: jaeger.compliance.local
+        agent_port: 6831
+  
+  logging:
+    local:
+      enabled: true
+      path: /var/log/compliance_scanner
+      max_size: 100  # MB
+      backup_count: 10
+    
+    remote:
+      enabled: true
+      provider: splunk
+      endpoint: https://splunk.compliance.local:8088
+      token: ${SPLUNK_HEC_TOKEN}
+
+# Notification Channels
+notifications:
+  email:
+    enabled: true
+    smtp:
+      host: smtp.compliance.local
+      port: 587
+      username: ${SMTP_USERNAME}
+      from_address: compliance-scanner@company.com
+    recipients:
+      - security-team@company.com
+      - compliance-officers@company.com
+  
+  slack:
+    enabled: true
+    webhook_url: ${SLACK_COMPLIANCE_WEBHOOK}
+
+# Advanced Scanning Parameters
+advanced:
+  network_scan:
+    cidr_ranges:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
+    excluded_ips:
+      - 10.0.0.1
+      - 10.0.0.2
+  
+  custom_checks:
+    - name: Financial Regulatory Compliance
+      description: Custom financial services security requirements
+      severity: high
+      script: /opt/compliance/financial_security_check.py
+
+# Compliance Reporting
+reporting:
+  formats:
+    - pdf
+    - html
+    - csv
+  
+  distribution:
+    internal_share: true
+    external_audit: true
+  
+  retention:
+    period: 7  # years
+    archive_method: encrypted_storage

@@ -1,0 +1,154 @@
+# Cloud Provider Scanning Scenarios
+
+# AWS Environment Comprehensive Scan
+aws_environment:
+  - account_id: 123456789012
+    regions:
+      - us-east-1
+      - us-west-2
+    scan_types:
+      - iam_review
+      - s3_bucket_security
+      - ec2_instance_audit
+      - rds_database_security
+    options:
+      check_public_access: true
+      verify_encryption: true
+      review_security_groups: true
+      check_network_acls: true
+    sensitive_resources:
+      - production_data_bucket
+      - customer_database
+      - admin_ec2_instances
+
+# Azure Subscription Security Assessment
+azure_environment:
+  - subscription_id: 00000000-0000-0000-0000-000000000000
+    scan_types:
+      - active_directory_audit
+      - network_security_groups
+      - storage_account_review
+      - azure_kubernetes_clusters
+      - app_service_security
+    options:
+      compliance_standard: nist_800_53
+      check_rbac: true
+      verify_encryption_at_rest: true
+      review_network_policies: true
+    sensitive_resources:
+      - production_key_vault
+      - customer_identity_store
+      - critical_web_applications
+
+# Google Cloud Platform Comprehensive Scan
+gcp_environment:
+  - project_id: company-project-123
+    scan_types:
+      - iam_permissions
+      - kubernetes_cluster_security
+      - compute_engine_audit
+      - cloud_storage_security
+      - bigquery_data_protection
+    options:
+      check_service_accounts: true
+      review_firewall_rules: true
+      verify_network_isolation: true
+      audit_data_access: true
+    sensitive_resources:
+      - production_data_lake
+      - customer_analytics_dataset
+      - mission_critical_clusters
+
+# Multi-Cloud Hybrid Environment Assessment
+hybrid_cloud:
+  - providers:
+      aws:
+        account_id: 123456789012
+        regions: [us-east-1, us-west-2]
+      azure:
+        subscription_id: 00000000-0000-0000-0000-000000000000
+        regions: [eastus, westus]
+      gcp:
+        project_id: company-project-123
+        regions: [us-central1, us-west1]
+    scan_types:
+      - cross_cloud_compliance
+      - network_interconnect_security
+      - identity_management
+      - data_protection_review
+    options:
+      compare_security_policies: true
+      check_data_protection: true
+      verify_network_segmentation: true
+      audit_cross_cloud_access: true
+    compliance_frameworks:
+      - nist_800_53
+      - hipaa
+      - pci_dss
+
+# Regulated Industry Cloud Scan
+financial_services_cloud:
+  - providers:
+      aws:
+        account_id: financial-prod-account
+        regions: [us-east-1]
+      azure:
+        subscription_id: financial-compliance-sub
+        regions: [eastus]
+    scan_types:
+      - regulatory_compliance
+      - sensitive_data_protection
+      - access_control_audit
+      - encryption_review
+    options:
+      compliance_standard: 
+        - sox
+        - glba
+        - nist_800_53
+      check_pii_protection: true
+      verify_data_encryption: true
+      audit_third_party_access: true
+    sensitive_resources:
+      - customer_financial_data
+      - transaction_logs
+      - risk_management_systems
+
+# Startup Cloud Infrastructure Scan
+startup_cloud_environment:
+  - providers:
+      aws:
+        account_id: startup-dev-account
+      gcp:
+        project_id: startup-project
+    scan_types:
+      - basic_security_audit
+      - developer_access_review
+      - ci_cd_pipeline_security
+    options:
+      check_developer_permissions: true
+      review_deployment_practices: true
+      verify_secrets_management: true
+    development_resources:
+      - staging_environments
+      - development_databases
+      - continuous_integration_systems
+
+# Research and Education Cloud
+research_cloud_environment:
+  - providers:
+      azure:
+        subscription_id: research-university-sub
+      aws:
+        account_id: research-data-account
+    scan_types:
+      - research_data_protection
+      - collaborative_environment_security
+      - international_access_review
+    options:
+      check_research_data_access: true
+      verify_international_collaboration_security: true
+      audit_data_sharing_mechanisms: true
+    sensitive_resources:
+      - research_datasets
+      - collaborative_research_platforms
+      - grant_management_systems
