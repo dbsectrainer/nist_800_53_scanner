@@ -18,8 +18,6 @@ setup(
         'azure-identity',
         'google-cloud-iam',
         'paramiko',
-        'winrm',
-        'pywinrm',
         'scikit-learn',
         'numpy',
         'pandas',
@@ -49,7 +47,6 @@ setup(
         'cloud': [
             'kubernetes',
             'docker',
-            'azure-functions',
             'google-cloud-functions',
             'aws-lambda-powertools'
         ]

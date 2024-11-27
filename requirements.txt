@@ -3,8 +3,6 @@ boto3
 azure-identity
 google-cloud-iam
 paramiko
-winrm
-pywinrm
 
 # Machine Learning & Data Processing
 scikit-learn
@@ -53,13 +51,11 @@ isort
 mypy
 
 # Serverless & Cloud Functions
-azure-functions
 google-cloud-functions
 aws-lambda-powertools
 
 # Message Queues & Distributed Systems
 kafka-python
-rabbitmq-python
 
 # Advanced Security
 cryptography

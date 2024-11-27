@@ -18,7 +18,7 @@ Thank you for your interest in improving the NIST 800-53 Scanner project. This d
 - Build a portfolio of meaningful contributions
 - Network with cybersecurity experts
 
-## 📋 Contribution Opportunities
+## 🔍 Contribution Opportunities
 
 ### 1. Code Contributions
 - Bug fixes
@@ -26,6 +26,7 @@ Thank you for your interest in improving the NIST 800-53 Scanner project. This d
 - Performance improvements
 - Machine learning model enhancements
 - Documentation updates
+- Test infrastructure development
 
 ### 2. Non-Code Contributions
 - Security research
@@ -38,7 +39,7 @@ Thank you for your interest in improving the NIST 800-53 Scanner project. This d
 
 ### Prerequisites
 - Python 3.8+
-- Poetry (dependency management)
+- pip
 - Git
 - Basic understanding of:
   * Cybersecurity principles
@@ -48,15 +49,22 @@ Thank you for your interest in improving the NIST 800-53 Scanner project. This d
 ### Development Environment Setup
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/nist-800-53-scanner.git
-cd nist-800-53-scanner
+git clone https://github.com/your-org/nist_800_53_scanner.git
+cd nist_800_53_scanner
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
 
 # Install dependencies
-pip install poetry
-poetry install
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
-# Install pre-commit hooks
-poetry run pre-commit install
+# Run tests
+pytest
+
+# Generate coverage report
+python scripts/test_coverage_report.py
 ```
 
 ## 💻 Contribution Process
@@ -94,13 +102,13 @@ git checkout -b bugfix/issue-description
 ```python
 def predict_security_threats(
     features: np.ndarray, 
-    model: tf.keras.Model
+    model: AnomalyDetector
 ) -> Dict[str, float]:
     """
     Predict potential security threats using machine learning model.
     
     :param features: Input feature array
-    :param model: Trained machine learning model
+    :param model: Trained anomaly detection model
     :return: Dictionary of threat probabilities
     """
     # Implementation with clear documentation
@@ -114,10 +122,10 @@ def predict_security_threats(
 
 ```bash
 # Run tests
-poetry run pytest
+pytest
 
 # Generate coverage report
-poetry run pytest --cov=modules
+python scripts/test_coverage_report.py
 ```
 
 ### 5. Documentation
@@ -130,7 +138,7 @@ poetry run pytest --cov=modules
 
 ### Vulnerability Reporting
 - Do NOT open public issues for security vulnerabilities
-- Email security@nist-scanner.org
+- Email security@project.com
 - Provide detailed, responsible disclosure
 - Follow our [Security Policy](SECURITY.md)
 
@@ -141,13 +149,14 @@ poetry run pytest --cov=modules
 - Compliance framework extensions
 - Machine learning model security
 
-## 🤖 Automated Checks
+## 🧪 Automated Checks
 
-### Pre-Commit Hooks
-- Black code formatting
-- Flake8 linting
-- Type checking with mypy
+### Pre-Commit Checks
+- Code formatting
+- Linting
+- Type checking
 - Security vulnerability scanning
+- Test coverage reporting
 
 ### Continuous Integration
 - Automated tests
@@ -159,7 +168,7 @@ poetry run pytest --cov=modules
 
 ### ML Model Improvements
 - Enhance feature extraction techniques
-- Develop new neural network architectures
+- Develop new anomaly detection architectures
 - Improve vulnerability prediction accuracy
 - Create transfer learning approaches
 
@@ -169,15 +178,6 @@ poetry run pytest --cov=modules
 - Include training data sources
 - Explain model selection rationale
 - Demonstrate improvement over existing models
-
-## 📊 Performance Considerations
-
-### Optimization Techniques
-- Distributed computing support
-- Efficient feature extraction
-- Minimal resource consumption
-- Scalable architecture
-- Benchmark performance improvements
 
 ## 🌐 Compliance Framework Support
 
@@ -197,18 +197,11 @@ poetry run pytest --cov=modules
 - Maintain professional communication
 - Support learning and growth
 
-### Communication Channels
-- GitHub Discussions
-- Community Slack
-- Weekly sync meetings
-- Conference and webinar participation
+## 📜 Licensing
 
-## 📝 Licensing
-
-- MIT License
+- Project License: [Specify License]
 - Contributions must comply with license terms
 - Retain original copyright notices
-- Ensure compatibility with project goals
 
 ## 🏆 Recognition
 
@@ -216,12 +209,10 @@ Contributors will be:
 - Listed in CONTRIBUTORS.md
 - Recognized in release notes
 - Potential speaking/conference opportunities
-- Recommended for professional networks
 
 ## 📚 Additional Resources
 - [NIST 800-53 Documentation](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf)
 - [Python Security Best Practices](https://python-security.readthedocs.io/)
-- [Machine Learning in Cybersecurity](https://www.mlsec.org/)
 
 **Last Updated**: {{ current_date }}
-**Contribution Guidelines Version**: 1.2.0
+**Contribution Guidelines Version**: 1.3.0

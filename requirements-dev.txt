@@ -53,3 +53,17 @@ ruff==0.0.270
 
 # Dependency Management
 pip-tools==6.13.0
+
+# Additional Dependencies for Modules
+argon2-cffi==21.3.0
+pyzmq==25.1.0
+python-magic==0.4.27
+psutil==5.9.5
+flask==2.3.2
+boto3==1.26.137
+pyyaml==6.0
+numpy==1.24.3
+scikit-learn==1.2.2
+
+# Test Coverage Reporting
+pytest-cov==4.0.0

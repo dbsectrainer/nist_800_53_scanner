@@ -1,146 +1,358 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIST 800-53 Compliance Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    <title>NIST 800-53 Scanner - Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin: 0;
+        }
+        .logout-btn {
+            padding: 8px 16px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .dashboard-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .card-header {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .card-header h2 {
+            margin: 0;
+            color: #444;
+            font-size: 1.2rem;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .metric:hover {
+            background-color: #f8f9fa;
+        }
+        .metric-label {
+            color: #666;
+        }
+        .metric-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .severity-critical {
+            color: #dc3545;
+        }
+        .severity-high {
+            color: #fd7e14;
+        }
+        .severity-medium {
+            color: #ffc107;
+        }
+        .severity-low {
+            color: #28a745;
+        }
+        .trend-chart {
+            margin-top: 20px;
+            height: 200px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        .trend-chart h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 1rem;
+        }
+        .trend-data {
+            display: flex;
+            height: 150px;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 10px 0;
+        }
+        .trend-bar {
+            width: 30px;
+            background: #007bff;
+            border-radius: 4px 4px 0 0;
+            position: relative;
+        }
+        .trend-bar::after {
+            content: attr(data-value);
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: #666;
+        }
+        .key-controls {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .key-controls h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 1rem;
+        }
+        .control-item {
+            padding: 5px 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .risk-category {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .risk-score {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
 </head>
 <body>
-    <div class="container-fluid dashboard">
-        <div class="row">
-            <!-- Sidebar Navigation -->
-            <nav class="col-md-2 d-none d-md-block sidebar">
-                <div class="sidebar-sticky">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="#overview">
-                                <i class="fas fa-chart-pie"></i> Overview
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#compliance">
-                                <i class="fas fa-shield-alt"></i> Compliance
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#scan-results">
-                                <i class="fas fa-search"></i> Scan Results
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#reports">
-                                <i class="fas fa-file-alt"></i> Reports
-                            </a>
-                        </li>
-                    </ul>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>NIST 800-53 Compliance Dashboard</h1>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- Compliance Status Card -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Compliance Status</h2>
                 </div>
-            </nav>
-
-            <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto px-4">
-                <!-- Overview Section -->
-                <section id="overview" class="dashboard-section active">
-                    <h1 class="mt-4">Compliance Dashboard</h1>
-                    
-                    <div class="row">
-                        <!-- Compliance Status Card -->
-                        <div class="col-md-4">
-                            <div class="card compliance-status">
-                                <div class="card-header">
-                                    Overall Compliance Status
-                                </div>
-                                <div class="card-body">
-                                    <canvas id="complianceChart"></canvas>
-                                    <div class="compliance-percentage text-center">
-                                        <h2>{{ compliance_percentage }}%</h2>
-                                        <p>{{ compliance_status }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Recent Scans Card -->
-                        <div class="col-md-8">
-                            <div class="card recent-scans">
-                                <div class="card-header">
-                                    Recent Scan Activities
-                                </div>
-                                <div class="card-body">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Scan Type</th>
-                                                <th>Target</th>
-                                                <th>Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for scan in recent_scans %}
-                                            <tr>
-                                                <td>{{ scan.date }}</td>
-                                                <td>{{ scan.type }}</td>
-                                                <td>{{ scan.target }}</td>
-                                                <td>
-                                                    <span class="badge 
-                                                        {% if scan.status == 'Compliant' %}bg-success
-                                                        {% elif scan.status == 'Partial' %}bg-warning
-                                                        {% else %}bg-danger{% endif %}">
-                                                        {{ scan.status }}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                <div class="metric">
+                    <span class="metric-label">Overall Compliance</span>
+                    <span class="metric-value" id="overall-compliance">Loading...</span>
+                </div>
+                <div id="compliance-frameworks">
+                    <!-- Frameworks will be populated here -->
+                </div>
+                <div class="trend-chart">
+                    <h3>Compliance Trend</h3>
+                    <div class="trend-data" id="compliance-trend">
+                        <!-- Trend bars will be populated here -->
                     </div>
-
-                    <!-- Control Family Breakdown -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <div class="card control-families">
-                                <div class="card-header">
-                                    Control Family Compliance
-                                </div>
-                                <div class="card-body">
-                                    <canvas id="controlFamilyChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
+                </div>
+            </div>
+            
+            <!-- Vulnerability Summary Card -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Vulnerability Summary</h2>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Total Vulnerabilities</span>
+                    <span class="metric-value" id="total-vulnerabilities">Loading...</span>
+                </div>
+                <div id="vulnerability-distribution">
+                    <!-- Vulnerability distribution will be populated here -->
+                </div>
+                <div class="trend-chart">
+                    <h3>Top Vulnerabilities</h3>
+                    <div id="top-vulnerabilities">
+                        <!-- Top vulnerabilities will be populated here -->
                     </div>
-                </section>
-
-                <!-- Compliance Details Section -->
-                <section id="compliance" class="dashboard-section">
-                    <h2>Detailed Compliance Analysis</h2>
-                    <!-- Detailed compliance breakdown will be added here -->
-                </section>
-
-                <!-- Scan Results Section -->
-                <section id="scan-results" class="dashboard-section">
-                    <h2>Detailed Scan Results</h2>
-                    <!-- Detailed scan results will be added here -->
-                </section>
-
-                <!-- Reports Section -->
-                <section id="reports" class="dashboard-section">
-                    <h2>Compliance Reports</h2>
-                    <!-- Report generation and download options -->
-                </section>
-            </main>
+                </div>
+            </div>
+            
+            <!-- Risk Assessment Card -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Risk Assessment</h2>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Overall Risk Score</span>
+                    <span class="metric-value risk-score" id="risk-score">Loading...</span>
+                </div>
+                <div id="risk-categories">
+                    <!-- Risk categories will be populated here -->
+                </div>
+                <div class="trend-chart">
+                    <h3>Risk Score Trend</h3>
+                    <div class="trend-data" id="risk-trend">
+                        <!-- Risk trend will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Compliance Frameworks Card -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2>Compliance Frameworks</h2>
+                </div>
+                <div id="framework-details">
+                    <!-- Framework details will be populated here -->
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- JavaScript Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script>
+        // Helper function to create trend bars
+        function createTrendBars(container, data) {
+            const maxValue = Math.max(...data);
+            const html = data.map(value => {
+                const height = (value / maxValue) * 150;
+                return `<div class="trend-bar" style="height: ${height}px;" data-value="${value}"></div>`;
+            }).join('');
+            document.getElementById(container).innerHTML = html;
+        }
+
+        // Fetch and display dashboard data
+        async function fetchDashboardData() {
+            try {
+                // Fetch compliance status
+                const complianceResponse = await fetch('/api/compliance_status');
+                const complianceData = await complianceResponse.json();
+                document.getElementById('overall-compliance').textContent = `${complianceData.overall_compliance}%`;
+                
+                // Populate frameworks
+                const frameworksHtml = Object.entries(complianceData.frameworks)
+                    .map(([name, score]) => `
+                        <div class="metric">
+                            <span class="metric-label">${name}</span>
+                            <span class="metric-value">${score}%</span>
+                        </div>
+                    `).join('');
+                document.getElementById('compliance-frameworks').innerHTML = frameworksHtml;
+
+                // Create compliance trend chart
+                createTrendBars('compliance-trend', complianceData.trend);
+
+                // Fetch vulnerability summary
+                const vulnerabilityResponse = await fetch('/api/vulnerability_summary');
+                const vulnerabilityData = await vulnerabilityResponse.json();
+                document.getElementById('total-vulnerabilities').textContent = vulnerabilityData.total_vulnerabilities;
+                
+                // Populate vulnerability distribution
+                const distributionHtml = Object.entries(vulnerabilityData.severity_distribution)
+                    .map(([severity, count]) => `
+                        <div class="metric">
+                            <span class="metric-label">${severity}</span>
+                            <span class="metric-value severity-${severity.toLowerCase()}">${count}</span>
+                        </div>
+                    `).join('');
+                document.getElementById('vulnerability-distribution').innerHTML = distributionHtml;
+
+                // Populate top vulnerabilities
+                const topVulnerabilitiesHtml = vulnerabilityData.top_vulnerabilities
+                    .map(vuln => `
+                        <div class="metric">
+                            <span class="metric-label">${vuln.type}</span>
+                            <span class="metric-value">${vuln.count}</span>
+                        </div>
+                    `).join('');
+                document.getElementById('top-vulnerabilities').innerHTML = topVulnerabilitiesHtml;
+
+                // Fetch risk assessment
+                const riskResponse = await fetch('/api/risk_assessment');
+                const riskData = await riskResponse.json();
+                document.getElementById('risk-score').textContent = riskData.overall_risk_score.toFixed(1);
+                
+                // Populate risk categories
+                const categoriesHtml = Object.entries(riskData.risk_categories)
+                    .map(([category, score]) => `
+                        <div class="risk-category">
+                            <span class="metric-label">${category.replace(/_/g, ' ')}</span>
+                            <span class="metric-value">${score.toFixed(1)}</span>
+                        </div>
+                    `).join('');
+                document.getElementById('risk-categories').innerHTML = categoriesHtml;
+
+                // Create risk trend chart
+                createTrendBars('risk-trend', riskData.risk_trend);
+
+                // Fetch compliance frameworks
+                const frameworksResponse = await fetch('/api/compliance_frameworks');
+                const frameworksData = await frameworksResponse.json();
+                
+                // Populate framework details
+                const frameworkDetailsHtml = Object.entries(frameworksData)
+                    .map(([name, data]) => `
+                        <div class="metric">
+                            <span class="metric-label">${name}</span>
+                            <span class="metric-value">${data.compliance_score}%</span>
+                        </div>
+                        <div class="key-controls">
+                            <h3>Key Controls</h3>
+                            ${data.key_controls.map(control => `
+                                <div class="control-item">${control}</div>
+                            `).join('')}
+                        </div>
+                    `).join('');
+                document.getElementById('framework-details').innerHTML = frameworkDetailsHtml;
+
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+            }
+        }
+
+        // Handle logout
+        async function logout() {
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        // Load dashboard data when page loads
+        document.addEventListener('DOMContentLoaded', fetchDashboardData);
+
+        // Refresh dashboard data every 30 seconds
+        setInterval(fetchDashboardData, 30000);
+    </script>
 </body>
 </html>
