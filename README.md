@@ -4,6 +4,95 @@
 
 This tool provides a comprehensive security compliance scanning solution based on NIST 800-53 control requirements. It supports multiple cloud providers (AWS, Azure, GCP) and on-premise environments, offering in-depth security assessments across various control categories.
 
+## NIST 800-53 Framework
+
+```mermaid
+classDiagram
+    class NIST800_53 {
+        <<NIST 800-53 Rev. 5>>
+        Security and Privacy Controls
+    }
+    
+    class SecurityBaselines {
+        Low Impact
+        Moderate Impact
+        High Impact
+    }
+    
+    class ImplementationLevels {
+        Organization
+        System
+        Component
+    }
+    
+    class ScannerCoverage {
+        Cloud (AWS, Azure, GCP)
+        On-Premise Systems
+        Network Infrastructure
+        Application Security
+    }
+    
+    NIST800_53 --> AccessControl : AC
+    NIST800_53 --> AuditAccountability : AU
+    NIST800_53 --> ConfigManagement : CM
+    NIST800_53 --> IncidentResponse : IR
+    NIST800_53 --> SystemCommsProtection : SC
+    NIST800_53 --> OtherControls : "15 more families"
+    
+    class AccessControl {
+        <<AC>>
+        Account Management
+        Access Enforcement
+        Least Privilege
+        Separation of Duties
+        Information Flow
+    }
+    
+    class AuditAccountability {
+        <<AU>>
+        Event Logging
+        Audit Records
+        Monitoring
+        Analysis & Reporting
+    }
+    
+    class ConfigManagement {
+        <<CM>>
+        Baseline Configuration
+        Change Control
+        Security Impact Analysis
+        Configuration Settings
+    }
+    
+    class IncidentResponse {
+        <<IR>>
+        Incident Handling
+        Monitoring
+        Reporting
+        Response Testing
+    }
+    
+    class SystemCommsProtection {
+        <<SC>>
+        Boundary Protection
+        Cryptography
+        Information in Transit
+        Information at Rest
+    }
+    
+    class OtherControls {
+        AT - Awareness & Training
+        IA - Identification & Authentication
+        RA - Risk Assessment
+        SI - System & Information Integrity
+        And others...
+    }
+    
+    SecurityBaselines --> NIST800_53 : implements
+    ImplementationLevels --> NIST800_53 : applies to
+    NIST800_53 --> ScannerCoverage : scanned by
+```
+
 ## Features
 
 - Multi-cloud and on-premise support
