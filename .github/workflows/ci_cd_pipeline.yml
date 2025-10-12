@@ -7,19 +7,19 @@ on:
     branches: [ main, develop ]
 
 env:
-  PYTHON_VERSION: 3.9
+  PYTHON_VERSION: 3.12
   POETRY_VERSION: 1.1.12
 
 jobs:
   security-checks:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0  # Full git history for signing verification
 
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
@@ -37,9 +37,9 @@ jobs:
 
   code-signing:
     needs: security-checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Import GPG key
       env:
@@ -70,13 +70,13 @@ jobs:
     needs: code-signing
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.8, 3.9, '3.10']
+        os: [ubuntu-24.04, macos-latest, windows-latest]
+        python-version: '3.12'
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -91,11 +91,11 @@ jobs:
 
   distributed-scan-test:
     needs: unit-tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
@@ -111,10 +111,10 @@ jobs:
 
   deploy:
     needs: [distributed-scan-test]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.ref == 'refs/heads/main'
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Deploy to Production
       env:

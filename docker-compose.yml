@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   nist_compliance_scanner:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     image: nist-compliance-scanner
@@ -43,7 +41,7 @@ services:
       - "9411:9411"
 
   prometheus:
-    image: prom/prometheus:v2.30.3
+    image: prom/prometheus:latest
     container_name: nist_prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
@@ -63,6 +61,7 @@ services:
 volumes:
   redis_data:
   grafana_data:
+
 
 networks:
   default:
