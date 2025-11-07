@@ -1,0 +1,82 @@
+# Dependabot configuration for automated dependency updates (2025 standards)
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "security-team"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    # Version update strategies
+    versioning-strategy: increase
+    # Group related updates together
+    groups:
+      aws:
+        patterns:
+          - "boto3*"
+          - "aws-*"
+      azure:
+        patterns:
+          - "azure-*"
+      google-cloud:
+        patterns:
+          - "google-cloud-*"
+      fastapi:
+        patterns:
+          - "fastapi*"
+          - "uvicorn*"
+          - "pydantic*"
+      testing:
+        patterns:
+          - "pytest*"
+          - "coverage*"
+          - "hypothesis*"
+      security:
+        patterns:
+          - "bandit*"
+          - "safety*"
+          - "cryptography*"
+      monitoring:
+        patterns:
+          - "prometheus*"
+          - "opentelemetry*"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "docker"
+
+# Automatically enable security updates
+enable-beta-ecosystems: true

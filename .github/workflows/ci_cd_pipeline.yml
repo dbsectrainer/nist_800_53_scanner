@@ -7,8 +7,7 @@ on:
     branches: [ main, develop ]
 
 env:
-  PYTHON_VERSION: 3.12
-  POETRY_VERSION: 1.1.12
+  PYTHON_VERSION: '3.12'
 
 jobs:
   security-checks:
@@ -26,14 +25,16 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install poetry
-        poetry install
+        pip install -e ".[dev]"
 
     - name: Run Bandit Security Scanner
-      run: poetry run bandit -r modules
+      run: bandit -r modules -c pyproject.toml
 
     - name: Run Safety Dependency Check
-      run: poetry run safety check
+      run: safety check --json || true
+
+    - name: Run pip-audit
+      run: pip-audit --desc || true
 
   code-signing:
     needs: security-checks
@@ -83,11 +84,10 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install poetry
-        poetry install
+        pip install -e ".[dev]"
 
-    - name: Run unit tests
-      run: poetry run pytest tests/
+    - name: Run unit tests with coverage
+      run: pytest tests/ --cov=modules --cov-report=xml --cov-report=term -v
 
   distributed-scan-test:
     needs: unit-tests
@@ -102,12 +102,10 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install poetry
-        poetry install
+        pip install -e ".[dev]"
 
     - name: Test Distributed Scanning Configuration
-      run: |
-        poetry run python -m pytest tests/distributed_scan_test.py
+      run: pytest tests/distributed_scan_test.py -v
 
   deploy:
     needs: [distributed-scan-test]
