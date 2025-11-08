@@ -1,0 +1,128 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":preserveSemverRanges"
+  ],
+  "description": "Renovate configuration for automated dependency updates (2025 standards)",
+  "labels": ["dependencies", "renovate"],
+  "assignees": ["@security-team"],
+  "reviewers": ["@security-team"],
+  "schedule": ["before 9am on Monday"],
+  "timezone": "America/New_York",
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 5,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "vulnerability"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "separateMajorMinor": true,
+  "separateMinorPatch": false,
+  "rangeStrategy": "bump",
+  "python": {
+    "enabled": true
+  },
+  "docker": {
+    "enabled": true,
+    "pinDigests": true
+  },
+  "packageRules": [
+    {
+      "description": "Group all AWS packages together",
+      "groupName": "AWS SDK",
+      "matchPackagePatterns": ["^boto3", "^aws-"]
+    },
+    {
+      "description": "Group all Azure packages together",
+      "groupName": "Azure SDK",
+      "matchPackagePatterns": ["^azure-"]
+    },
+    {
+      "description": "Group all Google Cloud packages together",
+      "groupName": "Google Cloud SDK",
+      "matchPackagePatterns": ["^google-cloud-"]
+    },
+    {
+      "description": "Group FastAPI ecosystem",
+      "groupName": "FastAPI ecosystem",
+      "matchPackagePatterns": ["^fastapi", "^uvicorn", "^pydantic"]
+    },
+    {
+      "description": "Group testing packages",
+      "groupName": "Testing dependencies",
+      "matchPackagePatterns": ["^pytest", "^coverage", "^hypothesis"]
+    },
+    {
+      "description": "Group security scanning tools",
+      "groupName": "Security tools",
+      "matchPackagePatterns": ["^bandit", "^safety", "^semgrep", "^pip-audit"]
+    },
+    {
+      "description": "Group monitoring and observability",
+      "groupName": "Monitoring stack",
+      "matchPackagePatterns": ["^prometheus", "^opentelemetry", "^jaeger"]
+    },
+    {
+      "description": "Auto-merge minor and patch updates for dev dependencies",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Auto-merge patch updates for production dependencies",
+      "matchDepTypes": ["dependencies"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Require approval for major updates",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true,
+      "labels": ["major-update", "requires-approval"]
+    },
+    {
+      "description": "High priority for security updates",
+      "matchDatasources": ["pypi"],
+      "vulnerabilityAlerts": {
+        "labels": ["security", "high-priority"],
+        "assignees": ["@security-team"],
+        "automerge": false
+      }
+    },
+    {
+      "description": "Docker image updates - pin digests",
+      "matchDatasources": ["docker"],
+      "pinDigests": true,
+      "separateMajorMinor": false
+    },
+    {
+      "description": "GitHub Actions - auto-merge minor/patch",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeType": "pr"
+    }
+  ],
+  "regexManagers": [
+    {
+      "description": "Update Python version in Dockerfiles",
+      "fileMatch": ["^Dockerfile$", "\\.dockerfile$"],
+      "matchStrings": [
+        "FROM python:(?<currentValue>.*?)\\n"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "python"
+    }
+  ],
+  "commitMessagePrefix": "deps:",
+  "commitMessageAction": "update",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newVersion}}",
+  "semanticCommitType": "deps",
+  "semanticCommitScope": null
+}

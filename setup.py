@@ -1,75 +1,26 @@
-from setuptools import setup, find_packages
+#!/usr/bin/env python
+"""
+DEPRECATED: This setup.py is maintained for backward compatibility only.
+Please use pyproject.toml for all configuration going forward (PEP 517/518).
 
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
+For installation:
+    pip install .
+    pip install -e ".[dev]"  # For development
+    pip install -e ".[all]"  # For all optional dependencies
 
-setup(
-    name="nist-800-53-compliance-scanner",
-    version="0.1.0",
-    author="Enterprise Security Team",
-    author_email="security@example.com",
-    description="A comprehensive NIST 800-53 security compliance scanning platform",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/your-org/nist-800-53-scanner",
-    packages=find_packages(exclude=['tests*']),
-    install_requires=[
-        'boto3',
-        'azure-identity',
-        'google-cloud-iam',
-        'paramiko',
-        'scikit-learn',
-        'numpy',
-        'pandas',
-        'fastapi',
-        'uvicorn',
-        'pydantic',
-        'python-jose[cryptography]',
-        'passlib[bcrypt]',
-        'sqlalchemy',
-        'alembic',
-        'redis',
-        'celery',
-        'prometheus-client',
-        'opentelemetry-api',
-        'opentelemetry-sdk',
-        'jaeger-client'
-    ],
-    extras_require={
-        'dev': [
-            'pytest',
-            'pytest-asyncio',
-            'pytest-cov',
-            'black',
-            'isort',
-            'mypy'
-        ],
-        'cloud': [
-            'kubernetes',
-            'docker',
-            'google-cloud-functions',
-            'aws-lambda-powertools'
-        ]
-    },
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Intended Audience :: Developers",
-        "Intended Audience :: System Administrators",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Topic :: Security",
-        "Topic :: Software Development :: Libraries :: Python Modules"
-    ],
-    python_requires='>=3.8',
-    entry_points={
-        'console_scripts': [
-            'nist-scanner=scan:main',
-        ],
-    },
-    project_urls={
-        'Bug Reports': 'https://github.com/your-org/nist-800-53-scanner/issues',
-        'Source': 'https://github.com/your-org/nist-800-53-scanner',
-    },
+This is a minimal shim that delegates to setuptools' pyproject.toml support.
+"""
+import warnings
+from setuptools import setup
+
+warnings.warn(
+    "setup.py is deprecated. Please use pyproject.toml and install via "
+    "'pip install .' or 'pip install -e .[dev]' for development.",
+    DeprecationWarning,
+    stacklevel=2,
 )
+
+# All configuration is now in pyproject.toml
+# This file exists only for backward compatibility
+if __name__ == "__main__":
+    setup()
