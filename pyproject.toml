@@ -38,7 +38,6 @@ dependencies = [
     "azure-identity>=1.19.0",
     "azure-mgmt-security>=7.0.0",
     "google-cloud-iam>=2.17.0",
-    "google-cloud-security-scanner>=1.16.0",
     "paramiko>=3.5.0",
 
     # Machine Learning & Data Processing
