@@ -140,7 +140,7 @@ dev = [
 
     # Performance Profiling
     "py-spy>=0.4.0",
-    "memray>=1.15.0",
+    "memray>=1.19.3",
     "scalene>=1.5.49",
 
     # Mocking and Testing Utilities
