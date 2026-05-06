@@ -29,6 +29,7 @@ python --version
 ### Installing Python 3.12+
 
 **Ubuntu/Debian:**
+
 ```bash
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
@@ -36,6 +37,7 @@ sudo apt install python3.12 python3.12-venv python3.12-dev
 ```
 
 **macOS (using Homebrew):**
+
 ```bash
 brew install python@3.12
 ```
@@ -109,12 +111,13 @@ pre-commit run --all-files
 If you have custom CI/CD configurations, update them:
 
 **GitHub Actions:**
+
 ```yaml
 # Update Python version
 - name: Set up Python
   uses: actions/setup-python@v5
   with:
-    python-version: '3.12'
+    python-version: "3.12"
 
 # Update installation command
 - name: Install dependencies
@@ -158,6 +161,7 @@ pytest tests/ -v
 **After:** Uses `pyproject.toml` (PEP 517/518)
 
 **Action Required:**
+
 - Remove `poetry` commands from your scripts
 - Use `pip install -e ".[dev]"` instead of `poetry install`
 - Update CI/CD to use pip-based installation
@@ -168,6 +172,7 @@ pytest tests/ -v
 **After:** Uses Ruff for everything
 
 **Action Required:**
+
 ```bash
 # Remove old tools
 pip uninstall flake8 black isort pylint
@@ -179,6 +184,7 @@ pip uninstall flake8 black isort pylint
 ```
 
 **VSCode settings.json:**
+
 ```json
 {
   "[python]": {
@@ -204,6 +210,7 @@ pip uninstall flake8 black isort pylint
 Several major dependency updates may require code changes:
 
 #### NumPy 2.x
+
 ```python
 # Before (deprecated in NumPy 2.x)
 import numpy as np
@@ -216,6 +223,7 @@ arr = np.int64(5)  # Use specific NumPy type
 ```
 
 #### Pydantic v2
+
 ```python
 # Before (Pydantic v1)
 from pydantic import BaseModel
@@ -235,6 +243,7 @@ class User(BaseModel):
 ```
 
 #### SQLAlchemy 2.0
+
 ```python
 # Before (SQLAlchemy 1.x)
 from sqlalchemy import create_engine
@@ -254,6 +263,7 @@ with engine.connect() as conn:
 **After:** Latest 2025 images
 
 **Action Required:**
+
 ```bash
 # Stop old containers
 docker-compose down
@@ -329,6 +339,7 @@ Enable Dependabot and Renovate for automatic updates:
 ### Issue: "Python 3.12 not found"
 
 **Solution:**
+
 ```bash
 # Install Python 3.12 (see Prerequisites section)
 # Then explicitly use python3.12
@@ -346,6 +357,7 @@ python3.12 -m venv venv
 ### Issue: Pre-commit hooks failing
 
 **Solution:**
+
 ```bash
 # Update hooks to latest versions
 pre-commit autoupdate
@@ -359,6 +371,7 @@ pre-commit run --all-files
 ### Issue: Tests failing after upgrade
 
 **Solution:**
+
 ```bash
 # Ensure all dev dependencies are installed
 pip install -e ".[dev]"
@@ -373,6 +386,7 @@ pytest tests/ -vv
 ### Issue: Docker containers not starting
 
 **Solution:**
+
 ```bash
 # Remove old containers and images
 docker-compose down
@@ -428,6 +442,7 @@ pip install -e ".[dev]"
 ## Support
 
 For questions or assistance:
+
 - GitHub Issues: https://github.com/your-org/nist-800-53-scanner/issues
 - Email: security@example.com
 

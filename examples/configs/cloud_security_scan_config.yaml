@@ -52,7 +52,7 @@ scan_options:
   distributed_scanning: true
   parallel_scanning: true
   max_concurrent_scans: 5
-  scan_timeout: 3600  # seconds
+  scan_timeout: 3600 # seconds
 
   control_filters:
     severity:
@@ -68,11 +68,11 @@ scan_options:
 security:
   authentication:
     method: api_key
-    max_api_key_age: 60  # days
-  
+    max_api_key_age: 60 # days
+
   encryption:
     sensitive_data: true
-    key_rotation_interval: 30  # days
+    key_rotation_interval: 30 # days
 
 # Monitoring Configuration
 monitoring:
@@ -80,7 +80,7 @@ monitoring:
   metrics:
     prometheus:
       enabled: true
-    
+
     tracing:
       jaeger:
         enabled: true
@@ -93,7 +93,7 @@ notifications:
     recipients:
       - security-team@company.com
       - cloud-ops@company.com
-  
+
   slack:
     enabled: true
     webhook_url: ${SLACK_CLOUD_SECURITY_WEBHOOK}

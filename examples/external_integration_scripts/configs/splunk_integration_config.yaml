@@ -3,8 +3,8 @@
 # Splunk Connection Settings
 splunk:
   host: splunk.company.com
-  port: 8089  # Management port
-  hec_port: 8088  # HTTP Event Collector port
+  port: 8089 # Management port
+  hec_port: 8088 # HTTP Event Collector port
   username: ${SPLUNK_USERNAME}
   password: ${SPLUNK_PASSWORD}
   hec_token: ${SPLUNK_HEC_TOKEN}
@@ -21,7 +21,7 @@ scan_targets:
     compliance_frameworks:
       - nist_800_53
       - pci_dss
-  
+
   - name: healthcare_systems
     type: healthcare_network
     cloud_providers:
@@ -34,23 +34,23 @@ scan_targets:
 security:
   authentication:
     method: api_key
-    max_api_key_age: 45  # days
-  
+    max_api_key_age: 45 # days
+
   encryption:
     sensitive_data: true
-    key_rotation_interval: 30  # days
+    key_rotation_interval: 30 # days
 
 # Logging and Monitoring
 logging:
   level: INFO
-  retention_period: 365  # days
+  retention_period: 365 # days
 
 # Compliance Reporting
 reporting:
   formats:
     - json
     - csv
-  
+
   distribution:
     splunk_index: true
     internal_share: true
@@ -59,13 +59,13 @@ reporting:
 splunk_advanced:
   saved_searches:
     - name: Critical Compliance Violations
-      search_query: 'index=nist_compliance severity=high'
+      search_query: "index=nist_compliance severity=high"
       alert_actions:
         - email_notification
         - slack_alert
-    
+
     - name: Compliance Trend Analysis
-      search_query: 'index=nist_compliance earliest=-30d@d latest=now'
+      search_query: "index=nist_compliance earliest=-30d@d latest=now"
       report_type: trend_analysis
 
   dashboards:
@@ -82,7 +82,7 @@ notifications:
     recipients:
       - security-team@company.com
       - compliance-officers@company.com
-  
+
   slack:
     enabled: true
     webhook_url: ${SLACK_WEBHOOK_URL}
@@ -92,10 +92,10 @@ compliance_frameworks:
   nist_800_53:
     enabled: true
     control_families:
-      - AC  # Access Control
-      - AU  # Audit and Accountability
-      - SC  # System and Communications Protection
-  
+      - AC # Access Control
+      - AU # Audit and Accountability
+      - SC # System and Communications Protection
+
   pci_dss:
     enabled: true
     requirements:
@@ -106,4 +106,4 @@ compliance_frameworks:
 # Performance and Scalability
 performance:
   max_concurrent_scans: 3
-  scan_timeout: 3600  # seconds
+  scan_timeout: 3600 # seconds

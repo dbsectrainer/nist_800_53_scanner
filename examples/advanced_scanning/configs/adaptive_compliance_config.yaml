@@ -22,7 +22,7 @@ scan_targets:
       - customer_financial_data
       - transaction_logs
       - trading_systems
-    age: 3  # years
+    age: 3 # years
     complexity_factors:
       - multi_region_deployment
       - high_transaction_volume
@@ -40,7 +40,7 @@ scan_targets:
       - patient_records
       - medical_imaging
       - telehealth_platform
-    age: 2  # years
+    age: 2 # years
     complexity_factors:
       - distributed_care_systems
       - international_data_sharing
@@ -56,7 +56,7 @@ scan_targets:
       - research_datasets
       - grant_management
       - collaborative_platforms
-    age: 1  # years
+    age: 1 # years
     complexity_factors:
       - multi_institutional_collaboration
       - cross_border_research
@@ -77,7 +77,7 @@ ml_model:
       epochs: 50
       batch_size: 32
       validation_split: 0.2
-  
+
   context_model:
     type: neural_network
     architecture:
@@ -101,7 +101,7 @@ feature_extraction:
     system_age: 0.2
     sensitive_resources: 0.3
     complexity_factors: 0.2
-  
+
   normalization:
     method: standard_scaler
     parameters:
@@ -113,7 +113,7 @@ compliance_assessment:
   thresholds:
     compliant: 0.7
     high_risk: 0.4
-  
+
   risk_levels:
     critical: 0.8
     high: 0.6
@@ -127,7 +127,7 @@ context_adaptation:
     - dynamic_risk_scoring
     - contextual_recommendation
     - adaptive_scanning_depth
-  
+
   risk_contexts:
     - low_risk
     - medium_risk
@@ -140,7 +140,7 @@ data_sources:
   historical_compliance:
     type: csv
     path: /path/to/historical/compliance/data.csv
-  
+
   threat_intelligence:
     providers:
       - mitre_att&ck
@@ -154,11 +154,11 @@ notifications:
     recipients:
       - security-team@company.com
       - compliance-officers@company.com
-  
+
   slack:
     enabled: true
     webhook_url: ${SLACK_WEBHOOK_URL}
-  
+
   pagerduty:
     enabled: true
     service_key: ${PAGERDUTY_SERVICE_KEY}
@@ -168,24 +168,24 @@ advanced_ml:
   transfer_learning:
     enabled: true
     pre_trained_model: nist_800_53_baseline
-  
+
   anomaly_detection:
     enabled: true
     sensitivity: 0.7
-  
+
   model_versioning:
     keep_latest: 3
-    auto_retrain_interval: 30  # days
+    auto_retrain_interval: 30 # days
 
 # Compliance Frameworks
 compliance_frameworks:
   nist_800_53:
     enabled: true
     control_families:
-      - AC  # Access Control
-      - AU  # Audit and Accountability
-      - SC  # System and Communications Protection
-  
+      - AC # Access Control
+      - AU # Audit and Accountability
+      - SC # System and Communications Protection
+
   pci_dss:
     enabled: true
     requirements:
@@ -196,8 +196,8 @@ compliance_frameworks:
 # Performance and Scalability
 performance:
   max_concurrent_scans: 3
-  scan_timeout: 3600  # seconds
-  
+  scan_timeout: 3600 # seconds
+
   distributed_computing:
     enabled: true
     worker_nodes: auto
@@ -209,13 +209,13 @@ reporting:
     - json
     - pdf
     - html
-  
+
   distribution:
     internal_share: true
     external_audit: true
-  
+
   retention:
-    period: 7  # years
+    period: 7 # years
     archive_method: encrypted_storage
 
 # Continuous Improvement
@@ -225,7 +225,7 @@ continuous_improvement:
     collection_methods:
       - manual_review
       - automated_analysis
-  
+
   model_retraining:
     trigger_conditions:
       - performance_drop

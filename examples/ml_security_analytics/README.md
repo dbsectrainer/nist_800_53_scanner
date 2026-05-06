@@ -7,10 +7,12 @@ This directory contains advanced machine learning scripts that demonstrate cutti
 ## 🚀 Available Scripts
 
 ### 1. Predictive Threat Detector
+
 **Script**: `predictive_threat_detector.py`
 **Configuration**: `configs/predictive_threat_config.yaml`
 
 #### Key Features
+
 - Multi-modal threat prediction
 - Transfer learning integration
 - Adaptive threat detection
@@ -19,6 +21,7 @@ This directory contains advanced machine learning scripts that demonstrate cutti
 ## 🛠 Prerequisites
 
 ### System Requirements
+
 - Python 3.8+
 - TensorFlow
 - TensorFlow Hub
@@ -27,6 +30,7 @@ This directory contains advanced machine learning scripts that demonstrate cutti
 - NumPy
 
 ### Installation
+
 ```bash
 # Install required dependencies
 pip install -r requirements.txt
@@ -35,6 +39,7 @@ pip install -r requirements.txt
 ## 🔧 Configuration
 
 ### Basic Configuration Structure
+
 ```yaml
 global:
   tenant_id: threat_intelligence_analyzer
@@ -48,6 +53,7 @@ threat_categories:
 ```
 
 ### Advanced Machine Learning Configuration
+
 ```yaml
 ml_model:
   architecture:
@@ -57,7 +63,7 @@ ml_model:
           activation: relu
         - units: 32
           activation: relu
-  
+
   training:
     optimizer:
       type: adam
@@ -67,12 +73,14 @@ ml_model:
 ## 🚀 Usage Examples
 
 ### Basic Threat Detection
+
 ```bash
 python predictive_threat_detector.py \
   --config configs/predictive_threat_config.yaml
 ```
 
 ### Authenticated Analysis
+
 ```bash
 python predictive_threat_detector.py \
   --config configs/predictive_threat_config.yaml \
@@ -82,16 +90,19 @@ python predictive_threat_detector.py \
 ## 🔬 Advanced Techniques
 
 ### 1. Transfer Learning
+
 - Pre-trained feature extraction
 - Text embedding generation
 - Multi-modal feature integration
 
 ### 2. Threat Prediction
+
 - Neural network-based classification
 - Multi-label threat detection
 - Contextual risk scoring
 
 ### 3. Data Processing
+
 - Network feature analysis
 - System behavior tracking
 - Text-based threat intelligence
@@ -99,11 +110,13 @@ python predictive_threat_detector.py \
 ## 🛡️ Key Capabilities
 
 ### Threat Detection
+
 - Identify multiple threat categories
 - Assess risk levels
 - Provide contextual insights
 
 ### Risk Categorization
+
 - Critical (0.8 - 1.0)
 - High (0.6 - 0.8)
 - Medium (0.4 - 0.6)
@@ -113,6 +126,7 @@ python predictive_threat_detector.py \
 ## 📊 Performance Optimization
 
 ### Scalability Features
+
 - Distributed prediction
 - Adaptive batch processing
 - Efficient feature extraction
@@ -132,12 +146,14 @@ python predictive_threat_detector.py \
 ## 🤝 Contributing
 
 ### Improvement Areas
+
 1. Enhance machine learning models
 2. Add new threat detection techniques
 3. Improve feature extraction
 4. Develop more advanced prediction strategies
 
 ### Contribution Steps
+
 1. Fork the repository
 2. Create a feature branch
 3. Implement your changes
@@ -146,11 +162,13 @@ python predictive_threat_detector.py \
 ## 📚 Advanced Topics
 
 ### Transfer Learning
+
 - Leverage pre-trained models
 - Adapt to specific security contexts
 - Reduce training time and improve accuracy
 
 ### Anomaly Detection
+
 - Identify unusual system behaviors
 - Detect potential zero-day threats
 - Provide early warning systems
@@ -169,6 +187,7 @@ python predictive_threat_detector.py \
 - Expand threat category detection
 
 ## 🔗 Additional Resources
+
 - [TensorFlow Machine Learning](https://www.tensorflow.org/tutorials)
 - [MITRE ATT&CK Framework](https://attack.mitre.org/)
 - [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)

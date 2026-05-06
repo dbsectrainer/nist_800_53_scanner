@@ -101,7 +101,7 @@ financial_services_cloud:
       - access_control_audit
       - encryption_review
     options:
-      compliance_standard: 
+      compliance_standard:
         - sox
         - glba
         - nist_800_53

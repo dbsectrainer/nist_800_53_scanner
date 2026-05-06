@@ -18,33 +18,33 @@ classDiagram
         <<NIST 800-53 Rev. 5>>
         Security and Privacy Controls
     }
-    
+
     class SecurityBaselines {
         Low Impact
         Moderate Impact
         High Impact
     }
-    
+
     class ImplementationLevels {
         Organization
         System
         Component
     }
-    
+
     class ScannerCoverage {
         Cloud (AWS, Azure, GCP)
         On-Premise Systems
         Network Infrastructure
         Application Security
     }
-    
+
     NIST800_53 --> AccessControl : AC
     NIST800_53 --> AuditAccountability : AU
     NIST800_53 --> ConfigManagement : CM
     NIST800_53 --> IncidentResponse : IR
     NIST800_53 --> SystemCommsProtection : SC
     NIST800_53 --> OtherControls : "15 more families"
-    
+
     class AccessControl {
         <<AC>>
         Account Management
@@ -53,7 +53,7 @@ classDiagram
         Separation of Duties
         Information Flow
     }
-    
+
     class AuditAccountability {
         <<AU>>
         Event Logging
@@ -61,7 +61,7 @@ classDiagram
         Monitoring
         Analysis & Reporting
     }
-    
+
     class ConfigManagement {
         <<CM>>
         Baseline Configuration
@@ -69,7 +69,7 @@ classDiagram
         Security Impact Analysis
         Configuration Settings
     }
-    
+
     class IncidentResponse {
         <<IR>>
         Incident Handling
@@ -77,7 +77,7 @@ classDiagram
         Reporting
         Response Testing
     }
-    
+
     class SystemCommsProtection {
         <<SC>>
         Boundary Protection
@@ -85,7 +85,7 @@ classDiagram
         Information in Transit
         Information at Rest
     }
-    
+
     class OtherControls {
         AT - Awareness & Training
         IA - Identification & Authentication
@@ -93,7 +93,7 @@ classDiagram
         SI - System & Information Integrity
         And others...
     }
-    
+
     SecurityBaselines --> NIST800_53 : implements
     ImplementationLevels --> NIST800_53 : applies to
     NIST800_53 --> ScannerCoverage : scanned by
@@ -102,6 +102,7 @@ classDiagram
 ## Features
 
 ### Core Capabilities
+
 - **Multi-cloud and on-premise support** - AWS, Azure, GCP, and hybrid environments
 - **Modular security control scanning** - Flexible architecture for custom controls
 - **Detailed compliance reporting** - Multiple output formats (JSON, Markdown, HTML)
@@ -109,6 +110,7 @@ classDiagram
 - **Modern Python 3.12+** - Type-safe, async-first, with latest security features
 
 ### NIST 800-53 Control Families
+
 - **AC** - Access Control
 - **AU** - Audit and Accountability
 - **SC** - System and Communications Protection
@@ -119,6 +121,7 @@ classDiagram
 - **SI** - System and Information Integrity
 
 ### 2025 Technology Stack
+
 - **FastAPI** - Modern async web framework
 - **Pydantic v2** - Advanced data validation
 - **SQLAlchemy 2.0** - Modern ORM with async support
@@ -180,6 +183,7 @@ pre-commit install
 ## Configuration
 
 Edit the `config.yaml` file to configure:
+
 - Cloud provider credentials
 - On-premise environment details
 - Scanning options
@@ -243,9 +247,75 @@ python scan.py --config config.yaml --report markdown
 ## Reporting
 
 The scanner generates reports in:
+
 - Markdown
 - JSON
 - Optional email notifications
+
+## Observability (Grafana and Prometheus)
+
+The Flask app in [`dashboard/`](dashboard/) exposes **Prometheus** metrics at **`GET /metrics`** (no authentication). The same aggregates are available as JSON on **`GET /api/v2/posture`** after login. Grafana is provisioned from this repository to visualize those series.
+
+### Docker Compose
+
+```bash
+docker compose up -d
+```
+
+| Service                   | URL                                            | Notes                                                                                                                                                                                                                                                                            |
+| ------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compliance dashboard (UI) | [http://localhost:8000](http://localhost:8000) | Web UI; `/dashboard` requires login. The stack sets `DASHBOARD_PORT=8000` so the container matches Prometheus scrape targets.                                                                                                                                                    |
+| Prometheus                | [http://localhost:9090](http://localhost:9090) | Scrapes job `nist_dashboard` → `nist_compliance_scanner:8000/metrics`.                                                                                                                                                                                                           |
+| Grafana                   | [http://localhost:3000](http://localhost:3000) | Default admin user `admin` / password `admin` (change `GF_SECURITY_ADMIN_PASSWORD` for any non-local use). Datasource and the **NIST dashboard overview** dashboard load from [`grafana/provisioning/`](grafana/provisioning/) and [`grafana/dashboards/`](grafana/dashboards/). |
+
+### Exported metrics (prefix `nist_dashboard_`)
+
+- `nist_dashboard_compliance_pct` — overall compliance percentage
+- `nist_dashboard_controls_total`, `nist_dashboard_controls_compliant`, `nist_dashboard_controls_non_compliant`
+- `nist_dashboard_poam_open`, `nist_dashboard_poam_critical_open`
+- `nist_dashboard_family_compliance_pct{family="AC"}` (and other NIST families present in the latest report)
+- `nist_dashboard_data_available` — `1` when decryptable scan results are loaded, `0` otherwise
+- `nist_dashboard_latest_report_info` — info metric with `report_id` and `last_scan_date` labels
+
+### Security note
+
+Expose `/metrics` only on trusted networks (for example inside the Compose network). For production, terminate TLS on a reverse proxy, set a strong Grafana admin password, and restrict who can reach Prometheus and the scrape port.
+
+### Local run without Docker
+
+```bash
+export DASHBOARD_PORT=8000   # optional; overrides YAML `app.port`
+python dashboard/app.py
+curl -s http://127.0.0.1:8000/metrics | head
+```
+
+## FedRAMP Moderate baseline (framing)
+
+**FedRAMP Moderate** for cloud services is aligned with the **NIST SP 800-53 Rev. 5 moderate baseline** as defined for **moderate-impact** systems (see NIST SP 800-53B for control baselines by impact level). Authorizations at the Moderate level expect that baseline to be implemented, assessed, and continuously monitored in line with FedRAMP requirements.
+
+This repository is a **technical aid** for scanning, reporting, and dashboard-style visibility against NIST-style control themes. It does **not** by itself constitute FedRAMP authorization, a System Security Plan (SSP), control narratives, evidence for a 3PAO, or an official moderate baseline inheritance package. Use it alongside your governance program, assessors, and cloud provider shared responsibility documentation.
+
+## AWS Config rules and NIST control families
+
+AWS Config managed rules and conformance packs (for example **Operational Best Practices for NIST SP 800-53 Rev. 5**) map individual rules to **specific NIST controls**. The table below is a **short, illustrative** mapping from representative rules to **NIST 800-53 control families** only. It is not exhaustive. For authoritative rule-to-control mapping, use [AWS Config conformance packs](https://docs.aws.amazon.com/config/latest/developerguide/conformance-packs.html) and your SSP; validate every control in your environment.
+
+| Representative AWS Config rule                     | NIST 800-53 family (illustrative)                  |
+| -------------------------------------------------- | -------------------------------------------------- |
+| CloudTrail enabled / multi-Region trail            | AU (Audit and Accountability)                      |
+| S3 bucket public read/write prohibited             | AC, SC                                             |
+| VPC flow logging enabled                           | AU, SC                                             |
+| GuardDuty enabled                                  | IR, SI                                             |
+| Security Hub enabled                               | SI, PM (program management / governance alignment) |
+| EBS encryption by default                          | SC                                                 |
+| RDS storage encrypted                              | SC                                                 |
+| IAM root user MFA enabled                          | IA, AC                                             |
+| IAM user MFA enabled for console users             | IA, AC                                             |
+| IAM password policy (length, complexity, rotation) | IA                                                 |
+| No root user access key                            | IA, AC                                             |
+| Restricted common ports on security groups         | SC                                                 |
+| Default security group no permissive rules         | AC, SC                                             |
+| ALB / ELB TLS listener policy                      | SC                                                 |
+| KMS key rotation enabled                           | SC                                                 |
 
 ## Security and Compliance
 

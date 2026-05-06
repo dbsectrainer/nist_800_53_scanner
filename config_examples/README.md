@@ -7,21 +7,27 @@ This directory contains comprehensive configuration templates demonstrating the 
 ## 📂 Configuration Types
 
 ### 1. Regulated Industry Configuration
+
 **File**: `regulated_industry_config.yaml`
+
 - Designed for financial services
 - Comprehensive security controls
 - Multiple compliance frameworks
 - Strict access management
 
 ### 2. Startup Cloud-Native Configuration
+
 **File**: `startup_cloud_native_config.yaml`
+
 - Agile, cloud-first approach
 - Microservices-oriented
 - Lightweight security controls
 - Continuous integration focus
 
 ### 3. Healthcare Compliance Configuration
+
 **File**: `healthcare_compliance_config.yaml`
+
 - HIPAA and HITECH compliance
 - Strict PHI protection
 - Multi-factor authentication
@@ -32,29 +38,34 @@ This directory contains comprehensive configuration templates demonstrating the 
 Each configuration template includes key sections:
 
 ### Global Settings
+
 - Tenant identification
 - Environment type
 - Logging level
 - Compliance frameworks
 
 ### Security Configuration
+
 - Authentication methods
 - Encryption settings
 - Access control policies
 - Rate limiting
 
 ### Cloud Provider Integration
+
 - Supported cloud platforms
 - Credential management
 - Region-specific settings
 
 ### Scanning Options
+
 - Distributed scanning
 - Parallel processing
 - Compliance filters
 - Sensitive resource identification
 
 ### Monitoring and Reporting
+
 - Metrics collection
 - Logging mechanisms
 - Notification channels
@@ -63,11 +74,13 @@ Each configuration template includes key sections:
 ## 🚀 Usage Guidelines
 
 ### 1. Select Appropriate Template
+
 - Identify your organizational context
 - Choose the closest matching configuration
 - Customize to fit specific requirements
 
 ### 2. Configuration Customization
+
 ```yaml
 # Example customization
 global:
@@ -80,6 +93,7 @@ security:
 ```
 
 ### 3. Sensitive Information
+
 - Use environment variables for credentials
 - Never commit sensitive information to version control
 - Utilize secure secret management systems
@@ -103,11 +117,11 @@ security:
 
 ## 📊 Compliance Framework Mapping
 
-| Configuration | Frameworks | Key Focus |
-|--------------|------------|-----------|
-| Regulated Industry | PCI DSS, SOX, GLBA | Financial Security |
-| Startup Cloud-Native | Cloud Best Practices | Agile Development |
-| Healthcare | HIPAA, HITECH, GDPR | Patient Data Protection |
+| Configuration        | Frameworks           | Key Focus               |
+| -------------------- | -------------------- | ----------------------- |
+| Regulated Industry   | PCI DSS, SOX, GLBA   | Financial Security      |
+| Startup Cloud-Native | Cloud Best Practices | Agile Development       |
+| Healthcare           | HIPAA, HITECH, GDPR  | Patient Data Protection |
 
 ## 🛠 Recommended Workflow
 
@@ -125,10 +139,12 @@ security:
 - Submit pull requests
 
 ## 📚 Additional Resources
+
 - [NIST 800-53 Documentation](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf)
 - [Compliance Framework Guidelines](https://www.nist.gov/compliance-resources)
 
 ## 📝 Disclaimer
+
 Configurations are templates. Always review and adapt to your specific security requirements.
 
 **Last Updated**: {{ current_date }}

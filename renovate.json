@@ -112,9 +112,7 @@
     {
       "description": "Update Python version in Dockerfiles",
       "fileMatch": ["^Dockerfile$", "\\.dockerfile$"],
-      "matchStrings": [
-        "FROM python:(?<currentValue>.*?)\\n"
-      ],
+      "matchStrings": ["FROM python:(?<currentValue>.*?)\\n"],
       "datasourceTemplate": "docker",
       "depNameTemplate": "python"
     }

@@ -7,19 +7,25 @@ This directory contains comprehensive example scripts and configurations demonst
 ## 📂 Example Scripts
 
 ### 1. Cloud Security Scanning
+
 **Script**: `cloud_security_scan.py`
+
 - Multi-cloud security assessment
 - Distributed scanning
 - Compliance framework support
 
 ### 2. Kubernetes Compliance Scanning
+
 **Script**: `kubernetes_compliance_scan.py`
+
 - Cluster-level security assessment
 - Namespace analysis
 - Container security review
 
 ### 3. Web Application Security Scanning
+
 **Script**: `web_application_security_scan.py`
+
 - Web vulnerability assessment
 - Authentication mechanism review
 - Compliance checking
@@ -27,19 +33,25 @@ This directory contains comprehensive example scripts and configurations demonst
 ## 🔧 Configuration Examples
 
 ### Cloud Security Scan Configuration
+
 **File**: `configs/cloud_security_scan_config.yaml`
+
 - Multi-cloud target configuration
 - Compliance framework specification
 - Scanning options for cloud infrastructure
 
 ### Kubernetes Compliance Scan Configuration
+
 **File**: `configs/kubernetes_compliance_scan_config.yaml`
+
 - Cluster and namespace targeting
 - Security policy enforcement
 - Compliance framework mapping
 
 ### Web Application Security Scan Configuration
+
 **File**: `configs/web_application_security_scan_config.yaml`
+
 - Web application target definition
 - Vulnerability scanning options
 - Compliance requirements
@@ -47,6 +59,7 @@ This directory contains comprehensive example scripts and configurations demonst
 ## 🚀 Usage Examples
 
 ### Cloud Security Scan
+
 ```bash
 # Basic scan
 python cloud_security_scan.py \
@@ -59,6 +72,7 @@ python cloud_security_scan.py \
 ```
 
 ### Kubernetes Compliance Scan
+
 ```bash
 # Basic scan
 python kubernetes_compliance_scan.py \
@@ -71,6 +85,7 @@ python kubernetes_compliance_scan.py \
 ```
 
 ### Web Application Security Scan
+
 ```bash
 # Basic scan
 python web_application_security_scan.py \
@@ -107,6 +122,7 @@ python web_application_security_scan.py \
 ## 📊 Scanning Scenarios
 
 ### Supported Scenarios
+
 - Cloud infrastructure security
 - Kubernetes cluster compliance
 - Web application vulnerability assessment
@@ -116,6 +132,7 @@ python web_application_security_scan.py \
 ## 🛠 Configuration Customization
 
 ### Key Customization Points
+
 - Add/remove scanning targets
 - Modify compliance frameworks
 - Adjust scanning depth and timeout
@@ -125,6 +142,7 @@ python web_application_security_scan.py \
 ## 🔍 Detailed Configuration Guide
 
 ### Global Settings
+
 ```yaml
 global:
   tenant_id: your_organization
@@ -133,6 +151,7 @@ global:
 ```
 
 ### Target Configuration
+
 ```yaml
 targets:
   - target: https://example.com
@@ -152,6 +171,7 @@ targets:
 4. Submit pull requests with detailed descriptions
 
 ## 📚 Additional Resources
+
 - [Project Documentation](../README.md)
 - [Security Policies](../SECURITY.md)
 - [Developer Guide](../DEVELOPER_GUIDE.md)

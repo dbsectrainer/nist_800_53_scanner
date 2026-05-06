@@ -19,7 +19,7 @@ security:
       - type: password
       - type: hardware_token
       - type: biometric
-    max_api_key_age: 60  # days
+    max_api_key_age: 60 # days
     password_policy:
       min_length: 16
       complexity_requirements:
@@ -28,18 +28,18 @@ security:
         - numbers
         - special_characters
       max_failed_attempts: 3
-      lockout_duration: 30  # minutes
-  
+      lockout_duration: 30 # minutes
+
   encryption:
     sensitive_data: true
-    key_rotation_interval: 45  # days
+    key_rotation_interval: 45 # days
     algorithms:
       data_at_rest: AES-256-GCM
       data_in_transit: TLS-1.3
     key_management:
       provider: hsm
       compliance: fips_140_2
-  
+
   access_control:
     role_based_access: true
     privileged_access_management: true
@@ -50,15 +50,15 @@ scan_options:
   distributed_scanning: true
   parallel_scanning: true
   max_concurrent_scans: 5
-  scan_timeout: 3600  # seconds
-  
+  scan_timeout: 3600 # seconds
+
   scan_categories:
     - access_control
     - audit_logging
     - network_security
     - system_configuration
     - incident_response
-  
+
   control_filters:
     severity:
       - high
@@ -79,7 +79,7 @@ cloud_providers:
     regions:
       - us-east-1
       - us-west-2
-  
+
   azure:
     enabled: true
     credentials:
@@ -88,9 +88,9 @@ cloud_providers:
       client_id: ${AZURE_CLIENT_ID}
     subscriptions:
       - financial-compliance-subscription
-  
+
   gcp:
-    enabled: false  # Disabled for this configuration
+    enabled: false # Disabled for this configuration
 
 # Monitoring and Observability
 monitoring:
@@ -98,21 +98,21 @@ monitoring:
   metrics:
     prometheus:
       enabled: true
-      port: 9090
-    
+      port: 9091
+
     tracing:
       jaeger:
         enabled: true
         agent_host: jaeger.compliance.local
         agent_port: 6831
-  
+
   logging:
     local:
       enabled: true
       path: /var/log/compliance_scanner
-      max_size: 100  # MB
+      max_size: 100 # MB
       backup_count: 10
-    
+
     remote:
       enabled: true
       provider: splunk
@@ -131,7 +131,7 @@ notifications:
     recipients:
       - security-team@company.com
       - compliance-officers@company.com
-  
+
   slack:
     enabled: true
     webhook_url: ${SLACK_COMPLIANCE_WEBHOOK}
@@ -146,7 +146,7 @@ advanced:
     excluded_ips:
       - 10.0.0.1
       - 10.0.0.2
-  
+
   custom_checks:
     - name: Financial Regulatory Compliance
       description: Custom financial services security requirements
@@ -159,11 +159,11 @@ reporting:
     - pdf
     - html
     - csv
-  
+
   distribution:
     internal_share: true
     external_audit: true
-  
+
   retention:
-    period: 7  # years
+    period: 7 # years
     archive_method: encrypted_storage

@@ -7,16 +7,19 @@ The NIST 800-53 Scanner Dashboard provides an interactive, web-based interface f
 ## 🚀 Key Features
 
 ### 1. Compliance Status Tracking
+
 - Real-time compliance score visualization
 - Multi-framework compliance assessment
 - Historical compliance trend analysis
 
 ### 2. Vulnerability Management
+
 - Comprehensive vulnerability summary
 - Severity-based vulnerability distribution
 - Top vulnerability identification
 
 ### 3. Risk Assessment
+
 - Detailed risk category analysis
 - Interactive risk scoring visualization
 - Contextual risk insights
@@ -24,12 +27,14 @@ The NIST 800-53 Scanner Dashboard provides an interactive, web-based interface f
 ## 🛠 Prerequisites
 
 ### System Requirements
+
 - Python 3.8+
 - Flask
 - Plotly.js
 - Modern web browser
 
 ### Dependencies
+
 ```bash
 # Install Python dependencies
 pip install flask flask-cors plotly pandas numpy
@@ -41,6 +46,7 @@ pip install flask flask-cors plotly pandas numpy
 ## 🔧 Configuration
 
 ### Dashboard Configuration
+
 ```yaml
 # Example dashboard configuration
 global:
@@ -49,13 +55,14 @@ global:
   port: 5000
 
 authentication:
-  token_expiration: 3600  # seconds
+  token_expiration: 3600 # seconds
   max_login_attempts: 5
 ```
 
 ## 🚀 Running the Dashboard
 
 ### Development Mode
+
 ```bash
 # Navigate to dashboard directory
 cd dashboard
@@ -65,6 +72,7 @@ python app.py
 ```
 
 ### Production Deployment
+
 - Use a WSGI server like Gunicorn
 - Configure reverse proxy with Nginx
 - Implement SSL/TLS encryption
@@ -72,11 +80,13 @@ python app.py
 ## 🔒 Authentication
 
 ### Login Process
+
 - Secure token-based authentication
 - Single sign-on (SSO) support
 - Role-based access control
 
 ### User Management
+
 - Create admin users
 - Manage user roles
 - Implement multi-factor authentication
@@ -84,16 +94,19 @@ python app.py
 ## 📊 Dashboard Sections
 
 ### 1. Compliance Overview
+
 - Overall compliance percentage
 - Framework-specific compliance scores
 - Compliance trend visualization
 
 ### 2. Vulnerability Insights
+
 - Total vulnerability count
 - Severity distribution pie chart
 - Top vulnerability types
 
 ### 3. Risk Assessment
+
 - Risk category scoring
 - Contextual risk analysis
 - Trend-based risk evaluation
@@ -101,12 +114,14 @@ python app.py
 ## 🌈 Visualization Techniques
 
 ### Chart Types
+
 - Bar charts
 - Pie charts
 - Line graphs
 - Interactive Plotly.js visualizations
 
 ### Color Coding
+
 - Severity-based color schemes
 - Intuitive visual representation
 - Accessibility-friendly design
@@ -114,11 +129,13 @@ python app.py
 ## 🔍 Data Sources
 
 ### Compliance Data
+
 - NIST 800-53 scanning results
 - Multiple compliance framework integration
 - Real-time and historical data
 
 ### Vulnerability Information
+
 - Distributed scanner results
 - Threat intelligence feeds
 - Machine learning-based predictions
@@ -126,11 +143,13 @@ python app.py
 ## 🤝 Integration Capabilities
 
 ### External Systems
+
 - SIEM platform integration
 - Threat intelligence platforms
 - Compliance management systems
 
 ### API Support
+
 - RESTful API endpoints
 - Webhook notifications
 - Secure data exchange
@@ -138,12 +157,14 @@ python app.py
 ## 🚨 Security Considerations
 
 ### Authentication
+
 - JWT-based token authentication
 - Secure credential storage
 - Rate limiting
 - Brute-force protection
 
 ### Data Protection
+
 - Encryption of sensitive information
 - Minimal data exposure
 - Secure API communication
@@ -151,11 +172,13 @@ python app.py
 ## 📝 Customization
 
 ### Extensibility
+
 - Modular dashboard design
 - Pluggable visualization components
 - Configurable data sources
 
 ### Theming
+
 - Custom CSS support
 - Dark/light mode
 - Responsive design
@@ -163,6 +186,7 @@ python app.py
 ## 🔮 Future Roadmap
 
 ### Planned Enhancements
+
 - Advanced machine learning insights
 - More granular compliance reporting
 - Enhanced visualization techniques
@@ -171,6 +195,7 @@ python app.py
 ## 🤖 Machine Learning Integration
 
 ### Predictive Analytics
+
 - Threat prediction models
 - Risk trend forecasting
 - Anomaly detection
@@ -186,17 +211,20 @@ python app.py
 ## 🌟 Contributing
 
 ### Improvement Areas
+
 - Visualization enhancements
 - New data source integrations
 - Performance optimization
 
 ### Contribution Steps
+
 1. Fork the repository
 2. Create a feature branch
 3. Implement changes
 4. Submit pull request
 
 ## 📚 Additional Resources
+
 - [NIST 800-53 Documentation](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf)
 - [Plotly.js Documentation](https://plotly.com/javascript/)
 - [Flask Documentation](https://flask.palletsprojects.com/)

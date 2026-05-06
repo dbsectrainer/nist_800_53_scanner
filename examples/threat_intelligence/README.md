@@ -7,10 +7,12 @@ This directory contains advanced scripts for continuous threat intelligence gath
 ## 🚀 Available Scripts
 
 ### 1. Continuous Compliance Monitor
+
 **Script**: `continuous_compliance_monitor.py`
 **Configuration**: `configs/continuous_compliance_config.yaml`
 
 #### Key Features
+
 - Multi-source threat intelligence gathering
 - Advanced threat correlation
 - Machine learning-driven threat detection
@@ -20,6 +22,7 @@ This directory contains advanced scripts for continuous threat intelligence gath
 ## 🛠 Prerequisites
 
 ### System Requirements
+
 - Python 3.8+
 - TensorFlow
 - Scikit-learn
@@ -28,6 +31,7 @@ This directory contains advanced scripts for continuous threat intelligence gath
 - Pandas and NumPy
 
 ### Installation
+
 ```bash
 # Install required dependencies
 pip install -r requirements.txt
@@ -36,6 +40,7 @@ pip install -r requirements.txt
 ## 🔧 Configuration
 
 ### Basic Configuration Structure
+
 ```yaml
 global:
   tenant_id: threat_intelligence_scanner
@@ -50,6 +55,7 @@ threat_intelligence:
 ```
 
 ### Advanced Threat Intelligence Configuration
+
 ```yaml
 threat_processing:
   clustering:
@@ -62,12 +68,14 @@ threat_processing:
 ## 🚀 Usage Examples
 
 ### Basic Threat Monitoring
+
 ```bash
 python continuous_compliance_monitor.py \
   --config configs/continuous_compliance_config.yaml
 ```
 
 ### Authenticated Monitoring
+
 ```bash
 python continuous_compliance_monitor.py \
   --config configs/continuous_compliance_config.yaml \
@@ -77,18 +85,21 @@ python continuous_compliance_monitor.py \
 ## 🔬 Advanced Techniques
 
 ### 1. Threat Intelligence Gathering
+
 - MISP threat collection
 - STIX/TAXII intelligence
 - OSINT threat feeds
 - Multi-source correlation
 
 ### 2. Machine Learning Integration
+
 - Neural network-based threat detection
 - Feature extraction and clustering
 - Severity prediction
 - Transfer learning support
 
 ### 3. Compliance Monitoring
+
 - Distributed scanning
 - Configuration drift detection
 - Contextual threat enrichment
@@ -96,11 +107,13 @@ python continuous_compliance_monitor.py \
 ## 🛡️ Key Capabilities
 
 ### Threat Detection
+
 - Identify multiple threat categories
 - Assess risk levels
 - Provide contextual insights
 
 ### Risk Categorization
+
 - Critical (0.8 - 1.0)
 - High (0.6 - 0.8)
 - Medium (0.4 - 0.6)
@@ -110,6 +123,7 @@ python continuous_compliance_monitor.py \
 ## 📊 Performance Optimization
 
 ### Scalability Features
+
 - Distributed threat analysis
 - Adaptive batch processing
 - Efficient feature extraction
@@ -129,12 +143,14 @@ python continuous_compliance_monitor.py \
 ## 🤝 Contributing
 
 ### Improvement Areas
+
 1. Enhance threat detection models
 2. Add new intelligence sources
 3. Improve feature extraction
 4. Develop more advanced prediction strategies
 
 ### Contribution Steps
+
 1. Fork the repository
 2. Create a feature branch
 3. Implement your changes
@@ -143,11 +159,13 @@ python continuous_compliance_monitor.py \
 ## 📚 Advanced Topics
 
 ### Transfer Learning
+
 - Leverage pre-trained threat models
 - Adapt to specific security contexts
 - Reduce training time and improve accuracy
 
 ### Anomaly Detection
+
 - Identify unusual system behaviors
 - Detect potential zero-day threats
 - Provide early warning systems
@@ -166,6 +184,7 @@ python continuous_compliance_monitor.py \
 - Expand threat category detection
 
 ## 🔗 Additional Resources
+
 - [MISP Threat Intelligence](https://www.misp-project.org/)
 - [STIX/TAXII Standards](https://oasis-open.github.io/cti-documentation/)
 - [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)

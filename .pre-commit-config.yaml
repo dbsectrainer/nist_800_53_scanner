@@ -62,7 +62,7 @@ repos:
     rev: v2.14.0
     hooks:
       - id: pretty-format-yaml
-        args: [--autofix, --indent, '2']
+        args: [--autofix, --indent, "2"]
 
   # Markdown formatting
   - repo: https://github.com/executablebooks/mdformat
@@ -72,7 +72,7 @@ repos:
         additional_dependencies:
           - mdformat-gfm
           - mdformat-black
-        args: [--wrap, '120']
+        args: [--wrap, "120"]
 
   # Shell script checks
   - repo: https://github.com/shellcheck-py/shellcheck-py
@@ -122,8 +122,8 @@ ci:
 
     for more information, see https://pre-commit.ci
   autofix_prs: true
-  autoupdate_branch: ''
-  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_branch: ""
+  autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
   autoupdate_schedule: weekly
   skip: []
   submodules: false

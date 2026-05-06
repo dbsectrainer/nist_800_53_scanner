@@ -3,8 +3,8 @@
 # Corporate Network Infrastructure Scan
 corporate_network:
   - targets:
-      - 192.168.1.0/24  # Internal network
-      - 10.0.0.0/16     # Corporate network
+      - 192.168.1.0/24 # Internal network
+      - 10.0.0.0/16 # Corporate network
     scan_type: network_discovery
     options:
       port_scan: true

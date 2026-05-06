@@ -7,10 +7,12 @@ This directory contains advanced security testing scripts that demonstrate sophi
 ## 🚀 Available Scripts
 
 ### 1. Advanced Penetration Simulator
+
 **Script**: `advanced_penetration_simulator.py`
 **Configuration**: `configs/advanced_penetration_config.yaml`
 
 #### Key Features
+
 - Comprehensive attack surface mapping
 - Advanced vulnerability identification
 - Exploit simulation
@@ -20,6 +22,7 @@ This directory contains advanced security testing scripts that demonstrate sophi
 ## 🛠 Prerequisites
 
 ### System Requirements
+
 - Python 3.8+
 - Nmap
 - Shodan API (optional)
@@ -27,6 +30,7 @@ This directory contains advanced security testing scripts that demonstrate sophi
 - Additional security testing libraries
 
 ### Installation
+
 ```bash
 # Install required dependencies
 pip install -r requirements.txt
@@ -39,6 +43,7 @@ sudo apt-get install nmap  # For Linux
 ## 🔧 Configuration
 
 ### Basic Configuration Structure
+
 ```yaml
 global:
   tenant_id: penetration_testing_scanner
@@ -52,6 +57,7 @@ scan_targets:
 ```
 
 ### Advanced Configuration Options
+
 ```yaml
 vulnerability_assessment:
   severity_levels:
@@ -66,12 +72,14 @@ vulnerability_assessment:
 ## 🚀 Usage Examples
 
 ### Basic Penetration Testing
+
 ```bash
 python advanced_penetration_simulator.py \
   --config configs/advanced_penetration_config.yaml
 ```
 
 ### Authenticated Scan
+
 ```bash
 python advanced_penetration_simulator.py \
   --config configs/advanced_penetration_config.yaml \
@@ -81,22 +89,26 @@ python advanced_penetration_simulator.py \
 ## 🔬 Advanced Techniques
 
 ### 1. Attack Surface Mapping
+
 - Network scanning
 - Internet exposure analysis
 - Web application discovery
 - Service fingerprinting
 
 ### 2. Vulnerability Assessment
+
 - Multi-dimensional vulnerability scoring
 - Service-specific vulnerability checks
 - Contextual risk evaluation
 
 ### 3. Exploit Simulation
+
 - Exploit potential identification
 - Attack vector generation
 - Exploit chain probability assessment
 
 ### 4. Network Penetration
+
 - Comprehensive network testing
 - Entry point analysis
 - Privilege escalation simulation
@@ -116,16 +128,19 @@ python advanced_penetration_simulator.py \
 ## 🔒 External Service Integration
 
 ### Shodan
+
 - Optional internet-wide scanning
 - Requires API key
 - Provides additional exposure insights
 
 ### Vulners
+
 - Vulnerability lookup
 - Comprehensive vulnerability database
 - Enriches scanning results
 
 ### Nmap
+
 - Comprehensive network scanning
 - Service and version detection
 - Scriptable network discovery
@@ -133,12 +148,14 @@ python advanced_penetration_simulator.py \
 ## 📊 Reporting
 
 ### Supported Formats
+
 - JSON
 - PDF
 - HTML
 - Dashboard integration
 
 ### Reporting Features
+
 - Detailed vulnerability breakdown
 - Risk scoring
 - Remediation recommendations
@@ -146,12 +163,14 @@ python advanced_penetration_simulator.py \
 ## 🤝 Contributing
 
 ### Improvement Areas
+
 1. Enhance vulnerability detection
 2. Add new scanning techniques
 3. Improve machine learning models
 4. Develop more advanced attack simulations
 
 ### Contribution Steps
+
 1. Fork the repository
 2. Create a feature branch
 3. Implement your changes
@@ -172,6 +191,7 @@ python advanced_penetration_simulator.py \
 - Advanced remediation suggestions
 
 ## 🔗 Additional Resources
+
 - [Nmap Documentation](https://nmap.org/docs.html)
 - [Shodan API Guide](https://developer.shodan.io/)
 - [OWASP Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)

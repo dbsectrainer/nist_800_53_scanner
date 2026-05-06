@@ -7,12 +7,14 @@ Thank you for your interest in improving the NIST 800-53 Scanner project. This d
 ## 🌟 Why Contribute?
 
 ### Project Impact
+
 - Advance cybersecurity compliance technologies
 - Develop cutting-edge security assessment tools
 - Collaborate with global security professionals
 - Enhance open-source security innovation
 
 ### Personal Growth
+
 - Gain expertise in machine learning
 - Develop advanced security skills
 - Build a portfolio of meaningful contributions
@@ -21,6 +23,7 @@ Thank you for your interest in improving the NIST 800-53 Scanner project. This d
 ## 🔍 Contribution Opportunities
 
 ### 1. Code Contributions
+
 - Bug fixes
 - New features
 - Performance improvements
@@ -29,6 +32,7 @@ Thank you for your interest in improving the NIST 800-53 Scanner project. This d
 - Test infrastructure development
 
 ### 2. Non-Code Contributions
+
 - Security research
 - Threat intelligence sharing
 - Use case documentation
@@ -38,15 +42,17 @@ Thank you for your interest in improving the NIST 800-53 Scanner project. This d
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Python 3.8+
 - pip
 - Git
 - Basic understanding of:
-  * Cybersecurity principles
-  * Machine learning concepts
-  * Cloud infrastructure
+  - Cybersecurity principles
+  - Machine learning concepts
+  - Cloud infrastructure
 
 ### Development Environment Setup
+
 ```bash
 # Clone the repository
 git clone https://github.com/your-org/nist_800_53_scanner.git
@@ -70,12 +76,14 @@ python scripts/test_coverage_report.py
 ## 💻 Contribution Process
 
 ### 1. Find an Issue or Propose a Feature
+
 - Check GitHub Issues
 - Look for "good first issue" or "help wanted" labels
 - Propose new features via GitHub Discussions
 - Join our community Slack for real-time collaboration
 
 ### 2. Create a Branch
+
 ```bash
 # Create a feature branch
 git checkout -b feature/your-feature-name
@@ -86,6 +94,7 @@ git checkout -b bugfix/issue-description
 ### 3. Coding Standards
 
 #### Python Coding Guidelines
+
 - Follow PEP 8 style guide
 - Use type hints
 - Write comprehensive docstrings
@@ -93,20 +102,22 @@ git checkout -b bugfix/issue-description
 - Implement proper error handling
 
 #### Machine Learning Best Practices
+
 - Document model architecture
 - Provide performance benchmarks
 - Explain feature extraction techniques
 - Include model training and evaluation scripts
 
 #### Example Code Style
+
 ```python
 def predict_security_threats(
-    features: np.ndarray, 
+    features: np.ndarray,
     model: AnomalyDetector
 ) -> Dict[str, float]:
     """
     Predict potential security threats using machine learning model.
-    
+
     :param features: Input feature array
     :param model: Trained anomaly detection model
     :return: Dictionary of threat probabilities
@@ -115,6 +126,7 @@ def predict_security_threats(
 ```
 
 ### 4. Testing
+
 - Write comprehensive unit tests
 - Aim for 90%+ test coverage
 - Include integration tests
@@ -129,6 +141,7 @@ python scripts/test_coverage_report.py
 ```
 
 ### 5. Documentation
+
 - Update relevant documentation
 - Add inline comments for complex logic
 - Update README if needed
@@ -137,12 +150,14 @@ python scripts/test_coverage_report.py
 ## 🛡️ Security Contribution Guidelines
 
 ### Vulnerability Reporting
+
 - Do NOT open public issues for security vulnerabilities
 - Email security@project.com
 - Provide detailed, responsible disclosure
 - Follow our [Security Policy](SECURITY.md)
 
 ### Security Contribution Areas
+
 - Threat detection algorithms
 - Encryption improvements
 - Access control mechanisms
@@ -152,6 +167,7 @@ python scripts/test_coverage_report.py
 ## 🧪 Automated Checks
 
 ### Pre-Commit Checks
+
 - Code formatting
 - Linting
 - Type checking
@@ -159,6 +175,7 @@ python scripts/test_coverage_report.py
 - Test coverage reporting
 
 ### Continuous Integration
+
 - Automated tests
 - Code quality checks
 - Security scanning
@@ -167,12 +184,14 @@ python scripts/test_coverage_report.py
 ## 🧠 Machine Learning Contributions
 
 ### ML Model Improvements
+
 - Enhance feature extraction techniques
 - Develop new anomaly detection architectures
 - Improve vulnerability prediction accuracy
 - Create transfer learning approaches
 
 ### ML Contribution Guidelines
+
 - Provide comprehensive performance benchmarks
 - Document model architecture clearly
 - Include training data sources
@@ -182,6 +201,7 @@ python scripts/test_coverage_report.py
 ## 🌐 Compliance Framework Support
 
 ### Adding New Frameworks
+
 - Comprehensive documentation
 - Mapping to existing controls
 - Validation test cases
@@ -191,6 +211,7 @@ python scripts/test_coverage_report.py
 ## 🤝 Community Standards
 
 ### Code of Conduct
+
 - Be respectful and inclusive
 - Collaborate constructively
 - Welcome diverse perspectives
@@ -206,11 +227,13 @@ python scripts/test_coverage_report.py
 ## 🏆 Recognition
 
 Contributors will be:
+
 - Listed in CONTRIBUTORS.md
 - Recognized in release notes
 - Potential speaking/conference opportunities
 
 ## 📚 Additional Resources
+
 - [NIST 800-53 Documentation](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf)
 - [Python Security Best Practices](https://python-security.readthedocs.io/)
 

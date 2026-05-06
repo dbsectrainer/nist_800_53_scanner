@@ -72,7 +72,7 @@ multi_tenant_cluster:
       review_network_policies: true
     tenant_configurations:
       team_alpha:
-        allowed_resources: 
+        allowed_resources:
           - cpu: 16
           - memory: 64Gi
       team_beta:
@@ -94,7 +94,7 @@ financial_services_cluster:
       - access_control
       - audit_logging
     options:
-      compliance_standard: 
+      compliance_standard:
         - sox
         - glba
         - pci_dss

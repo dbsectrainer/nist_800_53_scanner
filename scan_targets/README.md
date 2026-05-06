@@ -7,32 +7,40 @@ This directory contains comprehensive scanning scenarios demonstrating the NIST 
 ## 📂 Scenario Types
 
 ### 1. Cloud Provider Scenarios (`cloud_provider_scenarios.yaml`)
+
 Comprehensive security assessments for cloud environments:
+
 - AWS
 - Azure
 - Google Cloud Platform
 - Multi-cloud and hybrid environments
 
 #### Key Features
+
 - Provider-specific security checks
 - Compliance framework validation
 - Resource-level security assessment
 
 ### 2. Kubernetes Scenarios (`kubernetes_scenarios.yaml`)
+
 In-depth security scanning for Kubernetes clusters:
+
 - Development clusters
 - Production environments
 - Multi-tenant setups
 - Industry-specific deployments
 
 #### Key Features
+
 - Pod security analysis
 - Network policy review
 - Compliance framework mapping
 - Sensitive resource protection
 
 ### 3. Network Scenarios (`network_scenarios.yaml`)
+
 Comprehensive network infrastructure security scanning:
+
 - Corporate networks
 - DMZ and perimeter
 - Remote offices
@@ -40,13 +48,16 @@ Comprehensive network infrastructure security scanning:
 - Healthcare and financial networks
 
 #### Key Features
+
 - Network discovery
 - Vulnerability assessment
 - Compliance verification
 - Sensitive segment identification
 
 ### 4. Web Application Scenarios (`web_application_scenarios.yaml`)
+
 Detailed web application security assessments:
+
 - E-commerce platforms
 - Financial services portals
 - Healthcare systems
@@ -54,6 +65,7 @@ Detailed web application security assessments:
 - Government and educational platforms
 
 #### Key Features
+
 - OWASP Top 10 checks
 - Authentication mechanism review
 - Data protection verification
@@ -62,11 +74,13 @@ Detailed web application security assessments:
 ## 🚀 Usage Guidelines
 
 ### Scenario Selection
+
 1. Identify your environment type
 2. Choose the appropriate scenario file
 3. Customize the configuration to match your infrastructure
 
 ### Example Configuration
+
 ```yaml
 # Basic scenario selection
 scan_targets:
@@ -80,18 +94,21 @@ scan_targets:
 ## 🔍 Scanning Best Practices
 
 ### 1. Environment Preparation
+
 - Ensure proper network access
 - Have necessary credentials
 - Configure firewall rules
 - Obtain necessary permissions
 
 ### 2. Scenario Customization
+
 - Modify targets to match your infrastructure
 - Adjust scanning options
 - Set compliance framework requirements
 - Define sensitive resource mappings
 
 ### 3. Compliance Alignment
+
 - Map scenarios to your specific regulatory requirements
 - Use predefined compliance frameworks
 - Customize checks as needed
@@ -99,6 +116,7 @@ scan_targets:
 ## 📊 Scenario Structure
 
 Each scenario typically includes:
+
 - `target`: Scanning endpoint
 - `scan_types`: Types of security checks
 - `options`: Detailed scanning configuration

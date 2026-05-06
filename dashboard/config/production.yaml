@@ -5,21 +5,21 @@ app:
   name: NIST 800-53 Compliance Dashboard
   environment: production
   debug: false
-  secret_key: ${DASHBOARD_SECRET_KEY}  # Must be set as environment variable
-  port: 443  # HTTPS port
+  secret_key: ${DASHBOARD_SECRET_KEY} # Must be set as environment variable
+  port: 443 # HTTPS port
 
 # Authentication Configuration
 authentication:
-  method: saml  # Recommended: SAML or LDAP for enterprise
+  method: saml # Recommended: SAML or LDAP for enterprise
   token:
-    expiration: 1800  # 30 minutes
+    expiration: 1800 # 30 minutes
     algorithm: RS256
-  
+
   saml:
     idp_metadata_url: https://your-identity-provider.com/metadata
     entity_id: https://dashboard.your-company.com
     assertion_consumer_service_url: https://dashboard.your-company.com/saml/acs
-  
+
   multi_factor:
     enabled: true
     providers:
@@ -42,13 +42,13 @@ database:
 # Logging Configuration
 logging:
   level: INFO
-  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   handlers:
     - type: file
       filename: /var/log/nist_dashboard/production.log
     - type: syslog
       address: /dev/log
-  
+
   audit_logging:
     enabled: true
     retention_days: 365
@@ -66,15 +66,15 @@ security:
     enforce: true
     hsts: true
     min_tls_version: TLSv1.2
-  
+
   headers:
     x_frame_options: DENY
     x_xss_protection: 1; mode=block
     content_security_policy: default-src 'self'
-  
+
   rate_limiting:
     enabled: true
-    window: 60  # seconds
+    window: 60 # seconds
     max_requests: 100
 
 # Feature Flags
@@ -93,25 +93,25 @@ external_services:
         api_key: ${MISP_API_KEY}
       - name: osint
         url: ${OSINT_FEED_URL}
-  
+
   compliance_sync:
     enabled: true
     platforms:
       - splunk
       - elastic_siem
-    sync_interval: 3600  # seconds
+    sync_interval: 3600 # seconds
 
 # Performance Monitoring
 performance:
   profiling: false
   max_concurrent_requests: 100
-  
+
   caching:
     enabled: true
     backend: redis
     host: ${REDIS_HOST}
     port: 6379
-    ttl: 3600  # seconds
+    ttl: 3600 # seconds
 
 # Compliance Frameworks
 compliance:
@@ -120,7 +120,7 @@ compliance:
     - hipaa
     - pci_dss
     - sox
-  
+
   framework_sync:
     enabled: true
     frequency: daily
@@ -135,11 +135,11 @@ notifications:
       username: ${SMTP_USERNAME}
       password: ${SMTP_PASSWORD}
       use_tls: true
-  
+
   slack:
     enabled: true
     webhook_url: ${SLACK_WEBHOOK_URL}
-  
+
   pagerduty:
     enabled: true
     service_key: ${PAGERDUTY_SERVICE_KEY}
@@ -158,7 +158,7 @@ ml_services:
   threat_prediction:
     enabled: true
     model_path: /opt/nist_dashboard/ml_models/threat_predictor.h5
-  
+
   anomaly_detection:
     enabled: true
     sensitivity: 0.7

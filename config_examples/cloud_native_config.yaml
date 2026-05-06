@@ -11,21 +11,21 @@ security:
   authentication:
     method: oidc
     provider: azure_ad
-    max_api_key_age: 60  # days
+    max_api_key_age: 60 # days
     password_policy:
       min_length: 14
       require_complexity: true
-  
+
   encryption:
     sensitive_data: true
-    key_rotation_interval: 45  # days
+    key_rotation_interval: 45 # days
     algorithms:
       data_at_rest: AES-256-GCM
       data_in_transit: TLS-1.3
-  
+
   rate_limiting:
     max_requests: 100
-    time_window: 3600  # seconds
+    time_window: 3600 # seconds
 
 # Cloud Provider Configuration
 cloud_providers:
@@ -37,7 +37,7 @@ cloud_providers:
     subscriptions:
       - primary-subscription-id
       - secondary-subscription-id
-    
+
   aws:
     enabled: true
     credentials:
@@ -45,7 +45,7 @@ cloud_providers:
     regions:
       - us-east-1
       - us-west-2
-  
+
   gcp:
     enabled: true
     credentials:
@@ -58,13 +58,13 @@ scan_options:
   distributed_scanning: true
   parallel_scanning: true
   max_concurrent_scans: 5
-  scan_timeout: 3600  # seconds
-  
+  scan_timeout: 3600 # seconds
+
   scan_categories:
     - access_control
     - network_security
     - cloud_configuration
-  
+
   control_filters:
     severity:
       - high
@@ -79,12 +79,12 @@ monitoring:
     prometheus:
       enabled: true
       endpoint: /metrics
-    
+
     tracing:
       opentelemetry:
         enabled: true
         collector_endpoint: https://otel-collector.cloud-native.local
-  
+
   logging:
     cloud_native:
       enabled: true
@@ -95,11 +95,11 @@ monitoring:
 notifications:
   email:
     enabled: false
-  
+
   slack:
     enabled: true
     webhook_url: ${SLACK_CLOUD_NATIVE_WEBHOOK}
-  
+
   cloud_native_alerting:
     enabled: true
     provider: azure_monitor
@@ -126,7 +126,7 @@ security_policies:
     prevent_privileged_pods: true
     restrict_host_namespace: true
     read_only_root_filesystem: true
-  
+
   network_policies:
     default_deny: true
     allow_internal_dns: true

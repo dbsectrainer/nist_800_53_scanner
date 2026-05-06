@@ -1,22 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>NIST 800-53 Compliance Dashboard - Login</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/login.css') }}"
+    />
+  </head>
+  <body>
     <div class="login-container">
-        <div class="login-box">
-            <h1>NIST 800-53 Scanner</h1>
-            <form id="login-form">
-                <input type="text" id="username" name="username" placeholder="Username" required>
-                <input type="password" id="password" name="password" placeholder="Password" required>
-                <button type="submit">Login</button>
-            </form>
-            <div id="error-message" class="error-message"></div>
-        </div>
+      <div class="login-box">
+        <h1>NIST 800-53 Scanner</h1>
+        <form id="login-form">
+          <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="Username"
+            required
+          />
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Password"
+            required
+          />
+          <button type="submit">Login</button>
+        </form>
+        <div id="error-message" class="error-message"></div>
+      </div>
     </div>
     <script src="{{ url_for('static', filename='js/login.js') }}"></script>
-</body>
+  </body>
 </html>

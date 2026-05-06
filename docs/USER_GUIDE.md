@@ -7,6 +7,7 @@ The NIST 800-53 Scanner is an advanced security compliance automation platform d
 ## 🚀 Quick Start
 
 ### System Requirements
+
 - Python 3.8+
 - 8GB RAM
 - 20GB Disk Space
@@ -15,6 +16,7 @@ The NIST 800-53 Scanner is an advanced security compliance automation platform d
 ### Installation Methods
 
 #### 1. pip Installation
+
 ```bash
 # Install via pip
 pip install nist-800-53-scanner
@@ -24,6 +26,7 @@ nist-scanner --version
 ```
 
 #### 2. Docker Deployment
+
 ```bash
 # Pull Docker image
 docker pull nist-800-53-scanner
@@ -33,6 +36,7 @@ docker run -it nist-800-53-scanner scan --config /path/to/config.yaml
 ```
 
 #### 3. Source Installation
+
 ```bash
 # Clone repository
 git clone https://github.com/your-org/nist-800-53-scanner.git
@@ -49,6 +53,7 @@ poetry run python scan.py --config config.yaml
 ## 🔧 Configuration
 
 ### Basic Configuration
+
 Create a configuration file (`config.yaml`) with your scanning targets:
 
 ```yaml
@@ -70,11 +75,13 @@ scan_targets:
 ### Configuration Options
 
 #### Global Settings
+
 - `tenant_id`: Unique identifier for your organization
 - `environment`: Deployment environment (development/staging/production)
 - `log_level`: Logging verbosity
 
 #### Scan Target Configuration
+
 - `name`: Descriptive name for the target
 - `type`: Infrastructure type (cloud/on-premise/hybrid)
 - `cloud_providers`: List of cloud platforms
@@ -83,18 +90,21 @@ scan_targets:
 ## 🛡️ Scanning Modes
 
 ### 1. Comprehensive Scan
+
 ```bash
 # Full security and compliance assessment
 nist-scanner scan --config config.yaml --mode comprehensive
 ```
 
 ### 2. Targeted Scan
+
 ```bash
 # Scan specific targets or frameworks
 nist-scanner scan --config config.yaml --targets financial_infrastructure --frameworks pci_dss
 ```
 
 ### 3. Continuous Monitoring
+
 ```bash
 # Run periodic compliance checks
 nist-scanner monitor --config config.yaml --interval 24h
@@ -103,12 +113,14 @@ nist-scanner monitor --config config.yaml --interval 24h
 ## 📊 Reporting
 
 ### Report Formats
+
 - JSON
 - PDF
 - HTML
 - Dashboard Integration
 
 ### Generating Reports
+
 ```bash
 # Generate detailed compliance report
 nist-scanner report --config config.yaml --format pdf
@@ -117,11 +129,13 @@ nist-scanner report --config config.yaml --format pdf
 ## 🔍 Advanced Features
 
 ### Machine Learning Insights
+
 - Predictive vulnerability detection
 - Risk scoring
 - Adaptive compliance assessment
 
 ### Threat Intelligence
+
 - Multi-source threat correlation
 - Continuous monitoring
 - Advanced threat detection
@@ -138,11 +152,13 @@ nist-scanner report --config config.yaml --format pdf
 ## 🔒 Security Best Practices
 
 ### Authentication
+
 - API Key Authentication
 - Multi-factor Support
 - Role-based Access Control
 
 ### Data Protection
+
 - Encryption of sensitive information
 - Secure credential management
 - Minimal data exposure
@@ -150,11 +166,13 @@ nist-scanner report --config config.yaml --format pdf
 ## 📡 External Integrations
 
 ### SIEM Platforms
+
 - Splunk
 - Elastic Security
 - Microsoft Sentinel
 
 ### Threat Intelligence
+
 - MISP
 - STIX/TAXII
 - Open-source Threat Feeds
@@ -162,12 +180,14 @@ nist-scanner report --config config.yaml --format pdf
 ## 🤖 Dashboard Access
 
 ### Web Dashboard
+
 ```bash
 # Start dashboard
 nist-scanner dashboard --config dashboard_config.yaml
 ```
 
 #### Dashboard Features
+
 - Real-time compliance tracking
 - Vulnerability visualization
 - Risk assessment
@@ -176,12 +196,14 @@ nist-scanner dashboard --config dashboard_config.yaml
 ## 🚨 Troubleshooting
 
 ### Common Issues
+
 - Verify API credentials
 - Check network connectivity
 - Ensure sufficient permissions
 - Review log files
 
 ### Log Management
+
 ```bash
 # View scanner logs
 nist-scanner logs --tail 100
@@ -209,6 +231,7 @@ nist-scanner logs --tail 100
 - Professional Support Options
 
 ## 📚 Additional Resources
+
 - [NIST 800-53 Documentation](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf)
 - [Compliance Framework Guides](https://www.nist.gov/cybersecurity)
 - [Security Best Practices](https://www.cisa.gov/cybersecurity)

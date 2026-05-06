@@ -45,7 +45,7 @@ threat_intelligence:
     enabled: true
     url: https://misp.company.com
     api_key: ${MISP_API_KEY}
-    polling_interval: 60  # minutes
+    polling_interval: 60 # minutes
     event_filters:
       threat_level: [high, very_high]
       tags: [apt, ransomware, data_breach]
@@ -70,7 +70,7 @@ threat_processing:
     parameters:
       eps: 0.5
       min_samples: 2
-  
+
   feature_extraction:
     methods:
       - tag_count
@@ -84,9 +84,9 @@ threat_processing:
 # Compliance Monitoring Configuration
 compliance_monitoring:
   scan_frequency:
-    baseline: 24  # hours
-    high_priority_targets: 6  # hours
-    critical_targets: 1  # hours
+    baseline: 24 # hours
+    high_priority_targets: 6 # hours
+    critical_targets: 1 # hours
 
   configuration_drift:
     enabled: true
@@ -102,26 +102,26 @@ risk_assessment:
   scoring:
     base_score_weight: 0.6
     threat_intelligence_weight: 0.4
-  
+
   severity_levels:
     critical:
       threshold: 0.8
       actions:
         - immediate_isolation
         - executive_notification
-    
+
     high:
       threshold: 0.6
       actions:
         - enhanced_monitoring
         - incident_response_team_alert
-    
+
     medium:
       threshold: 0.4
       actions:
         - additional_investigation
         - security_team_notification
-    
+
     low:
       threshold: 0.2
       actions:
@@ -140,7 +140,7 @@ notifications:
       high: always
       medium: daily_digest
       low: weekly_summary
-  
+
   slack:
     enabled: true
     webhook_url: ${SLACK_WEBHOOK_URL}
@@ -148,7 +148,7 @@ notifications:
       critical: "#security-alerts"
       high: "#security-incidents"
       medium: "#security-monitoring"
-  
+
   pagerduty:
     enabled: true
     service_key: ${PAGERDUTY_SERVICE_KEY}
@@ -159,23 +159,23 @@ advanced_ml:
   transfer_learning:
     enabled: true
     pre_trained_model: threat_intelligence_baseline
-  
+
   anomaly_detection:
     enabled: true
     sensitivity: 0.7
     methods:
       - statistical_analysis
       - machine_learning_clustering
-  
+
   model_versioning:
     keep_latest: 3
-    auto_retrain_interval: 30  # days
+    auto_retrain_interval: 30 # days
 
 # Performance and Scalability
 performance:
   max_concurrent_scans: 5
-  scan_timeout: 7200  # seconds
-  
+  scan_timeout: 7200 # seconds
+
   distributed_computing:
     enabled: true
     worker_nodes: auto
@@ -188,14 +188,14 @@ reporting:
     - pdf
     - html
     - dashboard_integration
-  
+
   distribution:
     internal_share: true
     external_audit: true
     compliance_platform_sync: true
-  
+
   retention:
-    period: 7  # years
+    period: 7 # years
     archive_method: encrypted_storage
 
 # Continuous Improvement
@@ -206,7 +206,7 @@ continuous_improvement:
       - manual_review
       - automated_analysis
       - security_team_input
-  
+
   model_retraining:
     trigger_conditions:
       - performance_drop
@@ -219,10 +219,10 @@ compliance_frameworks:
   nist_800_53:
     enabled: true
     control_families:
-      - AC  # Access Control
-      - AU  # Audit and Accountability
-      - SC  # System and Communications Protection
-  
+      - AC # Access Control
+      - AU # Audit and Accountability
+      - SC # System and Communications Protection
+
   pci_dss:
     enabled: true
     requirements:

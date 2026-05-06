@@ -1,80 +1,80 @@
 groups:
-- name: nist_compliance_alerts
-  rules:
-  - alert: HighComplianceFailureRate
-    expr: sum(rate(nist_compliance_scans_total{status="non_compliant"}[5m])) / sum(rate(nist_compliance_scans_total[5m])) > 0.3
-    for: 10m
-    labels:
-      severity: critical
-    annotations:
-      summary: "High Compliance Failure Rate Detected"
-      description: "More than 30% of compliance scans are failing in the last 5 minutes"
+  - name: nist_compliance_alerts
+    rules:
+      - alert: HighComplianceFailureRate
+        expr: sum(rate(nist_compliance_scans_total{status="non_compliant"}[5m])) / sum(rate(nist_compliance_scans_total[5m])) > 0.3
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High Compliance Failure Rate Detected"
+          description: "More than 30% of compliance scans are failing in the last 5 minutes"
 
-  - alert: ScannerServiceDown
-    expr: up{job="nist_compliance_scanner"} == 0
-    for: 5m
-    labels:
-      severity: critical
-    annotations:
-      summary: "NIST Compliance Scanner Service Down"
-      description: "The NIST Compliance Scanner service has been down for more than 5 minutes"
+      - alert: ScannerServiceDown
+        expr: up{job="nist_compliance_scanner"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "NIST Compliance Scanner Service Down"
+          description: "The NIST Compliance Scanner service has been down for more than 5 minutes"
 
-  - alert: HighScanLatency
-    expr: histogram_quantile(0.95, rate(nist_scan_duration_seconds_bucket[10m])) > 300
-    for: 10m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High Scan Latency Detected"
-      description: "95% of scans are taking longer than 5 minutes"
+      - alert: HighScanLatency
+        expr: histogram_quantile(0.95, rate(nist_scan_duration_seconds_bucket[10m])) > 300
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Scan Latency Detected"
+          description: "95% of scans are taking longer than 5 minutes"
 
-  - alert: CloudProviderAccessIssues
-    expr: sum(nist_cloud_access_errors_total) > 10
-    for: 15m
-    labels:
-      severity: high
-    annotations:
-      summary: "Multiple Cloud Provider Access Errors"
-      description: "More than 10 cloud provider access errors detected in the last 15 minutes"
+      - alert: CloudProviderAccessIssues
+        expr: sum(nist_cloud_access_errors_total) > 10
+        for: 15m
+        labels:
+          severity: high
+        annotations:
+          summary: "Multiple Cloud Provider Access Errors"
+          description: "More than 10 cloud provider access errors detected in the last 15 minutes"
 
-  - alert: ComplianceScoreDropped
-    expr: nist_compliance_score < 0.7
-    for: 1h
-    labels:
-      severity: critical
-    annotations:
-      summary: "Compliance Score Significantly Dropped"
-      description: "Overall compliance score has fallen below 70%"
+      - alert: ComplianceScoreDropped
+        expr: nist_compliance_score < 0.7
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "Compliance Score Significantly Dropped"
+          description: "Overall compliance score has fallen below 70%"
 
-  - alert: UnauthorizedAccessAttempts
-    expr: sum(rate(nist_unauthorized_access_attempts_total[5m])) > 5
-    for: 10m
-    labels:
-      severity: high
-    annotations:
-      summary: "Multiple Unauthorized Access Attempts"
-      description: "More than 5 unauthorized access attempts detected in the last 5 minutes"
+      - alert: UnauthorizedAccessAttempts
+        expr: sum(rate(nist_unauthorized_access_attempts_total[5m])) > 5
+        for: 10m
+        labels:
+          severity: high
+        annotations:
+          summary: "Multiple Unauthorized Access Attempts"
+          description: "More than 5 unauthorized access attempts detected in the last 5 minutes"
 
-  - alert: AuditLoggingFailure
-    expr: sum(nist_audit_logging_failures_total) > 0
-    for: 5m
-    labels:
-      severity: critical
-    annotations:
-      summary: "Audit Logging Failures Detected"
-      description: "One or more audit logging mechanisms have failed"
+      - alert: AuditLoggingFailure
+        expr: sum(nist_audit_logging_failures_total) > 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Audit Logging Failures Detected"
+          description: "One or more audit logging mechanisms have failed"
 
-  - alert: HighResourceUtilization
-    expr: |
-      (
-        sum(rate(process_cpu_seconds_total{job="nist_compliance_scanner"}[5m])) / 
-        count(count(node_cpu_seconds_total{mode="system"}) by (cpu))
-      ) > 0.8
-      or
-      process_resident_memory_bytes{job="nist_compliance_scanner"} / node_memory_MemTotal_bytes > 0.85
-    for: 15m
-    labels:
-      severity: warning
-    annotations:
-      summary: "High Resource Utilization"
-      description: "NIST Compliance Scanner is using more than 80% CPU or 85% memory for over 15 minutes"
+      - alert: HighResourceUtilization
+        expr: |
+          (
+            sum(rate(process_cpu_seconds_total{job="nist_compliance_scanner"}[5m])) / 
+            count(count(node_cpu_seconds_total{mode="system"}) by (cpu))
+          ) > 0.8
+          or
+          process_resident_memory_bytes{job="nist_compliance_scanner"} / node_memory_MemTotal_bytes > 0.85
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Resource Utilization"
+          description: "NIST Compliance Scanner is using more than 80% CPU or 85% memory for over 15 minutes"

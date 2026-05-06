@@ -64,7 +64,7 @@ scan_options:
   distributed_scanning: true
   parallel_scanning: true
   max_concurrent_scans: 3
-  scan_timeout: 7200  # seconds
+  scan_timeout: 7200 # seconds
 
   control_filters:
     severity:
@@ -83,11 +83,11 @@ security:
     providers:
       - type: kubernetes_service_account
       - type: client_certificate
-    max_api_key_age: 45  # days
-  
+    max_api_key_age: 45 # days
+
   encryption:
     sensitive_data: true
-    key_rotation_interval: 30  # days
+    key_rotation_interval: 30 # days
     algorithms:
       data_at_rest: AES-256-GCM
       data_in_transit: TLS-1.3
@@ -99,7 +99,7 @@ monitoring:
     prometheus:
       enabled: true
       endpoint: /metrics
-    
+
     tracing:
       opentelemetry:
         enabled: true
@@ -109,7 +109,7 @@ monitoring:
 logging:
   compliance_logging:
     enabled: true
-    retention_period: 365  # days
+    retention_period: 365 # days
     audit_trail: true
 
 # Notification Channels
@@ -119,7 +119,7 @@ notifications:
     recipients:
       - kubernetes-admin@company.com
       - security-team@company.com
-  
+
   slack:
     enabled: true
     webhook_url: ${SLACK_KUBERNETES_WEBHOOK}
@@ -130,7 +130,7 @@ security_policies:
     prevent_privileged_pods: true
     restrict_host_namespace: true
     read_only_root_filesystem: true
-  
+
   network_policies:
     default_deny: true
     allow_internal_dns: true
@@ -142,11 +142,11 @@ reporting:
     - pdf
     - json
     - markdown
-  
+
   distribution:
     internal_share: true
     external_audit: true
-  
+
   retention:
-    period: 7  # years
+    period: 7 # years
     archive_method: encrypted_storage

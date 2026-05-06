@@ -7,18 +7,22 @@ This directory contains configuration files for different deployment environment
 ## 📂 Configuration Files
 
 ### 1. Development Configuration (`development.yaml`)
+
 Designed for local development and testing environments.
 
 #### Key Features
+
 - Debug mode enabled
 - Local authentication
 - Minimal security restrictions
 - Logging to local files
 
 ### 2. Production Configuration (`production.yaml`)
+
 Optimized for enterprise-grade, secure production deployments.
 
 #### Key Features
+
 - Enterprise authentication (SAML/LDAP)
 - Multi-factor authentication
 - Strict security settings
@@ -28,12 +32,15 @@ Optimized for enterprise-grade, secure production deployments.
 ## 🔒 Configuration Management
 
 ### Environment Variables
+
 Critical configuration values should be set via environment variables:
+
 - `DASHBOARD_SECRET_KEY`
 - Database credentials
 - External service API keys
 
 ### Recommended Practices
+
 1. Never commit sensitive information to version control
 2. Use environment-specific configuration files
 3. Implement secure secret management
@@ -41,6 +48,7 @@ Critical configuration values should be set via environment variables:
 ## 🚀 Deployment Strategies
 
 ### Development Environment
+
 ```bash
 # Set environment variable
 export FLASK_ENV=development
@@ -50,6 +58,7 @@ python app.py --config config/development.yaml
 ```
 
 ### Production Environment
+
 ```bash
 # Set environment variables
 export FLASK_ENV=production
@@ -62,11 +71,13 @@ gunicorn -w 4 -b 0.0.0.0:443 dashboard.app:create_app('config/production.yaml')
 ## 🛡️ Security Configuration Highlights
 
 ### Authentication Methods
+
 - Local (development)
 - SAML (enterprise)
 - Multi-factor authentication
 
 ### Security Features
+
 - SSL/TLS enforcement
 - Rate limiting
 - Content security policies
@@ -75,26 +86,31 @@ gunicorn -w 4 -b 0.0.0.0:443 dashboard.app:create_app('config/production.yaml')
 ## 📊 Configuration Sections
 
 ### 1. Application Settings
+
 - Environment-specific debug modes
 - Secret key management
 - Port configuration
 
 ### 2. Authentication
+
 - Multiple authentication methods
 - Token management
 - Multi-factor options
 
 ### 3. Database Configuration
+
 - Connection parameters
 - SSL modes
 - Connection pooling
 
 ### 4. Logging
+
 - Log levels
 - Multiple log handlers
 - Audit logging
 
 ### 5. External Services
+
 - Threat intelligence integration
 - Compliance platform sync
 - Notification channels
@@ -102,6 +118,7 @@ gunicorn -w 4 -b 0.0.0.0:443 dashboard.app:create_app('config/production.yaml')
 ## 🔍 Configuration Validation
 
 ### Recommended Validation Steps
+
 1. Verify all required environment variables
 2. Check database connectivity
 3. Test authentication mechanisms
@@ -110,11 +127,13 @@ gunicorn -w 4 -b 0.0.0.0:443 dashboard.app:create_app('config/production.yaml')
 ## 🚨 Common Configuration Pitfalls
 
 ### Development Environment
+
 - Leaving debug mode on
 - Using default/weak credentials
 - Exposing sensitive configuration
 
 ### Production Environment
+
 - Incomplete secret management
 - Insufficient logging
 - Disabled security features
@@ -122,17 +141,20 @@ gunicorn -w 4 -b 0.0.0.0:443 dashboard.app:create_app('config/production.yaml')
 ## 🤝 Contributing
 
 ### Configuration Improvements
+
 - Enhance security mechanisms
 - Add new authentication methods
 - Improve external service integrations
 
 ### Submission Guidelines
+
 1. Create a feature branch
 2. Implement configuration changes
 3. Add comprehensive documentation
 4. Submit pull request
 
 ## 📚 Additional Resources
+
 - [Flask Configuration Best Practices](https://flask.palletsprojects.com/en/2.0.x/config/)
 - [YAML Configuration Management](https://yaml.org/)
 - [Enterprise Authentication Strategies](https://www.owasp.org/index.php/Authentication_Cheat_Sheet)

@@ -6,40 +6,40 @@ app:
   environment: development
   debug: true
   secret_key: dev_secret_key_change_in_production
-  port: 5000
+  port: 5001
 
 # Authentication Configuration
 authentication:
-  method: local  # Options: local, ldap, saml
+  method: local # Options: local, ldap, saml
   token:
-    expiration: 3600  # 1 hour
+    expiration: 3600 # 1 hour
     algorithm: HS256
-  
+
   local_users:
     - username: admin
-      password: dev_admin_password  # MUST be changed
+      password: dev_admin_password # MUST be changed
       role: admin
     - username: analyst
-      password: dev_analyst_password  # MUST be changed
+      password: dev_analyst_password # MUST be changed
       role: analyst
 
 # Database Configuration
 database:
-  type: sqlite  # Options: sqlite, postgresql, mysql
+  type: sqlite # Options: sqlite, postgresql, mysql
   path: ./dashboard_dev.db
-  
+
 # Logging Configuration
 logging:
   level: DEBUG
-  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   file: ./logs/dashboard_dev.log
 
 # CORS Configuration
 cors:
   enabled: true
   allowed_origins:
-    - http://localhost:5000
-    - http://127.0.0.1:5000
+    - http://localhost:5001
+    - http://127.0.0.1:5001
 
 # Feature Flags
 features:
@@ -50,10 +50,10 @@ features:
 # External Services
 external_services:
   threat_intelligence:
-    enabled: false  # Disabled in development
-  
+    enabled: false # Disabled in development
+
   compliance_sync:
-    enabled: false  # Disabled in development
+    enabled: false # Disabled in development
 
 # Performance Monitoring
 performance:

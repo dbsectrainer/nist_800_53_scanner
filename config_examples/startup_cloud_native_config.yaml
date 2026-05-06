@@ -12,21 +12,21 @@ security:
   authentication:
     method: oidc
     provider: azure_ad
-    max_api_key_age: 30  # days
+    max_api_key_age: 30 # days
     password_policy:
       min_length: 12
       require_complexity: true
-  
+
   encryption:
     sensitive_data: true
-    key_rotation_interval: 30  # days
+    key_rotation_interval: 30 # days
     algorithms:
       data_at_rest: AES-256-GCM
       data_in_transit: TLS-1.3
-  
+
   rate_limiting:
     max_requests: 100
-    time_window: 3600  # seconds
+    time_window: 3600 # seconds
     per_ip: true
     per_api_key: true
 
@@ -39,7 +39,7 @@ cloud_providers:
     regions:
       - us-east-1
       - us-west-2
-  
+
   gcp:
     enabled: true
     credentials:
@@ -66,13 +66,13 @@ scan_options:
   distributed_scanning: true
   parallel_scanning: true
   max_concurrent_scans: 5
-  scan_timeout: 1800  # seconds
-  
+  scan_timeout: 1800 # seconds
+
   scan_categories:
     - access_control
     - network_security
     - cloud_configuration
-  
+
   control_filters:
     severity:
       - high
@@ -87,7 +87,7 @@ monitoring:
     prometheus:
       enabled: true
       endpoint: /metrics
-    
+
     tracing:
       opentelemetry:
         enabled: true
@@ -105,7 +105,7 @@ notifications:
   slack:
     enabled: true
     webhook_url: ${SLACK_STARTUP_WEBHOOK}
-  
+
   email:
     enabled: false
 
@@ -124,7 +124,7 @@ security_policies:
     prevent_privileged_pods: true
     restrict_host_namespace: true
     read_only_root_filesystem: true
-  
+
   network_policies:
     default_deny: true
     allow_internal_dns: true

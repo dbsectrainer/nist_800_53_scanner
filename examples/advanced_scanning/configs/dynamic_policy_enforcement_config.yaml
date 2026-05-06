@@ -48,7 +48,7 @@ ml_policy_model:
     epochs: 50
     batch_size: 32
     validation_split: 0.2
-  
+
   feature_extraction:
     weights:
       cloud_providers: 0.5
@@ -61,7 +61,7 @@ policy_validation:
     - schema_validation
     - machine_learning_scoring
     - rule_based_checking
-  
+
   compliance_thresholds:
     fully_compliant: 0.9
     partially_compliant: 0.7
@@ -74,7 +74,7 @@ automated_remediation:
     - default_value_replacement
     - configuration_adjustment
     - security_hardening
-  
+
   remediation_priority:
     critical: immediate
     high: prioritized
@@ -93,7 +93,7 @@ notifications:
       high: always
       medium: daily_digest
       low: weekly_summary
-  
+
   slack:
     enabled: true
     webhook_url: ${SLACK_WEBHOOK_URL}
@@ -101,7 +101,7 @@ notifications:
       critical: "#security-alerts"
       high: "#security-incidents"
       medium: "#security-monitoring"
-  
+
   pagerduty:
     enabled: true
     service_key: ${PAGERDUTY_SERVICE_KEY}
@@ -113,7 +113,7 @@ policy_management:
     enabled: true
     keep_versions: 5
     auto_backup: true
-  
+
   policy_update_triggers:
     - regulatory_changes
     - security_incident
@@ -123,8 +123,8 @@ policy_management:
 # Performance and Scalability
 performance:
   max_concurrent_scans: 5
-  scan_timeout: 7200  # seconds
-  
+  scan_timeout: 7200 # seconds
+
   distributed_computing:
     enabled: true
     worker_nodes: auto
@@ -137,14 +137,14 @@ reporting:
     - pdf
     - html
     - dashboard_integration
-  
+
   distribution:
     internal_share: true
     external_audit: true
     compliance_platform_sync: true
-  
+
   retention:
-    period: 7  # years
+    period: 7 # years
     archive_method: encrypted_storage
 
 # Continuous Improvement
@@ -155,7 +155,7 @@ continuous_improvement:
       - manual_review
       - automated_analysis
       - security_team_input
-  
+
   policy_refinement:
     trigger_conditions:
       - high_false_positive_rate
@@ -168,10 +168,10 @@ compliance_frameworks:
   nist_800_53:
     enabled: true
     control_families:
-      - AC  # Access Control
-      - AU  # Audit and Accountability
-      - SC  # System and Communications Protection
-  
+      - AC # Access Control
+      - AU # Audit and Accountability
+      - SC # System and Communications Protection
+
   pci_dss:
     enabled: true
     requirements:
@@ -183,12 +183,12 @@ compliance_frameworks:
 ml_model_management:
   auto_retraining:
     enabled: true
-    frequency: 30  # days
+    frequency: 30 # days
     trigger_conditions:
       - performance_drop
       - new_policy_patterns
       - significant_config_changes
-  
+
   model_selection:
     strategy: best_performing
     evaluation_metrics:
@@ -205,7 +205,7 @@ external_integrations:
       - misp
       - osint_feeds
       - threat_exchange
-  
+
   compliance_platforms:
     enabled: true
     sync_frequency: daily

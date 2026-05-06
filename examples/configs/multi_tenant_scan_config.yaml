@@ -68,7 +68,7 @@ external_systems:
     username: ${JIRA_USERNAME}
     password: ${JIRA_PASSWORD}
     project: COMPLIANCE
-  
+
   slack:
     enabled: true
     webhook_url: ${SLACK_WEBHOOK_URL}
@@ -78,7 +78,7 @@ scan_options:
   distributed_scanning: true
   parallel_scanning: true
   max_total_concurrent_scans: 5
-  scan_timeout: 7200  # seconds (2 hours)
+  scan_timeout: 7200 # seconds (2 hours)
 
   control_filters:
     severity:
@@ -97,11 +97,11 @@ security:
     providers:
       - type: api_key
       - type: oauth
-    max_api_key_age: 45  # days
-  
+    max_api_key_age: 45 # days
+
   encryption:
     sensitive_data: true
-    key_rotation_interval: 30  # days
+    key_rotation_interval: 30 # days
     algorithms:
       data_at_rest: AES-256-GCM
       data_in_transit: TLS-1.3
@@ -113,7 +113,7 @@ monitoring:
     prometheus:
       enabled: true
       endpoint: /metrics
-    
+
     tracing:
       opentelemetry:
         enabled: true
@@ -123,7 +123,7 @@ monitoring:
 logging:
   compliance_logging:
     enabled: true
-    retention_period: 365  # days
+    retention_period: 365 # days
     audit_trail: true
     mask_sensitive_data: true
 
@@ -134,7 +134,7 @@ notifications:
     recipients:
       - compliance-team@company.com
       - security-ops@company.com
-  
+
   pagerduty:
     enabled: true
     service_key: ${PAGERDUTY_SERVICE_KEY}
@@ -145,13 +145,13 @@ reporting:
     - pdf
     - html
     - json
-  
+
   distribution:
     internal_share: true
     external_audit: true
-  
+
   retention:
-    period: 7  # years
+    period: 7 # years
     archive_method: encrypted_storage
 
 # Advanced Compliance Policies
@@ -160,8 +160,8 @@ compliance_policies:
     enabled: true
     compare_security_controls: true
     identify_best_practices: true
-  
+
   continuous_monitoring:
     enabled: true
     frequency: daily
-    alert_threshold: 80  # percentage
+    alert_threshold: 80 # percentage
