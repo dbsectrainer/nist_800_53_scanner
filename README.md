@@ -289,15 +289,36 @@ python dashboard/app.py
 curl -s http://127.0.0.1:8000/metrics | head
 ```
 
-## FedRAMP Moderate baseline (framing)
+## 🏛️ FedRAMP Alignment
 
 **FedRAMP Moderate** for cloud services is aligned with the **NIST SP 800-53 Rev. 5 moderate baseline** as defined for **moderate-impact** systems (see NIST SP 800-53B for control baselines by impact level). Authorizations at the Moderate level expect that baseline to be implemented, assessed, and continuously monitored in line with FedRAMP requirements.
 
-This repository is a **technical aid** for scanning, reporting, and dashboard-style visibility against NIST-style control themes. It does **not** by itself constitute FedRAMP authorization, a System Security Plan (SSP), control narratives, evidence for a 3PAO, or an official moderate baseline inheritance package. Use it alongside your governance program, assessors, and cloud provider shared responsibility documentation.
+### FedRAMP Implementation Resources
 
-## AWS Config rules and NIST control families
+This scanner provides **technical evidence collection** for FedRAMP assessments:
 
-AWS Config managed rules and conformance packs (for example **Operational Best Practices for NIST SP 800-53 Rev. 5**) map individual rules to **specific NIST controls**. The table below is a **short, illustrative** mapping from representative rules to **NIST 800-53 control families** only. It is not exhaustive. For authoritative rule-to-control mapping, use [AWS Config conformance packs](https://docs.aws.amazon.com/config/latest/developerguide/conformance-packs.html) and your SSP; validate every control in your environment.
+- 📋 [**docs/fedramp-baseline.md**](docs/fedramp-baseline.md) — FedRAMP Moderate baseline guide + step-by-step scanner usage
+- 📊 [**docs/aws-config-mapping.md**](docs/aws-config-mapping.md) — 50+ AWS Config rules mapped to NIST 800-53 controls
+- 📊 [**dashboard/README.md**](dashboard/README.md) — Grafana integration for continuous compliance monitoring
+- 🔄 [**../cloud-security-best-practices/fedramp-30-days/**](../cloud-security-best-practices/fedramp-30-days/) — 30-day FedRAMP implementation roadmap
+
+### Usage for FedRAMP Assessment
+
+1. **Baseline Scan** — Run scanner against AWS environment (see [fedramp-baseline.md](docs/fedramp-baseline.md#step-2-run-baseline-scan))
+2. **Evidence Collection** — Export compliance reports (HTML, JSON, NIST format)
+3. **POA&M Tracking** — Track remediation of non-compliant controls
+4. **3PAO Readiness** — Provide dashboard view for independent assessor
+5. **Continuous Monitoring** — Use Grafana dashboard for post-ATO monitoring
+
+**Disclaimer:** This repository is a **technical aid** for scanning, reporting, and dashboard-style visibility against NIST-style control themes. It does **not** by itself constitute FedRAMP authorization, a System Security Plan (SSP), control narratives, evidence for a 3PAO, or an official moderate baseline inheritance package. Use it alongside your governance program, assessors, and cloud provider shared responsibility documentation.
+
+---
+
+## AWS Config Rules and NIST Control Families
+
+AWS Config managed rules and conformance packs (for example **Operational Best Practices for NIST SP 800-53 Rev. 5**) map individual rules to **specific NIST controls**. See [**docs/aws-config-mapping.md**](docs/aws-config-mapping.md) for a **comprehensive mapping of 50+ rules to NIST 800-53 controls** across all control families (AC, AU, CM, SC, etc.).
+
+The table below is a **short, illustrative** mapping from representative rules to **NIST 800-53 control families** only. For authoritative rule-to-control mapping, use [AWS Config conformance packs](https://docs.aws.amazon.com/config/latest/developerguide/conformance-packs.html) and your SSP; validate every control in your environment.
 
 | Representative AWS Config rule                     | NIST 800-53 family (illustrative)                  |
 | -------------------------------------------------- | -------------------------------------------------- |

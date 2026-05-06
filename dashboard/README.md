@@ -59,6 +59,109 @@ authentication:
   max_login_attempts: 5
 ```
 
+## 🏛️ FedRAMP Compliance Dashboard
+
+This dashboard provides **FedRAMP Moderate & High baseline** compliance monitoring:
+
+- **Real-time compliance scoring** — 325 Moderate or 345 High controls
+- **Automated evidence collection** — CloudTrail, Config, Security Hub integration
+- **POA&M tracking** — Monitor remediation progress for non-compliant controls
+- **3PAO-ready reports** — Export compliance snapshots for assessments
+
+**Setup for FedRAMP:**
+1. Run scanner against AWS accounts (see [fedramp-baseline.md](../docs/fedramp-baseline.md))
+2. Configure dashboard with compliance baseline (Moderate/High)
+3. Integrate with AWS Config for continuous monitoring
+4. Review compliance score weekly for ATO preparation
+
+---
+
+## 📊 Grafana Integration (Advanced)
+
+For **enterprise-scale** compliance monitoring, integrate with Grafana:
+
+### Prerequisites
+- Grafana >= 9.0
+- Prometheus (for metrics)
+- Docker (optional)
+
+### Setup Steps
+
+**Step 1: Start Prometheus**
+```bash
+# Create prometheus.yml config
+cat > prometheus.yml << 'EOF'
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'nist-scanner'
+    static_configs:
+      - targets: ['localhost:8000']
+EOF
+
+# Run Prometheus
+docker run -d -p 9090:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus
+```
+
+**Step 2: Configure Scanner Metrics Export**
+```python
+# dashboard/app.py - add Prometheus endpoint
+from prometheus_client import Counter, Gauge, start_http_server
+
+compliance_score = Gauge('nist_compliance_score', 'NIST 800-53 compliance percentage')
+controls_compliant = Gauge('nist_controls_compliant', 'Number of compliant controls')
+controls_failed = Gauge('nist_controls_failed', 'Number of failed controls')
+
+# Expose metrics on port 8000
+start_http_server(8000)
+```
+
+**Step 3: Add Grafana Data Source**
+```
+1. Navigate to http://localhost:3000 (Grafana)
+2. Configuration → Data Sources → Add
+3. Select Prometheus
+4. URL: http://localhost:9090
+5. Save & Test
+```
+
+**Step 4: Create Grafana Dashboards**
+```json
+{
+  "dashboard": {
+    "title": "FedRAMP Compliance Dashboard",
+    "panels": [
+      {
+        "title": "Compliance Score",
+        "targets": [{"expr": "nist_compliance_score"}],
+        "type": "gauge",
+        "gauge": {"min": 0, "max": 100}
+      },
+      {
+        "title": "Controls Status",
+        "targets": [
+          {"expr": "nist_controls_compliant", "legendFormat": "Compliant"},
+          {"expr": "nist_controls_failed", "legendFormat": "Non-Compliant"}
+        ],
+        "type": "stat"
+      }
+    ]
+  }
+}
+```
+
+**Step 5: Set Up Alerting**
+```
+Alert Rules (in Grafana):
+- If compliance_score < 80% → Warn
+- If compliance_score < 60% → Critical
+- If new control failure detected → Alert
+```
+
+---
+
 ## 🚀 Running the Dashboard
 
 ### Development Mode
@@ -67,15 +170,47 @@ authentication:
 # Navigate to dashboard directory
 cd dashboard
 
+# Install dependencies
+pip install flask flask-cors plotly pandas numpy prometheus-client
+
 # Run the application
 python app.py
+# Access at http://localhost:5000
 ```
 
-### Production Deployment
+### Production Deployment with Gunicorn
 
-- Use a WSGI server like Gunicorn
-- Configure reverse proxy with Nginx
-- Implement SSL/TLS encryption
+```bash
+# Install Gunicorn
+pip install gunicorn
+
+# Run with Gunicorn (4 workers, port 8000)
+gunicorn --workers 4 --bind 0.0.0.0:8000 app:app
+
+# Configure Nginx reverse proxy
+cat > /etc/nginx/sites-available/scanner << 'EOF'
+server {
+    listen 443 ssl;
+    server_name compliance.example.gov;
+    
+    ssl_certificate /etc/ssl/certs/cert.pem;
+    ssl_certificate_key /etc/ssl/private/key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+EOF
+
+# Enable site
+sudo ln -s /etc/nginx/sites-available/scanner /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
 
 ## 🔒 Authentication
 
