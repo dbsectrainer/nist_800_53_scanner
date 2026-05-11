@@ -97,7 +97,7 @@ dependencies = [
 
     # Configuration & Utilities
     "pyyaml>=6.0.2",
-    "click>=8.1.8",
+    "click>=8.3.3",
     "rich>=13.9.4",
     "typer>=0.15.1",
 ]
