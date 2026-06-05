@@ -13,27 +13,27 @@ This guide explains how to use the NIST 800-53 Scanner to assess and track FedRA
 
 ### Moderate Baseline Control Families
 
-| Family | Controls | Description |
-|--------|----------|-------------|
-| **AC** | 22 | Access Control — who can do what |
-| **AT** | 4 | Awareness & Training — security training |
-| **AU** | 13 | Audit & Accountability — logging & monitoring |
-| **CA** | 9 | Assessment & Authorization — ATO process |
-| **CM** | 10 | Configuration Management — change control |
-| **CP** | 13 | Contingency Planning — disaster recovery |
-| **IA** | 11 | Identification & Authentication — login security |
-| **IR** | 10 | Incident Response — handling breaches |
-| **MA** | 7 | Maintenance — patching, updates |
-| **MP** | 8 | Media Protection — data storage security |
-| **PE** | 15 | Physical & Environmental — data center security |
-| **PL** | 11 | Planning — security planning |
-| **PS** | 8 | Personnel Security — background checks, access termination |
-| **RA** | 5 | Risk Assessment — vulnerability scanning |
-| **SA** | 16 | System & Services Acquisition — vendor security |
-| **SC** | 40 | System & Communications Protection — encryption, firewalls |
-| **SI** | 14 | System & Information Integrity — malware, monitoring |
-| **SR** | 4 | Supply Chain Risk Management — SBOM, vendor risk |
-| | **325 Total** | |
+| Family | Controls      | Description                                                |
+| ------ | ------------- | ---------------------------------------------------------- |
+| **AC** | 22            | Access Control — who can do what                           |
+| **AT** | 4             | Awareness & Training — security training                   |
+| **AU** | 13            | Audit & Accountability — logging & monitoring              |
+| **CA** | 9             | Assessment & Authorization — ATO process                   |
+| **CM** | 10            | Configuration Management — change control                  |
+| **CP** | 13            | Contingency Planning — disaster recovery                   |
+| **IA** | 11            | Identification & Authentication — login security           |
+| **IR** | 10            | Incident Response — handling breaches                      |
+| **MA** | 7             | Maintenance — patching, updates                            |
+| **MP** | 8             | Media Protection — data storage security                   |
+| **PE** | 15            | Physical & Environmental — data center security            |
+| **PL** | 11            | Planning — security planning                               |
+| **PS** | 8             | Personnel Security — background checks, access termination |
+| **RA** | 5             | Risk Assessment — vulnerability scanning                   |
+| **SA** | 16            | System & Services Acquisition — vendor security            |
+| **SC** | 40            | System & Communications Protection — encryption, firewalls |
+| **SI** | 14            | System & Information Integrity — malware, monitoring       |
+| **SR** | 4             | Supply Chain Risk Management — SBOM, vendor risk           |
+|        | **325 Total** |                                                            |
 
 ---
 
@@ -100,14 +100,12 @@ The scan output includes:
       "recommendation": "Enable MFA for root account"
     }
   ],
-  "evidence": [
-    "CloudTrail shows no root API calls in last 90 days",
-    "IAM policy denies root access"
-  ]
+  "evidence": ["CloudTrail shows no root API calls in last 90 days", "IAM policy denies root access"]
 }
 ```
 
 **Status Legend:**
+
 - 🟢 **COMPLIANT** — Control fully implemented (score > 0.90)
 - 🟡 **PARTIAL** — Control partially implemented (score 0.60-0.90)
 - 🔴 **NON_COMPLIANT** — Control not implemented (score < 0.60)
@@ -140,6 +138,7 @@ python scan.py \
 The scanner includes **FedRAMP-specific validations** for common gaps:
 
 ### Access Control (AC) — 22 controls
+
 ```
 AC-1: Access Control Policy — Policy document exists
 AC-2: Account Management — MFA enforced, root access disabled
@@ -151,6 +150,7 @@ AC-20: Use of External Systems — VPC endpoints for AWS APIs
 ```
 
 **Scan Command:**
+
 ```bash
 python scan.py --control-family AC --output-format json | grep -E "status|findings"
 ```
@@ -171,6 +171,7 @@ SC-13: Cryptographic Protection — AES-256 at rest, TLS in transit
 ```
 
 **Scan Command:**
+
 ```bash
 python scan.py --control-family SC --output-format json > sc_family_findings.json
 # Review: 40 controls, typically 30-35 are COMPLIANT in mature systems
@@ -192,6 +193,7 @@ AU-12: Audit Generation — All resources generate logs
 ```
 
 **Scan Command:**
+
 ```bash
 python scan.py --control-family AU --check-7yr-retention | grep "COMPLIANT"
 ```
@@ -208,14 +210,15 @@ See [aws-config-mapping.md](aws-config-mapping.md) for 50+ AWS Config rules → 
 
 **Overall FedRAMP Readiness Score:**
 
-| Score | Status | Meaning | Action |
-|-------|--------|---------|--------|
-| **90-100%** | 🟢 Ready | ATO achievable | Engage 3PAO |
-| **75-89%** | 🟡 Near | 2-4 week remediation | POA&M planning |
-| **50-74%** | 🟠 Moderate | 1-2 month remediation | Roadmap |
-| **<50%** | 🔴 Low | Major work needed | Architect redesign |
+| Score       | Status      | Meaning               | Action             |
+| ----------- | ----------- | --------------------- | ------------------ |
+| **90-100%** | 🟢 Ready    | ATO achievable        | Engage 3PAO        |
+| **75-89%**  | 🟡 Near     | 2-4 week remediation  | POA&M planning     |
+| **50-74%**  | 🟠 Moderate | 1-2 month remediation | Roadmap            |
+| **<50%**    | 🔴 Low      | Major work needed     | Architect redesign |
 
 **Example Results:**
+
 - Cloud-native system (AWS-only): **92%** compliant (AWS-inherited controls)
 - Hybrid system (on-prem + AWS): **76%** compliant (must implement on-prem controls)
 - Legacy system: **45%** compliant (requires significant upgrades)
@@ -225,8 +228,10 @@ See [aws-config-mapping.md](aws-config-mapping.md) for 50+ AWS Config rules → 
 ## Common FedRAMP Failures & Fixes
 
 ### ❌ Failure: No audit logging
+
 **Finding:** AU-2, AU-11 NON_COMPLIANT
 **Fix:** Enable CloudTrail + S3 Object Lock
+
 ```bash
 aws cloudtrail create-trail --name org-trail --s3-bucket-name my-logs-bucket
 aws s3api put-object-lock-configuration --bucket my-logs-bucket \
@@ -234,8 +239,10 @@ aws s3api put-object-lock-configuration --bucket my-logs-bucket \
 ```
 
 ### ❌ Failure: Public S3 buckets
+
 **Finding:** SC-7 NON_COMPLIANT
 **Fix:** Block public access
+
 ```bash
 aws s3api put-public-access-block --bucket my-bucket \
   --public-access-block-configuration \
@@ -243,8 +250,10 @@ aws s3api put-public-access-block --bucket my-bucket \
 ```
 
 ### ❌ Failure: Root account access
+
 **Finding:** AC-2, AC-6 NON_COMPLIANT
 **Fix:** Deny root programmatic access + enable MFA
+
 ```bash
 # Attach SCP to deny root access
 aws organizations put-policy --content '{
@@ -263,8 +272,10 @@ aws organizations put-policy --content '{
 ```
 
 ### ❌ Failure: Unencrypted data at rest
+
 **Finding:** SC-28 NON_COMPLIANT
 **Fix:** Enable KMS encryption
+
 ```bash
 # RDS
 aws rds modify-db-instance --db-instance-identifier mydb \
@@ -296,6 +307,7 @@ AU-11,Audit_Retention,CloudTrail_Logs_Only_30Days,2026-06-20,SecOpsTeam,Planned,
 ```
 
 **Tracking Dashboard:**
+
 ```bash
 # Generate POA&M progress report
 python scan.py --framework nist_800_53_moderate --output-format poam > poam_status.csv
@@ -315,6 +327,7 @@ When engaging a 3PAO for independent assessment:
 5. **Week 5+:** Final assessment & authorization
 
 **Evidence to provide:**
+
 ```
 ✓ Scanner results (HTML/JSON)
 ✓ CloudTrail logs (7 days sample)

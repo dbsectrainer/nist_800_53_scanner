@@ -69,6 +69,7 @@ This dashboard provides **FedRAMP Moderate & High baseline** compliance monitori
 - **3PAO-ready reports** — Export compliance snapshots for assessments
 
 **Setup for FedRAMP:**
+
 1. Run scanner against AWS accounts (see [fedramp-baseline.md](../docs/fedramp-baseline.md))
 2. Configure dashboard with compliance baseline (Moderate/High)
 3. Integrate with AWS Config for continuous monitoring
@@ -81,6 +82,7 @@ This dashboard provides **FedRAMP Moderate & High baseline** compliance monitori
 For **enterprise-scale** compliance monitoring, integrate with Grafana:
 
 ### Prerequisites
+
 - Grafana >= 9.0
 - Prometheus (for metrics)
 - Docker (optional)
@@ -88,6 +90,7 @@ For **enterprise-scale** compliance monitoring, integrate with Grafana:
 ### Setup Steps
 
 **Step 1: Start Prometheus**
+
 ```bash
 # Create prometheus.yml config
 cat > prometheus.yml << 'EOF'
@@ -106,6 +109,7 @@ docker run -d -p 9090:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.y
 ```
 
 **Step 2: Configure Scanner Metrics Export**
+
 ```python
 # dashboard/app.py - add Prometheus endpoint
 from prometheus_client import Counter, Gauge, start_http_server
@@ -119,6 +123,7 @@ start_http_server(8000)
 ```
 
 **Step 3: Add Grafana Data Source**
+
 ```
 1. Navigate to http://localhost:3000 (Grafana)
 2. Configuration → Data Sources → Add
@@ -128,6 +133,7 @@ start_http_server(8000)
 ```
 
 **Step 4: Create Grafana Dashboards**
+
 ```json
 {
   "dashboard": {
@@ -135,15 +141,15 @@ start_http_server(8000)
     "panels": [
       {
         "title": "Compliance Score",
-        "targets": [{"expr": "nist_compliance_score"}],
+        "targets": [{ "expr": "nist_compliance_score" }],
         "type": "gauge",
-        "gauge": {"min": 0, "max": 100}
+        "gauge": { "min": 0, "max": 100 }
       },
       {
         "title": "Controls Status",
         "targets": [
-          {"expr": "nist_controls_compliant", "legendFormat": "Compliant"},
-          {"expr": "nist_controls_failed", "legendFormat": "Non-Compliant"}
+          { "expr": "nist_controls_compliant", "legendFormat": "Compliant" },
+          { "expr": "nist_controls_failed", "legendFormat": "Non-Compliant" }
         ],
         "type": "stat"
       }
@@ -153,6 +159,7 @@ start_http_server(8000)
 ```
 
 **Step 5: Set Up Alerting**
+
 ```
 Alert Rules (in Grafana):
 - If compliance_score < 80% → Warn
@@ -192,11 +199,11 @@ cat > /etc/nginx/sites-available/scanner << 'EOF'
 server {
     listen 443 ssl;
     server_name compliance.example.gov;
-    
+
     ssl_certificate /etc/ssl/certs/cert.pem;
     ssl_certificate_key /etc/ssl/private/key.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
-    
+
     location / {
         proxy_pass http://localhost:8000;
         proxy_set_header Host $host;
