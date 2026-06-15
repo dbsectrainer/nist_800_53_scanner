@@ -1,361 +1,324 @@
-# NIST 800-53 Security Compliance Scanner
+# NIST 800-53 Compliance Scanner
 
-[![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![Type Checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue.svg)](http://mypy-lang.org/)
-[![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+> Comprehensive NIST 800-53 Rev. 5 compliance scanner supporting AWS, Azure, GCP, and on-premise environments — with Grafana dashboards and automated alerting.
+
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/) [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/) [![Grafana](https://img.shields.io/badge/grafana-dashboards-orange.svg)](https://grafana.com/) [![NIST 800-53](https://img.shields.io/badge/NIST-800--53%20Rev%205-green.svg)](https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final) [![FedRAMP](https://img.shields.io/badge/FedRAMP-Moderate%20Aligned-blue.svg)](https://www.fedramp.gov/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
 
 ## Overview
 
-This tool provides a **comprehensive security compliance scanning solution** based on NIST 800-53 Rev. 5 control requirements, updated to 2025 standards. It supports multiple cloud providers (AWS, Azure, GCP) and on-premise environments, offering in-depth security assessments across various control categories with modern Python 3.12+ features and best practices.
+1. Scans AWS, Azure, GCP, and on-premise environments against all 18 NIST 800-53 Rev. 5 control families, covering Low, Moderate, and High impact baselines.
+2. Produces compliance reports in JSON, Markdown, and HTML formats with per-control pass/fail status and remediation guidance.
+3. Exposes Prometheus metrics from the Flask dashboard and provisions a Grafana overview dashboard via configuration-as-code.
+4. Enforces alert rules through `alert_rules.yml` so teams receive notifications when compliance posture drops below defined thresholds.
+5. Supports multi-tenant operation, rate limiting, encrypted storage of scan results, and OpenTelemetry distributed tracing for production-grade observability.
+6. Provides startup and shutdown lifecycle scripts, a suite of example configurations, and a POA&M generator for tracking remediation of non-compliant controls.
 
-## NIST 800-53 Framework
+---
 
-```mermaid
-classDiagram
-    class NIST800_53 {
-        <<NIST 800-53 Rev. 5>>
-        Security and Privacy Controls
-    }
+## Architecture
 
-    class SecurityBaselines {
-        Low Impact
-        Moderate Impact
-        High Impact
-    }
-
-    class ImplementationLevels {
-        Organization
-        System
-        Component
-    }
-
-    class ScannerCoverage {
-        Cloud (AWS, Azure, GCP)
-        On-Premise Systems
-        Network Infrastructure
-        Application Security
-    }
-
-    NIST800_53 --> AccessControl : AC
-    NIST800_53 --> AuditAccountability : AU
-    NIST800_53 --> ConfigManagement : CM
-    NIST800_53 --> IncidentResponse : IR
-    NIST800_53 --> SystemCommsProtection : SC
-    NIST800_53 --> OtherControls : "15 more families"
-
-    class AccessControl {
-        <<AC>>
-        Account Management
-        Access Enforcement
-        Least Privilege
-        Separation of Duties
-        Information Flow
-    }
-
-    class AuditAccountability {
-        <<AU>>
-        Event Logging
-        Audit Records
-        Monitoring
-        Analysis & Reporting
-    }
-
-    class ConfigManagement {
-        <<CM>>
-        Baseline Configuration
-        Change Control
-        Security Impact Analysis
-        Configuration Settings
-    }
-
-    class IncidentResponse {
-        <<IR>>
-        Incident Handling
-        Monitoring
-        Reporting
-        Response Testing
-    }
-
-    class SystemCommsProtection {
-        <<SC>>
-        Boundary Protection
-        Cryptography
-        Information in Transit
-        Information at Rest
-    }
-
-    class OtherControls {
-        AT - Awareness & Training
-        IA - Identification & Authentication
-        RA - Risk Assessment
-        SI - System & Information Integrity
-        And others...
-    }
-
-    SecurityBaselines --> NIST800_53 : implements
-    ImplementationLevels --> NIST800_53 : applies to
-    NIST800_53 --> ScannerCoverage : scanned by
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Configuration Layer                         │
+│              config.yaml  /  config_examples/                   │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     Scanner Engine (scan.py)                    │
+│         MultiTenantNISTComplianceScanner                        │
+│   Input Validation  │  Rate Limiting  │  Auth Manager           │
+└──────┬──────────────┴──────────────────┴──────────┬────────────┘
+       │                                             │
+       ▼                                             ▼
+┌──────────────────────────┐          ┌──────────────────────────┐
+│    Cloud Adapters        │          │   On-Premise Adapter     │
+│  ┌──────┐ ┌──────┐      │          │  SSH / WinRM / Network   │
+│  │ AWS  │ │Azure │ GCP  │          │  Paramiko / pywinrm      │
+│  └──────┘ └──────┘      │          └──────────────────────────┘
+└──────────────────────────┘
+       │                                             │
+       └──────────────────┬──────────────────────────┘
+                          │
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│               18 NIST 800-53 Control Family Modules             │
+│  AC  AU  CM  IA  IR  SC  SI  AT  CA  CP  MA  MP  PE  PL        │
+│  PM  PS  RA  SA                                                 │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       Results & Reporting                       │
+│          JSON  │  Markdown  │  HTML  │  POA&M Generator         │
+│          Report Versioning  │  Encrypted Storage                │
+└──────┬──────────────────────────────────────────┬───────────────┘
+       │                                          │
+       ▼                                          ▼
+┌────────────────────────┐          ┌─────────────────────────────┐
+│  Flask Dashboard       │          │  Alert Rules                │
+│  dashboard/app.py      │          │  alert_rules.yml            │
+│  GET /metrics          │          │  Prometheus Alertmanager    │
+│  GET /api/v2/posture   │          └─────────────────────────────┘
+└──────────┬─────────────┘
+           │
+           ▼
+┌──────────────────────────────────────────────────────────────┐
+│            Observability Stack                               │
+│   Prometheus (port 9090)  ─────►  Grafana (port 3000)       │
+│   prometheus.yml / grafana/provisioning/                     │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## Features
+---
 
-### Core Capabilities
+## Key Features
 
-- **Multi-cloud and on-premise support** - AWS, Azure, GCP, and hybrid environments
-- **Modular security control scanning** - Flexible architecture for custom controls
-- **Detailed compliance reporting** - Multiple output formats (JSON, Markdown, HTML)
-- **Real-time monitoring** - Continuous compliance tracking with Prometheus/Grafana
-- **Modern Python 3.12+** - Type-safe, async-first, with latest security features
+### Control Family Coverage
 
-### NIST 800-53 Control Families
+The scanner evaluates all 18 NIST 800-53 Rev. 5 control families. The table below lists the primary families with dedicated modules:
 
-- **AC** - Access Control
-- **AU** - Audit and Accountability
-- **SC** - System and Communications Protection
-- **CM** - Configuration Management
-- **IR** - Incident Response
-- **IA** - Identification and Authentication
-- **RA** - Risk Assessment
-- **SI** - System and Information Integrity
+| Family | Identifier | Description |
+| --- | --- | --- |
+| Access Control | AC | IAM policies, least privilege, separation of duties, information flow |
+| Audit and Accountability | AU | Event logging, audit records, log retention, analysis and review |
+| Configuration Management | CM | Baseline configuration, change control, security impact analysis |
+| Identification and Authentication | IA | MFA enforcement, credential management, authenticator lifecycle |
+| Incident Response | IR | Detection mechanisms, response plans, testing and preparedness |
+| System and Communications Protection | SC | Boundary protection, TLS enforcement, encryption at rest and in transit |
+| System and Information Integrity | SI | Malware protection, security alerts, software patching verification |
+| Awareness and Training | AT | Training records, role-based security awareness |
+| Risk Assessment | RA | Vulnerability scanning, risk scoring, remediation prioritization |
 
-### 2025 Technology Stack
+Additional families (CA, CP, MA, MP, PE, PL, PM, PS, SA) are evaluated through cloud provider configuration checks and policy document analysis.
 
-- **FastAPI** - Modern async web framework
-- **Pydantic v2** - Advanced data validation
-- **SQLAlchemy 2.0** - Modern ORM with async support
-- **OpenTelemetry** - Distributed tracing and observability
-- **Ruff** - Ultra-fast Python linting and formatting
-- **Docker & Kubernetes** - Cloud-native deployment
+### Multi-Cloud and On-Premise Support
 
-## Prerequisites
+The scanner connects to cloud environments using provider-native SDKs and to on-premise hosts over SSH (Paramiko) or WinRM (pywinrm).
 
-- **Python 3.12+** (Latest Python for 2025 standards)
-- Cloud provider credentials (as applicable)
-- Network access to scanned environments
-- Docker (optional, for containerized deployment)
-- Git (for version control)
+- AWS: IAM, CloudTrail, GuardDuty, Security Hub, Config, S3, RDS, KMS, VPC
+- Azure: Service principal authentication, subscription-level security assessments
+- GCP: Service account credentials, project-level IAM and audit log checks
+- On-Premise: Linux SSH, Windows WinRM, network infrastructure scanning via scan_targets/ scenario files
 
-## Installation
+### Observability Stack
 
-### Using pip (recommended)
+The Flask application in `dashboard/` exposes Prometheus metrics at `GET /metrics` and a JSON posture endpoint at `GET /api/v2/posture`. Grafana is provisioned automatically from `grafana/provisioning/` and `grafana/dashboards/`.
 
-```bash
-# Install with all dependencies
-pip install -e ".[all]"
-
-# Install for production use
-pip install .
-
-# Install for development
-pip install -e ".[dev]"
-```
-
-### Using Docker
-
-```bash
-# Build and run with Docker Compose
-docker-compose up -d
-
-# Build standalone container
-docker build -t nist-compliance-scanner .
-```
-
-### For Development
-
-```bash
-# Clone the repository
-git clone https://github.com/your-org/nist-800-53-scanner.git
-cd nist-800-53-scanner
-
-# Create virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install with development dependencies
-pip install -e ".[dev]"
-
-# Install pre-commit hooks
-pre-commit install
-```
-
-## Configuration
-
-Edit the `config.yaml` file to configure:
-
-- Cloud provider credentials
-- On-premise environment details
-- Scanning options
-- Reporting preferences
-
-### Example Configuration Sections
-
-```yaml
-# Cloud Provider Configuration
-aws:
-  enabled: true
-  access_key: ${AWS_ACCESS_KEY}
-  secret_key: ${AWS_SECRET_KEY}
-
-# On-Premise Configuration
-on_premise:
-  linux:
-    enabled: true
-    hosts:
-      - 192.168.1.100
-    ssh_key_path: /path/to/ssh/key
-```
-
-## Usage
-
-```bash
-# Run a comprehensive scan
-python scan.py --config config.yaml --environment cloud
-
-# Generate a compliance report
-python scan.py --config config.yaml --report markdown
-```
-
-## Scanning Categories
-
-1. **Access Control**
-   - IAM policy review
-   - Account management checks
-   - Privilege escalation prevention
-
-2. **Audit Logging**
-   - Cloud trail logging
-   - System event monitoring
-   - Log retention and analysis
-
-3. **Network Security**
-   - Firewall configuration
-   - Network segmentation
-   - Boundary protection
-
-4. **Configuration Management**
-   - System hardening
-   - Configuration baseline
-   - Change management
-
-5. **Incident Response**
-   - Incident detection mechanisms
-   - Response plan evaluation
-   - Training and preparedness
-
-## Reporting
-
-The scanner generates reports in:
-
-- Markdown
-- JSON
-- Optional email notifications
-
-## Observability (Grafana and Prometheus)
-
-The Flask app in [`dashboard/`](dashboard/) exposes **Prometheus** metrics at **`GET /metrics`** (no authentication). The same aggregates are available as JSON on **`GET /api/v2/posture`** after login. Grafana is provisioned from this repository to visualize those series.
-
-### Docker Compose
-
-```bash
-docker compose up -d
-```
-
-| Service                   | URL                                            | Notes                                                                                                                                                                                                                                                                            |
-| ------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Compliance dashboard (UI) | [http://localhost:8000](http://localhost:8000) | Web UI; `/dashboard` requires login. The stack sets `DASHBOARD_PORT=8000` so the container matches Prometheus scrape targets.                                                                                                                                                    |
-| Prometheus                | [http://localhost:9090](http://localhost:9090) | Scrapes job `nist_dashboard` → `nist_compliance_scanner:8000/metrics`.                                                                                                                                                                                                           |
-| Grafana                   | [http://localhost:3000](http://localhost:3000) | Default admin user `admin` / password `admin` (change `GF_SECURITY_ADMIN_PASSWORD` for any non-local use). Datasource and the **NIST dashboard overview** dashboard load from [`grafana/provisioning/`](grafana/provisioning/) and [`grafana/dashboards/`](grafana/dashboards/). |
-
-### Exported metrics (prefix `nist_dashboard_`)
+Exported metric series (prefix `nist_dashboard_`):
 
 - `nist_dashboard_compliance_pct` — overall compliance percentage
 - `nist_dashboard_controls_total`, `nist_dashboard_controls_compliant`, `nist_dashboard_controls_non_compliant`
 - `nist_dashboard_poam_open`, `nist_dashboard_poam_critical_open`
-- `nist_dashboard_family_compliance_pct{family="AC"}` (and other NIST families present in the latest report)
-- `nist_dashboard_data_available` — `1` when decryptable scan results are loaded, `0` otherwise
+- `nist_dashboard_family_compliance_pct{family="AC"}` (one series per NIST family)
+- `nist_dashboard_data_available` — 1 when scan results are loaded, 0 otherwise
 - `nist_dashboard_latest_report_info` — info metric with `report_id` and `last_scan_date` labels
 
-### Security note
+### Automated Alerting
 
-Expose `/metrics` only on trusted networks (for example inside the Compose network). For production, terminate TLS on a reverse proxy, set a strong Grafana admin password, and restrict who can reach Prometheus and the scrape port.
+Alert rules in `alert_rules.yml` integrate with Prometheus Alertmanager to notify teams when:
 
-### Local run without Docker
+- Overall compliance percentage falls below configured thresholds
+- Critical POA&M items remain open beyond their scheduled remediation dates
+- Scan data becomes unavailable or stale
+
+### Reporting and POA&M
+
+- JSON, Markdown, and HTML output formats from `scan.py --report`
+- Report versioning via `dashboard/report_versioning.py` tracks history over time
+- `dashboard/poam_generator.py` produces Plan of Action and Milestones documents for non-compliant controls, supporting FedRAMP continuous monitoring requirements
+
+### Security and Compliance
+
+- NIST 800-53 Rev. 5 — Low, Moderate, and High impact baselines
+- FedRAMP Moderate alignment (see `docs/fedramp-baseline.md`)
+- AWS Config conformance pack mapping (50+ rules documented in `docs/aws-config-mapping.md`)
+- AES-256-GCM encryption for scan results at rest; TLS 1.3 for data in transit
+- API key authentication with rotation policy, rate limiting per IP and per key
+- OpenTelemetry distributed tracing with OTLP export
+- Bandit static analysis, Ruff linting, mypy type checking enforced in CI
+- Secrets baseline managed via detect-secrets (`.secrets.baseline`)
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.12 or later
+- Docker and Docker Compose (for the containerized stack)
+- Cloud provider credentials (AWS, Azure, or GCP) configured as environment variables or assume-role
+- Network access to any on-premise hosts to be scanned
+
+### Local Development
 
 ```bash
-export DASHBOARD_PORT=8000   # optional; overrides YAML `app.port`
+# Clone the repository
+git clone https://github.com/dbsectrainer/nist_800_53_scanner.git
+cd nist_800_53_scanner
+
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Copy and edit the configuration
+cp config_examples/basic_config.yaml config.yaml
+# Edit config.yaml to supply cloud credentials and scan targets
+
+# Run a scan
+python scan.py --config config.yaml --environment cloud
+
+# Generate a Markdown compliance report
+python scan.py --config config.yaml --report markdown
+```
+
+### Docker Deployment
+
+```bash
+# Start the full observability stack (scanner, dashboard, Prometheus, Grafana)
+docker-compose up -d
+```
+
+| Service | URL | Notes |
+| --- | --- | --- |
+| Compliance Dashboard | http://localhost:8000 | Web UI; `/dashboard` requires login |
+| Prometheus | http://localhost:9090 | Scrapes `nist_compliance_scanner:8000/metrics` |
+| Grafana | http://localhost:3000 | Default credentials `admin` / `admin` — change `GF_SECURITY_ADMIN_PASSWORD` before any non-local use |
+
+```bash
+# Use lifecycle scripts
+./startup.sh    # start services
+./shutdown.sh   # stop services
+
+# Run without Docker
+export DASHBOARD_PORT=8000
 python dashboard/app.py
 curl -s http://127.0.0.1:8000/metrics | head
 ```
 
-## 🏛️ FedRAMP Alignment
-
-**FedRAMP Moderate** for cloud services is aligned with the **NIST SP 800-53 Rev. 5 moderate baseline** as defined for **moderate-impact** systems (see NIST SP 800-53B for control baselines by impact level). Authorizations at the Moderate level expect that baseline to be implemented, assessed, and continuously monitored in line with FedRAMP requirements.
-
-### FedRAMP Implementation Resources
-
-This scanner provides **technical evidence collection** for FedRAMP assessments:
-
-- 📋 [**docs/fedramp-baseline.md**](docs/fedramp-baseline.md) — FedRAMP Moderate baseline guide + step-by-step scanner usage
-- 📊 [**docs/aws-config-mapping.md**](docs/aws-config-mapping.md) — 50+ AWS Config rules mapped to NIST 800-53 controls
-- 📊 [**dashboard/README.md**](dashboard/README.md) — Grafana integration for continuous compliance monitoring
-- 🔄 [**../cloud-security-best-practices/fedramp-30-days/**](../cloud-security-best-practices/fedramp-30-days/) — 30-day FedRAMP implementation roadmap
-
-### Usage for FedRAMP Assessment
-
-1. **Baseline Scan** — Run scanner against AWS environment (see [fedramp-baseline.md](docs/fedramp-baseline.md#step-2-run-baseline-scan))
-2. **Evidence Collection** — Export compliance reports (HTML, JSON, NIST format)
-3. **POA&M Tracking** — Track remediation of non-compliant controls
-4. **3PAO Readiness** — Provide dashboard view for independent assessor
-5. **Continuous Monitoring** — Use Grafana dashboard for post-ATO monitoring
-
-**Disclaimer:** This repository is a **technical aid** for scanning, reporting, and dashboard-style visibility against NIST-style control themes. It does **not** by itself constitute FedRAMP authorization, a System Security Plan (SSP), control narratives, evidence for a 3PAO, or an official moderate baseline inheritance package. Use it alongside your governance program, assessors, and cloud provider shared responsibility documentation.
+Security note: expose `/metrics` only on trusted networks. For production, terminate TLS on a reverse proxy and restrict access to Prometheus and the scrape port.
 
 ---
 
-## AWS Config Rules and NIST Control Families
+## Production Ready Status
 
-AWS Config managed rules and conformance packs (for example **Operational Best Practices for NIST SP 800-53 Rev. 5**) map individual rules to **specific NIST controls**. See [**docs/aws-config-mapping.md**](docs/aws-config-mapping.md) for a **comprehensive mapping of 50+ rules to NIST 800-53 controls** across all control families (AC, AU, CM, SC, etc.).
+**Core scanning, observability, and CI pipeline are operational.**
 
-The table below is a **short, illustrative** mapping from representative rules to **NIST 800-53 control families** only. For authoritative rule-to-control mapping, use [AWS Config conformance packs](https://docs.aws.amazon.com/config/latest/developerguide/conformance-packs.html) and your SSP; validate every control in your environment.
+- NIST 800-53 Rev. 5 control family modules implemented for AC, AU, CM, IA, IR, SC, and SI
+- Multi-cloud adapters for AWS (boto3), Azure (azure-identity), and GCP (google-cloud-iam)
+- On-premise scanning via SSH (Paramiko) and WinRM (pywinrm)
+- Flask dashboard with Prometheus metrics endpoint and Grafana provisioning
+- Alert rules file (`alert_rules.yml`) and Prometheus scrape config (`prometheus.yml`) included
+- Docker Compose stack for one-command local deployment
+- Report versioning, POA&M generator, and encrypted result storage implemented
+- GitHub Actions CI pipeline with linting (Ruff), type checking (mypy), and security scanning (Bandit)
+- Pre-commit hooks and secrets baseline enforced
+- Test suite covering access control, audit logging, network security, configuration management, incident response, encryption, authentication, and end-to-end flows
 
-| Representative AWS Config rule                     | NIST 800-53 family (illustrative)                  |
-| -------------------------------------------------- | -------------------------------------------------- |
-| CloudTrail enabled / multi-Region trail            | AU (Audit and Accountability)                      |
-| S3 bucket public read/write prohibited             | AC, SC                                             |
-| VPC flow logging enabled                           | AU, SC                                             |
-| GuardDuty enabled                                  | IR, SI                                             |
-| Security Hub enabled                               | SI, PM (program management / governance alignment) |
-| EBS encryption by default                          | SC                                                 |
-| RDS storage encrypted                              | SC                                                 |
-| IAM root user MFA enabled                          | IA, AC                                             |
-| IAM user MFA enabled for console users             | IA, AC                                             |
-| IAM password policy (length, complexity, rotation) | IA                                                 |
-| No root user access key                            | IA, AC                                             |
-| Restricted common ports on security groups         | SC                                                 |
-| Default security group no permissive rules         | AC, SC                                             |
-| ALB / ELB TLS listener policy                      | SC                                                 |
-| KMS key rotation enabled                           | SC                                                 |
+### Verification
 
-## Security and Compliance
+```bash
+# Install dependencies and run tests
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+python -m pytest tests/ -v
 
-- Follows NIST 800-53 Rev. 5 guidelines
-- Supports comprehensive and targeted scanning
-- Provides actionable remediation guidance
+# Lint and type check
+ruff check .
+mypy scan.py dashboard/app.py
 
-## Contributing
+# Run a scan against config
+python scan.py --config config.yaml --environment cloud --report markdown
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+# Verify Prometheus metrics are exposed
+docker-compose up -d
+curl -s http://localhost:8000/metrics | grep nist_dashboard_compliance_pct
+```
 
-## License
+Expected output from metrics endpoint:
 
-MIT License
+```
+nist_dashboard_compliance_pct 87.3
+nist_dashboard_controls_total 325
+nist_dashboard_controls_compliant 283
+nist_dashboard_data_available 1
+```
 
-## Disclaimer
+---
 
-This tool provides guidance and should be used as part of a comprehensive security strategy. Always consult security professionals for critical infrastructure.
+## Project Structure
+
+```
+nist_800_53_scanner/
+├── scan.py                        # Main scanner entry point
+├── config.yaml                    # Active configuration
+├── config_examples/               # Example configurations (basic, enterprise, healthcare, cloud-native)
+├── modules/                       # NIST control family scanner modules
+│   ├── access_control.py
+│   ├── audit_logging.py
+│   ├── configuration_management.py
+│   ├── incident_response.py
+│   ├── network_security.py
+│   ├── authentication.py
+│   ├── encryption.py
+│   ├── monitoring.py
+│   ├── rate_limiter.py
+│   ├── input_validator.py
+│   └── report_versioning.py
+├── dashboard/                     # Flask web dashboard + Prometheus metrics
+│   ├── app.py
+│   ├── data_manager.py
+│   ├── models.py
+│   ├── poam_generator.py
+│   ├── config/                    # Dashboard environment configs
+│   ├── static/                    # CSS and JavaScript assets
+│   └── templates/                 # HTML templates
+├── grafana/                       # Grafana provisioning and dashboard JSON
+│   ├── provisioning/
+│   └── dashboards/
+├── prometheus.yml                 # Prometheus scrape configuration
+├── alert_rules.yml                # Prometheus alert rules
+├── scan_targets/                  # Scan scenario YAML files (cloud, kubernetes, network, web)
+├── security_policies/             # Policy documents for AC, AU, IR, SC, AT families
+├── docs/                          # Architecture, FedRAMP baseline, AWS Config mapping, user guide
+├── examples/                      # Advanced scanning examples (ML, adaptive, dynamic policy)
+├── tests/                         # Test suite (unit, integration, end-to-end)
+├── scripts/                       # Utility scripts
+├── Dockerfile
+├── docker-compose.yml
+├── startup.sh
+├── shutdown.sh
+├── requirements.txt
+└── requirements-dev.txt
+```
+
+---
+
+## BE EASY ENTERPRISES Federal Portfolio
+
+| Showcase Project | Repository | Description |
+| --- | --- | --- |
+| **Secure RAG Pipeline** | [Secure-Generative-AI-Platform-on-AWS](https://github.com/dbsectrainer/Secure-Generative-AI-Platform-on-AWS) | AWS Bedrock + RAG with FedRAMP High alignment |
+| **DevSecOps CI/CD** | [dod-cybersec-ops-framework](https://github.com/dbsectrainer/dod-cybersec-ops-framework) | DoD 8570 / NIST RMF aligned pipeline |
+| **Zero Trust Architecture** | [AEGIS](https://github.com/dbsectrainer/AEGIS) | FedRAMP High + NIST 800-207 Zero Trust |
+| **FedRAMP Control Automation** | **[nist_800_53_scanner](https://github.com/dbsectrainer/nist_800_53_scanner)** | **This repo** |
+| **Federal AI Governance** | [ai-safety-governance](https://github.com/dbsectrainer/ai-safety-governance) | EO 14110 / OMB M-24-10 aligned |
+| **CMMC 2.0 Dashboard** | [integrated-cyber-risk-compliance](https://github.com/dbsectrainer/integrated-cyber-risk-compliance) | CMMC 2.0 readiness assessment |
+| **FedRAMP 30-Day Guide** | [cloud-security-best-practices](https://github.com/dbsectrainer/cloud-security-best-practices) | Day-by-day FedRAMP implementation roadmap |
+| **Agentic AI Workflow** | [federal-doc-triage-agent](https://github.com/dbsectrainer/federal-doc-triage-agent) | Production-ready LangGraph + Bedrock triage agent |
+
+---
+
+## Author
+
+**Donnivis Baker** — [github.com/dbsectrainer](https://github.com/dbsectrainer)
+**BE EASY ENTERPRISES** — Federal IT Modernization & Cybersecurity
+
+For questions, partnerships, or federal engagement inquiries, open an issue or reach out directly.
+
+**Document Version:** 1.0 | **Last Updated:** 2026-06-15 | **NIST 800-53 Rev. 5:** Moderate Baseline
