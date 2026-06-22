@@ -34,7 +34,7 @@ classifiers = [
 
 dependencies = [
     # Core Cloud Providers (latest stable versions)
-    "boto3>=1.35.80",
+    "boto3>=1.43.34",
     "azure-identity>=1.19.0",
     "azure-mgmt-security>=7.0.0",
     "google-cloud-iam>=2.17.0",
@@ -90,7 +90,7 @@ dependencies = [
 
     # Serverless & Cloud Functions
     "google-cloud-functions>=1.17.0",
-    "aws-lambda-powertools>=3.3.0",
+    "aws-lambda-powertools>=3.29.0",
 
     # Message Queues
     "aiokafka>=0.12.0",
@@ -122,7 +122,7 @@ dev = [
     "types-redis>=4.6.0.20241004",
     "types-requests>=2.32.0.20241016",
     "types-pyyaml>=6.0.12.20240917",
-    "boto3-stubs[essential]>=1.35.80",
+    "boto3-stubs[essential]>=1.43.34",
 
     # Security Scanning
     "bandit[toml]>=1.8.0",
@@ -158,7 +158,7 @@ cloud = [
     "kubernetes>=31.0.0",
     "docker>=7.1.0",
     "google-cloud-functions>=1.17.0",
-    "aws-lambda-powertools>=3.3.0",
+    "aws-lambda-powertools>=3.29.0",
 ]
 
 all = [
