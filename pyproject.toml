@@ -149,7 +149,7 @@ dev = [
     "freezegun>=1.5.1",
 
     # Development Tools
-    "pre-commit>=4.0.1",
+    "pre-commit>=4.6.0",
     "tox>=4.23.2",
     "nox>=2024.10.9",
 ]

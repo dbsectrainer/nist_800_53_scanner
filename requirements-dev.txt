@@ -54,7 +54,7 @@ uvicorn[standard]>=0.34.0
 httpx>=0.28.1
 
 # Development Workflow Tools
-pre-commit>=4.0.1
+pre-commit>=4.6.0
 tox>=4.23.2
 nox>=2024.10.9
 
