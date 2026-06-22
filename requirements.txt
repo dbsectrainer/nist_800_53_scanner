@@ -1,6 +1,6 @@
 # Core Cloud Providers (Latest 2025 versions)
 boto3>=1.35.80
-azure-identity>=1.19.0
+azure-identity>=1.25.3
 azure-mgmt-security>=7.0.0
 google-cloud-iam>=2.17.0
 
