@@ -139,7 +139,7 @@ dev = [
     "debugpy>=1.8.10",
 
     # Performance Profiling
-    "py-spy>=0.4.0",
+    "py-spy>=0.4.2",
     "memray>=1.15.0",
     "scalene>=1.5.49",
 
