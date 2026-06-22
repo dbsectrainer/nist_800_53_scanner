@@ -22,10 +22,10 @@ numpy>=2.2.0
 pandas>=2.2.3
 
 # Modern Web Framework (FastAPI with latest features)
-fastapi>=0.115.6
-uvicorn[standard]>=0.34.0
-pydantic>=2.10.3
-pydantic-settings>=2.7.0
+fastapi>=0.138.0
+uvicorn[standard]>=0.49.0
+pydantic>=2.13.4
+pydantic-settings>=2.14.2
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 python-multipart>=0.0.20
