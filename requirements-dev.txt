@@ -55,7 +55,7 @@ httpx>=0.28.1
 
 # Development Workflow Tools
 pre-commit>=4.0.1
-tox>=4.23.2
+tox>=4.55.1
 nox>=2024.10.9
 
 # Additional Development Tools
