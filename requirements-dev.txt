@@ -1,4 +1,4 @@
-# Development Dependencies - Updated for 2025 Standards
+# Development Dependencies - Updated for 2026 Standards
 -r requirements.txt
 
 # Testing Framework (Latest pytest ecosystem)
@@ -10,7 +10,7 @@ pytest-mock>=3.14.0
 coverage[toml]>=7.6.9
 hypothesis>=6.122.3
 
-# Code Quality & Linting - Ruff is the modern standard for 2025
+# Code Quality & Linting - Ruff is the modern standard for 2026
 ruff>=0.8.4
 
 # Type Checking (Multiple type checkers for comprehensive coverage)
@@ -39,10 +39,11 @@ myst-parser>=4.0.0
 ipdb>=0.13.13
 debugpy>=1.8.10
 
-# Performance Profiling (Advanced profilers for 2025)
+# Performance Profiling (Advanced profilers for 2026)
 py-spy>=0.4.0
 memray>=1.15.0
 scalene>=1.5.49
+memory-profiler>=0.61.0
 
 # Mocking and Testing Utilities
 responses>=0.25.3

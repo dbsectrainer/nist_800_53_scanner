@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
 import logging
-import os
-import subprocess
-import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Dict, List, Optional
 
-import boto3
-import paramiko
-from azure.identity import DefaultAzureCredential
 
 try:
     import winrm  # type: ignore[import-untyped]
@@ -27,7 +19,7 @@ from .windows_powershell import WindowsPowerShellScanner
 
 
 class AccessControlScanner:
-    def __init__(self, config: Dict):
+    def __init__(self, config: dict):
         """
         Initialize Access Control Scanner with advanced security checks
 
@@ -50,7 +42,7 @@ class AccessControlScanner:
 
     # Existing Linux-specific methods remain the same...
 
-    def _scan_windows_access_controls(self) -> List[Dict]:
+    def _scan_windows_access_controls(self) -> list[dict]:
         """
         Advanced Windows system access control scanning
 
@@ -85,13 +77,13 @@ class AccessControlScanner:
 
         return results
 
-    def scan(self) -> List[Dict]:
+    def scan(self) -> list[dict]:
         """
         Perform comprehensive access control scans.
 
         :return: List of access control scan results
         """
-        results: List[Dict] = []
+        results: list[dict] = []
 
         # Windows-specific access control checks
         try:

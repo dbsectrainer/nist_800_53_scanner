@@ -147,5 +147,5 @@ security:
 
 Configurations are templates. Always review and adapt to your specific security requirements.
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Configuration Examples Version**: 1.1.0

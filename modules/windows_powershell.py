@@ -2,11 +2,11 @@
 import subprocess
 import json
 import logging
-from typing import Dict, Any, List
+from typing import Any
 
 
 class WindowsPowerShellScanner:
-    def __init__(self, config: Dict):
+    def __init__(self, config: dict):
         """
         Initialize Windows PowerShell Scanner
 
@@ -22,7 +22,7 @@ class WindowsPowerShellScanner:
             "password_complexity": {"min_length": 12, "require_complexity": True},
         }
 
-    def execute_powershell_script(self, script: str) -> Dict[str, Any]:
+    def execute_powershell_script(self, script: str) -> dict[str, Any]:
         """
         Execute a PowerShell script and return parsed results
 
@@ -53,7 +53,7 @@ class WindowsPowerShellScanner:
             self.logger.error(f"PowerShell Execution Error: {e}")
             return {}
 
-    def scan_user_accounts(self) -> List[Dict[str, Any]]:
+    def scan_user_accounts(self) -> list[dict[str, Any]]:
         """
         Comprehensive Windows user account security scan
 
@@ -152,7 +152,7 @@ class WindowsPowerShellScanner:
 
         return results
 
-    def scan_system_access_controls(self) -> List[Dict[str, Any]]:
+    def scan_system_access_controls(self) -> list[dict[str, Any]]:
         """
         Comprehensive Windows system access control scanning
 

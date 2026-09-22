@@ -237,5 +237,5 @@ Contributors will be:
 - [NIST 800-53 Documentation](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf)
 - [Python Security Best Practices](https://python-security.readthedocs.io/)
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Contribution Guidelines Version**: 1.3.0

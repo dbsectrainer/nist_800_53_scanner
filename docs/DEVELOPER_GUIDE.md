@@ -4,8 +4,8 @@
 
 ### Prerequisites
 
-- Python 3.8+
-- Poetry (dependency management)
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/) (dependency management)
 - Git
 - Docker (optional)
 
@@ -16,15 +16,18 @@
 git clone https://github.com/your-org/nist-800-53-scanner.git
 cd nist-800-53-scanner
 
-# Install Poetry
-pip install poetry
+# Install uv (see https://docs.astral.sh/uv/getting-started/installation/)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install dependencies
-poetry install
+# Install dependencies from uv.lock (reproducible, includes dev extras)
+uv sync --frozen --extra dev
 
 # Setup pre-commit hooks
-poetry run pre-commit install
+uv run pre-commit install
 ```
+
+To add or update a dependency, edit `pyproject.toml` and run `uv lock` to
+refresh `uv.lock`, then commit both files together.
 
 ## 🔧 Project Structure
 
@@ -86,13 +89,13 @@ git push -u origin feature/your-feature-name
 
 ```bash
 # Run all tests
-poetry run pytest
+uv run pytest
 
 # Run specific module tests
-poetry run pytest tests/test_authentication.py
+uv run pytest tests/test_authentication.py
 
 # Generate coverage report
-poetry run pytest --cov=modules
+uv run pytest --cov=modules
 ```
 
 ### Test Coverage
@@ -172,11 +175,11 @@ def build_vulnerability_model():
 ### Dependency Management
 
 ```bash
-# Update dependencies
-poetry update
+# Update dependencies (refreshes uv.lock against the >= floors in pyproject.toml)
+uv lock --upgrade
 
 # Check for vulnerabilities
-poetry run safety check
+uv run safety check
 ```
 
 ## 📝 Documentation
@@ -236,5 +239,5 @@ def complex_function(param1: str, param2: int) -> Dict:
 - Collaborate openly
 - Maintain high-quality standards
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Developer Guide Version**: 1.1.0

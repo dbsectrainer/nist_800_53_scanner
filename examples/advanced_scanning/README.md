@@ -230,5 +230,5 @@ python threat_intelligence_integrator.py \
 - [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)
 - [MITRE ATT&CK Framework](https://attack.mitre.org/)
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Advanced Scanning Version**: 1.1.0

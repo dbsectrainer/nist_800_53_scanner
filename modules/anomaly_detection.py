@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-import numpy as np
 import pandas as pd
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 import logging
-from typing import List, Dict, Any
+from typing import Any
 
 class AnomalyDetector:
-    def __init__(self, config: Dict):
+    def __init__(self, config: dict):
         """
         Initialize Anomaly Detection module
         
@@ -23,7 +22,7 @@ class AnomalyDetector:
             'random_state': 42
         }
 
-    def _prepare_security_data(self, scan_results: List[Dict[str, Any]]) -> pd.DataFrame:
+    def _prepare_security_data(self, scan_results: list[dict[str, Any]]) -> pd.DataFrame:
         """
         Prepare security scan data for anomaly detection
         
@@ -63,7 +62,7 @@ class AnomalyDetector:
         
         return 0
 
-    def detect_security_anomalies(self, scan_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def detect_security_anomalies(self, scan_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Detect anomalies in security scan results using Isolation Forest
         

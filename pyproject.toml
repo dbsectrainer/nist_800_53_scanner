@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "nist-800-53-compliance-scanner"
 version = "1.0.0"
-description = "A comprehensive NIST 800-53 security compliance scanning platform for 2025"
+description = "A comprehensive NIST 800-53 security compliance scanning platform for 2026"
 readme = "README.md"
 requires-python = ">=3.12"
 license = {text = "MIT"}
@@ -38,7 +38,21 @@ dependencies = [
     "azure-identity>=1.19.0",
     "azure-mgmt-security>=7.0.0",
     "google-cloud-iam>=2.17.0",
+    "google-cloud-resource-manager>=1.14.0",
+    "msgraph-sdk>=1.14.0",
     "paramiko>=3.5.0",
+
+    # Dashboard
+    "flask>=3.1.0",
+    "flask-cors>=4.0.0",
+    "flask-limiter>=3.9.2",
+    "plotly>=5.18.0",
+
+    # Utilities
+    "validators>=0.28.0",
+    "psutil>=6.0.0",
+    "pywinrm>=0.4.3",
+    "pyzmq>=26.2.0",
 
     # Machine Learning & Data Processing
     "scikit-learn>=1.6.0",
@@ -142,6 +156,7 @@ dev = [
     "py-spy>=0.4.0",
     "memray>=1.15.0",
     "scalene>=1.5.49",
+    "memory-profiler>=0.61.0",
 
     # Mocking and Testing Utilities
     "responses>=0.25.3",

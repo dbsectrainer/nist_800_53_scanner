@@ -155,5 +155,5 @@ Each scenario typically includes:
 
 MIT License - Collaborative, open-source security scanning framework
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Scenarios Version**: 1.1.0

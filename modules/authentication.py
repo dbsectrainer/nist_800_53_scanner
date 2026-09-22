@@ -1,7 +1,5 @@
 import secrets
 import os
-import time
-from typing import Dict, Optional
 from datetime import datetime, timedelta
 from argon2 import PasswordHasher
 import json
@@ -11,7 +9,7 @@ import stat
 class AuthenticationManager:
     def __init__(self, credentials_file="credentials.json"):
         self.credentials_file = credentials_file
-        self.credentials: Dict[str, Dict] = self._load_credentials()
+        self.credentials: dict[str, dict] = self._load_credentials()
         self.ph = PasswordHasher()
         self.failed_attempts = {}
         self.MAX_ATTEMPTS = 5
@@ -24,18 +22,18 @@ class AuthenticationManager:
         if os.path.exists(self.credentials_file):
             os.chmod(self.credentials_file, stat.S_IRUSR | stat.S_IWUSR)
 
-    def _load_credentials(self) -> Dict[str, Dict]:
+    def _load_credentials(self) -> dict[str, dict]:
         """Load credentials from file or create if not exists."""
         if not os.path.exists(self.credentials_file):
             return {}
 
-        with open(self.credentials_file, "r") as f:
+        with open(self.credentials_file) as f:
             creds = json.load(f)
             # Migrate any old SHA256 hashed passwords to Argon2
             self._migrate_password_hashes(creds)
             return creds
 
-    def _migrate_password_hashes(self, creds: Dict):
+    def _migrate_password_hashes(self, creds: dict):
         """Migrate old SHA256 hashes to Argon2."""
         ph = PasswordHasher()
         for username, data in creds.items():
@@ -100,7 +98,7 @@ class AuthenticationManager:
         self._save_credentials()
         return True
 
-    def authenticate(self, username: str, password: str) -> Optional[str]:
+    def authenticate(self, username: str, password: str) -> str | None:
         """Authenticate a user and return API key if successful."""
         if not self._check_rate_limit(username):
             return None
@@ -134,7 +132,7 @@ class AuthenticationManager:
             self._record_failed_attempt(username)
             return None
 
-    def _create_session(self) -> Dict:
+    def _create_session(self) -> dict:
         """Create a new session."""
         return {
             "id": secrets.token_urlsafe(32),
@@ -142,7 +140,7 @@ class AuthenticationManager:
             "expires_at": (datetime.now() + self.SESSION_DURATION).isoformat(),
         }
 
-    def validate_api_key(self, api_key: str) -> Optional[Dict]:
+    def validate_api_key(self, api_key: str) -> dict | None:
         """Validate an API key and return user details."""
         for username, user_data in self.credentials.items():
             if user_data.get("api_key") == api_key:
@@ -162,7 +160,7 @@ class AuthenticationManager:
                 return {"username": username, "role": user_data["role"]}
         return None
 
-    def rotate_credentials(self, username: str) -> Optional[str]:
+    def rotate_credentials(self, username: str) -> str | None:
         """Rotate API key and session for a user."""
         if username not in self.credentials:
             return None

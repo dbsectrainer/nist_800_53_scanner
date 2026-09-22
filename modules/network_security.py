@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-from typing import List, Dict
 
 class NetworkSecurityScanner:
-    def __init__(self, config: Dict):
+    def __init__(self, config: dict):
         """
         Initialize Network Security Scanner
         
@@ -10,7 +9,7 @@ class NetworkSecurityScanner:
         """
         self.config = config
 
-    def scan(self) -> List[Dict]:
+    def scan(self) -> list[dict]:
         """
         Perform comprehensive network security scans
         
@@ -26,7 +25,7 @@ class NetworkSecurityScanner:
 
         return results
 
-    def _scan_cloud_network_security(self) -> List[Dict]:
+    def _scan_cloud_network_security(self) -> list[dict]:
         """
         Scan cloud provider network security configurations
         
@@ -60,7 +59,7 @@ class NetworkSecurityScanner:
 
         return results
 
-    def _scan_on_premise_network_security(self) -> List[Dict]:
+    def _scan_on_premise_network_security(self) -> list[dict]:
         """
         Scan on-premise network security configurations
         

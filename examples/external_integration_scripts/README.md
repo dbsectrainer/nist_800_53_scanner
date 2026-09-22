@@ -166,5 +166,5 @@ performance:
 - [Elasticsearch Documentation](https://www.elastic.co/guide/index.html)
 - [NIST 800-53 Compliance Guide](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-53r5.pdf)
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Integration Scripts Version**: 1.1.0

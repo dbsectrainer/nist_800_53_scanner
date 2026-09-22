@@ -1,7 +1,7 @@
 import os
 import yaml
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 from pathlib import Path
 from dataclasses import dataclass
 from functools import lru_cache
@@ -23,7 +23,7 @@ class SecurityHeaders:
 
 
 class ConfigurationManager:
-    def __init__(self, config_path: str, environment: Optional[str] = None):
+    def __init__(self, config_path: str, environment: str | None = None):
         """
         Initialize configuration manager.
 
@@ -36,7 +36,7 @@ class ConfigurationManager:
         self.config = self._load_configuration()
         self.security_headers = SecurityHeaders()
 
-    def _load_configuration(self) -> Dict[str, Any]:
+    def _load_configuration(self) -> dict[str, Any]:
         """
         Load configuration files with environment-specific overrides.
 
@@ -52,7 +52,7 @@ class ConfigurationManager:
         # Merge configurations
         return self._deep_merge(base_config, env_config)
 
-    def _load_yaml(self, filename: str, default: Dict) -> Dict:
+    def _load_yaml(self, filename: str, default: dict) -> dict:
         """
         Safely load YAML configuration file.
 
@@ -68,13 +68,13 @@ class ConfigurationManager:
             if not config_file.exists():
                 return default
 
-            with open(config_file, "r") as f:
+            with open(config_file) as f:
                 return yaml.safe_load(f) or default
         except Exception as e:
             print(f"Error loading configuration {filename}: {str(e)}")
             return default
 
-    def _deep_merge(self, dict1: Dict, dict2: Dict) -> Dict:
+    def _deep_merge(self, dict1: dict, dict2: dict) -> dict:
         """
         Deep merge two dictionaries.
 
@@ -100,7 +100,7 @@ class ConfigurationManager:
         """Check if running in production environment."""
         return self.environment == "production"
 
-    def get_security_headers(self) -> Dict[str, str]:
+    def get_security_headers(self) -> dict[str, str]:
         """
         Get security headers based on environment.
 
@@ -128,7 +128,7 @@ class ConfigurationManager:
 
         return headers
 
-    def get_database_config(self) -> Dict[str, Any]:
+    def get_database_config(self) -> dict[str, Any]:
         """
         Get database configuration for current environment.
 
@@ -137,7 +137,7 @@ class ConfigurationManager:
         """
         return self.config.get("database", {})
 
-    def get_security_config(self) -> Dict[str, Any]:
+    def get_security_config(self) -> dict[str, Any]:
         """
         Get security configuration for current environment.
 
@@ -146,7 +146,7 @@ class ConfigurationManager:
         """
         return self.config.get("security", {})
 
-    def get_logging_config(self) -> Dict[str, Any]:
+    def get_logging_config(self) -> dict[str, Any]:
         """
         Get logging configuration for current environment.
 
@@ -156,7 +156,7 @@ class ConfigurationManager:
         return self.config.get("logging", {})
 
     @lru_cache(maxsize=1)
-    def get_csrf_config(self) -> Dict[str, Any]:
+    def get_csrf_config(self) -> dict[str, Any]:
         """
         Get CSRF protection configuration.
 
@@ -174,7 +174,7 @@ class ConfigurationManager:
             "same_site": csrf_config.get("same_site", "Strict"),
         }
 
-    def get_rate_limit_config(self) -> Dict[str, Any]:
+    def get_rate_limit_config(self) -> dict[str, Any]:
         """
         Get rate limiting configuration.
 
@@ -185,7 +185,7 @@ class ConfigurationManager:
             "rate_limit", {"enabled": True, "max_requests": 100, "window_seconds": 60}
         )
 
-    def get_session_config(self) -> Dict[str, Any]:
+    def get_session_config(self) -> dict[str, Any]:
         """
         Get session configuration.
 
@@ -205,7 +205,7 @@ class ConfigurationManager:
             "path": session_config.get("path", "/"),
         }
 
-    def validate_configuration(self) -> Dict[str, Any]:
+    def validate_configuration(self) -> dict[str, Any]:
         """
         Validate current configuration for security requirements.
 
@@ -236,7 +236,7 @@ class ConfigurationManager:
 
         return results
 
-    def export_configuration(self, output_path: Optional[str] = None) -> str:
+    def export_configuration(self, output_path: str | None = None) -> str:
         """
         Export current configuration to file.
 
@@ -260,7 +260,7 @@ class ConfigurationManager:
 
         return resolved_path
 
-    def _remove_sensitive_data(self, config: Dict) -> Dict:
+    def _remove_sensitive_data(self, config: dict) -> dict:
         """
         Remove sensitive data from configuration.
 
@@ -287,12 +287,12 @@ class ConfigurationManager:
 class ConfigurationScanner:
     """Scanner adapter for NIST 800-53 configuration management controls."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
 
-    def scan(self) -> List[Dict[str, Any]]:
+    def scan(self) -> list[dict[str, Any]]:
         """Return configuration management compliance results."""
-        results: List[Dict[str, Any]] = []
+        results: list[dict[str, Any]] = []
 
         results.append(
             {

@@ -5,8 +5,7 @@ import os
 import hmac
 import hashlib
 import time
-from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Any
 from pathlib import Path
 import threading
 import queue
@@ -25,14 +24,14 @@ class SecurityEvent:
     timestamp: float
     level: SecurityLevel
     event_type: str
-    details: Dict[str, Any]
-    source_ip: Optional[str] = None
-    user_id: Optional[str] = None
-    session_id: Optional[str] = None
+    details: dict[str, Any]
+    source_ip: str | None = None
+    user_id: str | None = None
+    session_id: str | None = None
 
 
 class AlertHandler:
-    def __init__(self, alert_config: Dict[str, Any]):
+    def __init__(self, alert_config: dict[str, Any]):
         """
         Initialize alert handler with configuration.
 
@@ -159,7 +158,7 @@ class SecureLogger:
             bool: True if log integrity is verified
         """
         try:
-            with open(self.log_dir / "security.log", "r") as log_file, open(self.hmac_log, "r") as hmac_file:
+            with open(self.log_dir / "security.log") as log_file, open(self.hmac_log) as hmac_file:
                 for log_line, hmac_line in zip(log_file, hmac_file):
                     if log_line.strip():
                         calculated_hmac = self._calculate_hmac(log_line.strip())
@@ -171,7 +170,7 @@ class SecureLogger:
 
 
 class AuditLogger:
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """
         Initialize comprehensive audit logging system.
 
@@ -207,8 +206,8 @@ class AuditLogger:
         user_id: str,
         success: bool,
         source_ip: str,
-        session_id: Optional[str] = None,
-        details: Optional[Dict] = None,
+        session_id: str | None = None,
+        details: dict | None = None,
     ):
         """Log authentication-related security event."""
         level = SecurityLevel.WARNING if not success else SecurityLevel.INFO
@@ -226,7 +225,7 @@ class AuditLogger:
         self.log_event(event)
 
     def log_access_event(
-        self, resource: str, action: str, user_id: str, success: bool, source_ip: str, session_id: Optional[str] = None
+        self, resource: str, action: str, user_id: str, success: bool, source_ip: str, session_id: str | None = None
     ):
         """Log access control related security event."""
         level = SecurityLevel.WARNING if not success else SecurityLevel.INFO
@@ -243,7 +242,7 @@ class AuditLogger:
 
         self.log_event(event)
 
-    def log_system_event(self, event_type: str, details: Dict[str, Any], level: SecurityLevel = SecurityLevel.INFO):
+    def log_system_event(self, event_type: str, details: dict[str, Any], level: SecurityLevel = SecurityLevel.INFO):
         """Log system-related security event."""
         event = SecurityEvent(timestamp=time.time(), level=level, event_type=event_type, details=details)
 
@@ -262,13 +261,13 @@ class AuditLogger:
 class AuditLoggingScanner:
     """Scanner adapter for NIST 800-53 audit logging controls."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
         self.logger = logging.getLogger(__name__)
 
-    def scan(self) -> List[Dict[str, Any]]:
+    def scan(self) -> list[dict[str, Any]]:
         """Return audit logging compliance results."""
-        results: List[Dict[str, Any]] = []
+        results: list[dict[str, Any]] = []
 
         log_cfg = self.config.get("monitoring", {}).get("logging", {})
         local_enabled = log_cfg.get("local", {}).get("enabled", False)

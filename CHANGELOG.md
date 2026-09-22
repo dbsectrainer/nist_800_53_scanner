@@ -313,5 +313,5 @@ make dev-setup
 - Community feedback is crucial
 - Security is an ever-evolving landscape
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Version**: 1.2.0

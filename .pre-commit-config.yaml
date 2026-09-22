@@ -1,4 +1,4 @@
-# Pre-commit hooks configuration for 2025 standards
+# Pre-commit hooks configuration for 2026 standards
 # See https://pre-commit.com for more information
 repos:
   # General file checks
@@ -86,14 +86,6 @@ repos:
     hooks:
       - id: hadolint-docker
         args: [--ignore, DL3008, --ignore, DL3009, --ignore, DL3015]
-
-  # Poetry lock file check (if using poetry)
-  - repo: https://github.com/python-poetry/poetry
-    rev: 1.8.0
-    hooks:
-      - id: poetry-check
-        files: pyproject.toml
-        pass_filenames: false
 
   # Check for secrets
   - repo: https://github.com/Yelp/detect-secrets

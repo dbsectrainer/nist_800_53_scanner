@@ -192,5 +192,5 @@ python predictive_threat_detector.py \
 - [MITRE ATT&CK Framework](https://attack.mitre.org/)
 - [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Machine Learning Security Analytics Version**: 1.1.0

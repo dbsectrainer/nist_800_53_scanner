@@ -371,5 +371,5 @@ sudo nginx -t && sudo systemctl reload nginx
 - [Plotly.js Documentation](https://plotly.com/javascript/)
 - [Flask Documentation](https://flask.palletsprojects.com/)
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Dashboard Version**: 1.1.0
