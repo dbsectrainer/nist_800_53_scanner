@@ -7,8 +7,8 @@ pytest-asyncio>=1.4.0
 pytest-cov>=7.1.0
 pytest-xdist>=3.8.0
 pytest-mock>=3.15.1
-coverage[toml]>=7.14.2
-hypothesis>=6.155.7
+coverage[toml]>=7.16.1
+hypothesis>=6.168.0
 
 # Code Quality & Linting - Ruff is the modern standard for 2026
 ruff>=0.8.4
