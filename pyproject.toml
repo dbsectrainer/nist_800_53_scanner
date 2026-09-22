@@ -150,7 +150,7 @@ dev = [
 
     # Debugging
     "ipdb>=0.13.13",
-    "debugpy>=1.8.10",
+    "debugpy>=1.8.22",
 
     # Performance Profiling
     "py-spy>=0.4.2",
