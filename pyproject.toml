@@ -87,7 +87,7 @@ dependencies = [
 
     # Authentication & Security
     "authlib>=1.3.2",
-    "cryptography>=49.0.0",
+    "cryptography>=50.0.1",
     "python-dotenv>=1.0.1",
     "argon2-cffi>=23.1.0",
 
