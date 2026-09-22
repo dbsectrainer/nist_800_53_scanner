@@ -35,8 +35,39 @@ jobs:
       - name: Run pip-audit
         run: uv run pip-audit --desc || true
 
-  unit-tests:
+  code-signing:
     needs: security-checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Import GPG key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          gpg --list-secret-keys
+
+      - name: Sign code
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          find . -type f \( -name "*.py" -o -name "*.yml" \) -not -path "*/\.*" -print0 |
+          while IFS= read -r -d '' file; do
+            gpg --batch --yes --passphrase "$GPG_PASSPHRASE" -u scanner@example.com --detach-sign "$file"
+          done
+
+      - name: Verify signatures
+        run: |
+          find . -type f -name "*.sig" -print0 |
+          while IFS= read -r -d '' sig_file; do
+            original_file="${sig_file%.sig}"
+            gpg --verify "$sig_file" "$original_file"
+          done
+
+  unit-tests:
+    needs: code-signing
     strategy:
       matrix:
         os: [ubuntu-24.04, macos-latest, windows-latest]
@@ -72,3 +103,17 @@ jobs:
 
       - name: Test Distributed Scanning Configuration
         run: uv run pytest tests/test_distributed_scanner.py -v
+
+  deploy:
+    needs: [distributed-scan-test]
+    runs-on: ubuntu-24.04
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Deploy to Production
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          # Add deployment script here
+          echo "Deploying to production environment"

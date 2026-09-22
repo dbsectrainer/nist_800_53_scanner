@@ -6,6 +6,7 @@ from typing import Any
 import boto3
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from google.cloud import iam_admin_v1, resourcemanager_v3
+from google.oauth2 import service_account
 from kiota_abstractions.base_request_configuration import RequestConfiguration
 from msgraph import GraphServiceClient
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
@@ -20,11 +21,15 @@ class CloudAccessScanner:
             ``{'aws': {'enabled': bool},
                'azure': {'enabled': bool, 'tenant_id': str,
                          'client_id': str, 'client_secret': str},
-               'gcp': {'enabled': bool, 'project_id': str}}``
+               'gcp': {'enabled': bool, 'projects': list[str],
+                       'credentials': {'method': str,
+                                       'credentials_path': str}}}``
             Azure ``client_id``/``client_secret`` are optional; when omitted,
             authentication falls back to the standard DefaultAzureCredential
             chain (environment variables, managed identity, CLI, etc.).
-            GCP authentication uses Application Default Credentials.
+            GCP reads ``gcp.projects`` and optional ``gcp.credentials``; when
+            credentials are omitted, authentication uses Application Default
+            Credentials. ``gcp.project_id`` is accepted as a legacy fallback.
         """
         self.config = config
         self.logger = logging.getLogger(__name__)
@@ -112,15 +117,35 @@ class CloudAccessScanner:
         :return: List of user principal names (or object IDs) holding Global Administrator
         """
         admins: list[str] = []
-        roles = await graph_client.directory_roles.get()
-        for role in roles.value or []:
-            if role.display_name != 'Global Administrator':
-                continue
-            members = await graph_client.directory_roles.by_directory_role_id(role.id).members.get()
-            for member in members.value or []:
+        global_admin_role = None
+        roles_page = await graph_client.directory_roles.get()
+        while roles_page:
+            for role in roles_page.value or []:
+                if role.display_name == 'Global Administrator':
+                    global_admin_role = role
+                    break
+            if global_admin_role or not roles_page.odata_next_link:
+                break
+            roles_page = await graph_client.directory_roles.with_url(
+                roles_page.odata_next_link
+            ).get()
+
+        if not global_admin_role:
+            return admins
+
+        members_builder = graph_client.directory_roles.by_directory_role_id(
+            global_admin_role.id
+        ).members
+        members_page = await members_builder.get()
+        while members_page:
+            for member in members_page.value or []:
                 principal_name = (member.additional_data or {}).get('userPrincipalName')
                 admins.append(principal_name or member.id)
-            break
+            if not members_page.odata_next_link:
+                break
+            members_page = await members_builder.with_url(
+                members_page.odata_next_link
+            ).get()
         return admins
 
     async def _fetch_azure_guest_users(self, graph_client: GraphServiceClient) -> list[str]:
@@ -134,8 +159,19 @@ class CloudAccessScanner:
             filter="userType eq 'Guest'",
         )
         request_configuration = RequestConfiguration(query_parameters=query_params)
-        users = await graph_client.users.get(request_configuration=request_configuration)
-        return [user.user_principal_name or user.id for user in (users.value or [])]
+        users_page = await graph_client.users.get(request_configuration=request_configuration)
+        guests: list[str] = []
+        while users_page:
+            guests.extend(
+                user.user_principal_name or user.id
+                for user in (users_page.value or [])
+            )
+            if not users_page.odata_next_link:
+                break
+            users_page = await graph_client.users.with_url(
+                users_page.odata_next_link
+            ).get()
+        return guests
 
     def _scan_azure_access_controls(self) -> list[dict[str, Any]]:
         """
@@ -182,6 +218,41 @@ class CloudAccessScanner:
 
         return results
 
+    def _get_gcp_project_ids(self) -> list[str]:
+        """
+        Resolve configured GCP project IDs from the nested config schema.
+
+        :return: Project IDs to scan, preferring ``gcp.projects`` over legacy
+            ``gcp.project_id``
+        """
+        gcp_config = self.config.get('gcp', {})
+        projects = gcp_config.get('projects')
+        if projects:
+            return list(projects)
+        project_id = gcp_config.get('project_id')
+        return [project_id] if project_id else []
+
+    def _build_gcp_credentials(self) -> service_account.Credentials | None:
+        """
+        Build GCP credentials from configured service-account settings.
+
+        :return: Service-account credentials when configured, otherwise ``None``
+            to use Application Default Credentials
+        """
+        gcp_config = self.config.get('gcp', {})
+        credentials_config = gcp_config.get('credentials', {})
+        if credentials_config.get('method') != 'service_account':
+            return None
+
+        credentials_path = credentials_config.get('credentials_path')
+        if not credentials_path:
+            return None
+
+        return service_account.Credentials.from_service_account_file(
+            credentials_path,
+            scopes=['https://www.googleapis.com/auth/cloud-platform'],
+        )
+
     def _scan_gcp_access_controls(self) -> list[dict[str, Any]]:
         """
         Comprehensive Google Cloud Platform IAM access control scanning
@@ -189,41 +260,61 @@ class CloudAccessScanner:
         :return: List of GCP IAM security findings
         """
         results = []
+        project_ids = self._get_gcp_project_ids()
+        if not project_ids:
+            return [{
+                'control_id': 'AC-GCP-001',
+                'description': 'GCP Access Control Scan',
+                'compliant': False,
+                'remediation': (
+                    'Configure gcp.projects (or legacy gcp.project_id) in the scanner config'
+                ),
+            }]
+
+        credentials = self._build_gcp_credentials()
+        client_kwargs = {'credentials': credentials} if credentials else {}
+
         try:
-            project_id = self.config.get('gcp', {}).get('project_id')
-            project_path = f'projects/{project_id}'
+            iam_client = iam_admin_v1.IAMClient(**client_kwargs)
+            rm_client = resourcemanager_v3.ProjectsClient(**client_kwargs)
 
-            # List service accounts via the IAM Admin API
-            iam_client = iam_admin_v1.IAMClient()
-            service_accounts = list(
-                iam_client.list_service_accounts(request={'name': project_path})
-            )
+            for project_id in project_ids:
+                project_path = f'projects/{project_id}'
 
-            # Inspect the project's IAM policy for publicly-exposed bindings
-            # (allUsers / allAuthenticatedUsers), the standard GCP definition
-            # of an "external collaborator" on a resource's access policy.
-            rm_client = resourcemanager_v3.ProjectsClient()
-            policy = rm_client.get_iam_policy(resource=project_path)
-            external_collaborators = sorted({
-                member
-                for binding in policy.bindings
-                for member in binding.members
-                if member in ('allUsers', 'allAuthenticatedUsers')
-            })
+                service_accounts = list(
+                    iam_client.list_service_accounts(request={'name': project_path})
+                )
 
-            accounts_compliant = len(service_accounts) <= self.security_thresholds['max_service_accounts']
-            external_compliant = len(external_collaborators) <= self.security_thresholds['max_external_collaborators']
+                # Inspect the project's IAM policy for publicly-exposed bindings
+                # (allUsers / allAuthenticatedUsers). Any public binding fails
+                # this control regardless of the external-collaborator threshold.
+                policy = rm_client.get_iam_policy(request={'resource': project_path})
+                external_collaborators = sorted({
+                    member
+                    for binding in policy.bindings
+                    for member in binding.members
+                    if member in ('allUsers', 'allAuthenticatedUsers')
+                })
 
-            results.append({
-                'control_id': 'AC-3(5)',
-                'description': 'GCP Service Account Management',
-                'compliant': accounts_compliant and external_compliant,
-                'details': {
-                    'service_accounts': [account.email for account in service_accounts],
-                    'external_collaborators': external_collaborators
-                },
-                'remediation': 'Review GCP service account permissions and public/external IAM policy bindings'
-            })
+                accounts_compliant = (
+                    len(service_accounts) <= self.security_thresholds['max_service_accounts']
+                )
+                external_compliant = len(external_collaborators) == 0
+
+                results.append({
+                    'control_id': 'AC-3(5)',
+                    'description': 'GCP Service Account Management',
+                    'compliant': accounts_compliant and external_compliant,
+                    'details': {
+                        'project_id': project_id,
+                        'service_accounts': [account.email for account in service_accounts],
+                        'external_collaborators': external_collaborators,
+                    },
+                    'remediation': (
+                        'Review GCP service account permissions and remove public '
+                        'IAM policy bindings (allUsers / allAuthenticatedUsers)'
+                    ),
+                })
 
         except Exception as e:
             self.logger.error(f"GCP Access Control Scan Error: {e}")

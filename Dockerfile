@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv for reproducible, uv.lock-pinned dependency installs
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.8.22 /uv /uvx /bin/
 ENV UV_COMPILE_BYTECODE=1
 
 # Install dependencies first (better layer caching), from the lockfile only
