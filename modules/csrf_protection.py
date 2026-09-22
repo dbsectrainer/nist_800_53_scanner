@@ -1,7 +1,6 @@
 import hmac
 import time
 import secrets
-from typing import Dict, Optional, Tuple
 from base64 import b64encode, b64decode
 import json
 
@@ -28,7 +27,7 @@ class CSRFProtection:
         Returns:
             HMAC signature
         """
-        message = f"{token}:{timestamp}".encode('utf-8')
+        message = f"{token}:{timestamp}".encode()
         signature = hmac.new(self.secret_key, message, 'sha256').hexdigest()
         return signature
 
@@ -56,7 +55,7 @@ class CSRFProtection:
         # Encode token package
         return b64encode(json.dumps(token_data).encode('utf-8')).decode('utf-8')
 
-    def validate_token(self, encoded_token: str, strict: bool = True) -> Tuple[bool, Optional[str]]:
+    def validate_token(self, encoded_token: str, strict: bool = True) -> tuple[bool, str | None]:
         """
         Validate a CSRF token.
         
@@ -91,7 +90,7 @@ class CSRFProtection:
         except Exception as e:
             return False, f"Token validation failed: {str(e)}"
 
-    def get_token_age(self, encoded_token: str) -> Optional[float]:
+    def get_token_age(self, encoded_token: str) -> float | None:
         """
         Get age of a token in seconds.
         
@@ -109,7 +108,7 @@ class CSRFProtection:
             return None
 
 class CSRFMiddleware:
-    def __init__(self, csrf_protection: CSRFProtection, exempt_paths: Optional[list] = None):
+    def __init__(self, csrf_protection: CSRFProtection, exempt_paths: list | None = None):
         """
         Initialize CSRF middleware.
         
@@ -132,7 +131,7 @@ class CSRFMiddleware:
         """
         return any(path.startswith(exempt) for exempt in self.exempt_paths)
 
-    def process_request(self, request_data: Dict) -> Tuple[bool, Optional[str]]:
+    def process_request(self, request_data: dict) -> tuple[bool, str | None]:
         """
         Process request for CSRF validation.
         
@@ -158,7 +157,7 @@ class CSRFMiddleware:
         # Validate token
         return self.csrf.validate_token(token)
 
-    def get_response_headers(self) -> Dict[str, str]:
+    def get_response_headers(self) -> dict[str, str]:
         """
         Get headers to be added to response.
         
@@ -187,7 +186,7 @@ def create_csrf_protected_form(csrf_token: str) -> str:
         </form>
     """
 
-def verify_same_origin(request_data: Dict) -> bool:
+def verify_same_origin(request_data: dict) -> bool:
     """
     Verify request is from same origin.
     

@@ -189,5 +189,5 @@ python continuous_compliance_monitor.py \
 - [STIX/TAXII Standards](https://oasis-open.github.io/cti-documentation/)
 - [NIST Cybersecurity Framework](https://www.nist.gov/cyberframework)
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Threat Intelligence Monitoring Version**: 1.1.0

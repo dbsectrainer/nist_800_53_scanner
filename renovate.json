@@ -6,7 +6,7 @@
     ":semanticCommits",
     ":preserveSemverRanges"
   ],
-  "description": "Renovate configuration for automated dependency updates (2025 standards)",
+  "description": "Renovate configuration for automated dependency updates (2026 standards)",
   "labels": ["dependencies", "renovate"],
   "assignees": ["@security-team"],
   "reviewers": ["@security-team"],

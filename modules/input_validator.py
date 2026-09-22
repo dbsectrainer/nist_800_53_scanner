@@ -1,9 +1,8 @@
 import html
-import mimetypes
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 from urllib.parse import urlparse
 
 import validators
@@ -67,7 +66,7 @@ class InputValidator:
         return not any(re.search(pattern, email) for pattern in invalid_patterns)
 
     @staticmethod
-    def validate_password(password: str, min_length: int = 12) -> Dict[str, Any]:
+    def validate_password(password: str, min_length: int = 12) -> dict[str, Any]:
         """
         Validate password strength with detailed feedback.
 
@@ -115,7 +114,7 @@ class InputValidator:
         return result
 
     @staticmethod
-    def sanitize_input(input_data: Union[str, Dict, List], max_length: int = 1000) -> Union[str, Dict, List]:
+    def sanitize_input(input_data: str | dict | list, max_length: int = 1000) -> str | dict | list:
         """
         Sanitize input with comprehensive protection against XSS and injection.
 
@@ -171,7 +170,7 @@ class InputValidator:
         return input_data
 
     @staticmethod
-    def validate_file_path(file_path: str, allowed_base_paths: List[str]) -> bool:
+    def validate_file_path(file_path: str, allowed_base_paths: list[str]) -> bool:
         """
         Validate file path for traversal attacks and permissions.
 
@@ -196,7 +195,7 @@ class InputValidator:
             return False
 
     @staticmethod
-    def validate_file_content(file_path: str, max_size: Optional[int] = None) -> Dict[str, Any]:
+    def validate_file_content(file_path: str, max_size: int | None = None) -> dict[str, Any]:
         """
         Validate file content type and size.
 
@@ -290,7 +289,7 @@ class InputValidator:
             return False
 
     @staticmethod
-    def validate_scan_parameters(params: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_scan_parameters(params: dict[str, Any]) -> dict[str, Any]:
         """
         Validate parameters for a security scan with detailed feedback.
 

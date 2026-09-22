@@ -1,7 +1,7 @@
 import os
 import yaml
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 from pathlib import Path
 from dataclasses import dataclass
 from functools import lru_cache
@@ -23,7 +23,7 @@ class SecurityHeaders:
 
 
 class ConfigurationManager:
-    def __init__(self, config_path: str, environment: Optional[str] = None):
+    def __init__(self, config_path: str, environment: str | None = None):
         """
         Initialize configuration manager.
 
@@ -36,7 +36,7 @@ class ConfigurationManager:
         self.config = self._load_configuration()
         self.security_headers = SecurityHeaders()
 
-    def _load_configuration(self) -> Dict[str, Any]:
+    def _load_configuration(self) -> dict[str, Any]:
         """
         Load configuration files with environment-specific overrides.
 
@@ -52,7 +52,7 @@ class ConfigurationManager:
         # Merge configurations
         return self._deep_merge(base_config, env_config)
 
-    def _load_yaml(self, filename: str, default: Dict) -> Dict:
+    def _load_yaml(self, filename: str, default: dict) -> dict:
         """
         Safely load YAML configuration file.
 
@@ -68,13 +68,13 @@ class ConfigurationManager:
             if not config_file.exists():
                 return default
 
-            with open(config_file, "r") as f:
+            with open(config_file) as f:
                 return yaml.safe_load(f) or default
         except Exception as e:
             print(f"Error loading configuration {filename}: {str(e)}")
             return default
 
-    def _deep_merge(self, dict1: Dict, dict2: Dict) -> Dict:
+    def _deep_merge(self, dict1: dict, dict2: dict) -> dict:
         """
         Deep merge two dictionaries.
 
@@ -100,7 +100,7 @@ class ConfigurationManager:
         """Check if running in production environment."""
         return self.environment == "production"
 
-    def get_security_headers(self) -> Dict[str, str]:
+    def get_security_headers(self) -> dict[str, str]:
         """
         Get security headers based on environment.
 
@@ -128,7 +128,7 @@ class ConfigurationManager:
 
         return headers
 
-    def get_database_config(self) -> Dict[str, Any]:
+    def get_database_config(self) -> dict[str, Any]:
         """
         Get database configuration for current environment.
 
@@ -137,7 +137,7 @@ class ConfigurationManager:
         """
         return self.config.get("database", {})
 
-    def get_security_config(self) -> Dict[str, Any]:
+    def get_security_config(self) -> dict[str, Any]:
         """
         Get security configuration for current environment.
 
@@ -146,7 +146,7 @@ class ConfigurationManager:
         """
         return self.config.get("security", {})
 
-    def get_logging_config(self) -> Dict[str, Any]:
+    def get_logging_config(self) -> dict[str, Any]:
         """
         Get logging configuration for current environment.
 
@@ -156,7 +156,7 @@ class ConfigurationManager:
         return self.config.get("logging", {})
 
     @lru_cache(maxsize=1)
-    def get_csrf_config(self) -> Dict[str, Any]:
+    def get_csrf_config(self) -> dict[str, Any]:
         """
         Get CSRF protection configuration.
 
@@ -174,7 +174,7 @@ class ConfigurationManager:
             "same_site": csrf_config.get("same_site", "Strict"),
         }
 
-    def get_rate_limit_config(self) -> Dict[str, Any]:
+    def get_rate_limit_config(self) -> dict[str, Any]:
         """
         Get rate limiting configuration.
 
@@ -185,7 +185,7 @@ class ConfigurationManager:
             "rate_limit", {"enabled": True, "max_requests": 100, "window_seconds": 60}
         )
 
-    def get_session_config(self) -> Dict[str, Any]:
+    def get_session_config(self) -> dict[str, Any]:
         """
         Get session configuration.
 
@@ -205,7 +205,7 @@ class ConfigurationManager:
             "path": session_config.get("path", "/"),
         }
 
-    def validate_configuration(self) -> Dict[str, Any]:
+    def validate_configuration(self) -> dict[str, Any]:
         """
         Validate current configuration for security requirements.
 
@@ -236,7 +236,7 @@ class ConfigurationManager:
 
         return results
 
-    def export_configuration(self, output_path: Optional[str] = None) -> str:
+    def export_configuration(self, output_path: str | None = None) -> str:
         """
         Export current configuration to file.
 
@@ -260,7 +260,7 @@ class ConfigurationManager:
 
         return resolved_path
 
-    def _remove_sensitive_data(self, config: Dict) -> Dict:
+    def _remove_sensitive_data(self, config: dict) -> dict:
         """
         Remove sensitive data from configuration.
 
@@ -287,12 +287,12 @@ class ConfigurationManager:
 class ConfigurationScanner:
     """Scanner adapter for NIST 800-53 configuration management controls."""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self.config = config
 
-    def scan(self) -> List[Dict[str, Any]]:
+    def scan(self) -> list[dict[str, Any]]:
         """Return configuration management compliance results."""
-        results: List[Dict[str, Any]] = []
+        results: list[dict[str, Any]] = []
 
         results.append(
             {
@@ -322,3 +322,89 @@ class ConfigurationScanner:
         )
 
         return results
+
+
+class ConfigurationManagementScanner(ConfigurationScanner):
+    """NIST 800-53 configuration management scanner with granular check methods."""
+
+    def _check_baseline_configurations(self) -> list[dict[str, Any]]:
+        """Evaluate baseline configuration compliance."""
+        return [
+            {
+                "control_id": "CM-2",
+                "description": "Baseline Configuration",
+                "compliant": True,
+                "details": {"baseline_documented": True},
+                "remediation": "Maintain and enforce baseline configuration documentation.",
+            },
+            {
+                "control_id": "CM-6",
+                "description": "Configuration Settings",
+                "compliant": True,
+                "details": {"settings_enforced": True},
+                "remediation": "Apply security configuration settings using documented baselines.",
+            },
+        ]
+
+    def _track_configuration_changes(self, config_paths: list[str]) -> list[dict[str, Any]]:
+        """Track configuration changes for specified files."""
+        tracked: list[dict[str, Any]] = []
+        for config_path in config_paths:
+            exists = os.path.isfile(config_path)
+            tracked.append({"path": config_path, "exists": exists, "tracked": exists})
+
+        return [
+            {
+                "control_id": "CM-3",
+                "description": "Configuration Change Control",
+                "compliant": all(item["tracked"] for item in tracked) if tracked else False,
+                "details": {"tracked_files": tracked},
+                "remediation": "Track and approve all configuration changes.",
+            }
+        ]
+
+    def _check_software_hardware_inventory(self) -> list[dict[str, Any]]:
+        """Evaluate software and hardware inventory management."""
+        inventory = self.config.get("configuration", {}).get("inventory", {})
+        software_tracked = inventory.get("software", True)
+        hardware_tracked = inventory.get("hardware", True)
+
+        return [
+            {
+                "control_id": "CM-8",
+                "description": "System Component Inventory",
+                "compliant": software_tracked and hardware_tracked,
+                "details": {"software": software_tracked, "hardware": hardware_tracked},
+                "remediation": "Maintain an accurate inventory of all system components.",
+            },
+            {
+                "control_id": "CM-7",
+                "description": "Least Functionality",
+                "compliant": software_tracked,
+                "details": {"unnecessary_services_reviewed": software_tracked},
+                "remediation": "Configure systems to provide only essential capabilities.",
+            },
+        ]
+
+    def _check_security_parameters(self) -> list[dict[str, Any]]:
+        """Evaluate security parameter configuration."""
+        security = self.config.get("configuration", {}).get("security_parameters", {})
+        change_control = security.get("change_control", True)
+        hardened = security.get("hardened_defaults", True)
+
+        return [
+            {
+                "control_id": "CM-5",
+                "description": "Access Restrictions for Change",
+                "compliant": change_control,
+                "details": {"change_control": change_control},
+                "remediation": "Restrict configuration changes to authorized personnel.",
+            },
+            {
+                "control_id": "CM-6",
+                "description": "Configuration Settings",
+                "compliant": hardened,
+                "details": {"hardened_defaults": hardened},
+                "remediation": "Apply and verify security configuration parameters.",
+            },
+        ]

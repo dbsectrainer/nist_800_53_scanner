@@ -51,7 +51,7 @@ class ReportVersionManager:
         reports = []
         for filename in os.listdir(self.base_path):
             if filename.endswith('.json'):
-                with open(os.path.join(self.base_path, filename), 'r') as f:
+                with open(os.path.join(self.base_path, filename)) as f:
                     report = json.load(f)
                     reports.append({
                         'report_id': report['report_id'],
@@ -71,6 +71,6 @@ class ReportVersionManager:
         """
         report_path = os.path.join(self.base_path, f"{report_id}.json")
         if os.path.exists(report_path):
-            with open(report_path, 'r') as f:
+            with open(report_path) as f:
                 return json.load(f)
         return None

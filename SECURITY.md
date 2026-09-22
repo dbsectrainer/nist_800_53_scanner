@@ -117,9 +117,9 @@ Our security practices align with:
 
 ## 📝 Policy Updates
 
-- Last Updated: {{ current_date }}
+- Last Updated: 2026-09-22
 - Version: 1.1.0
-- Next Review: {{ review_date }}
+- Next Review: 2027-09-22
 
 ## 🏆 Hall of Thanks
 

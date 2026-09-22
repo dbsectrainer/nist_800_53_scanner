@@ -1,5 +1,6 @@
 import numpy as np
-from typing import List, Dict, Any, Callable
+from typing import Any
+from collections.abc import Callable
 from .model_versioning import ModelVersionManager
 from .anomaly_detection import AnomalyDetector
 
@@ -45,9 +46,9 @@ class MLModelABTester:
         return f1_score
     
     def compare_models(self, 
-                       version_ids: List[str], 
+                       version_ids: list[str], 
                        test_data: np.ndarray, 
-                       ground_truth: np.ndarray) -> Dict[str, float]:
+                       ground_truth: np.ndarray) -> dict[str, float]:
         """
         Compare multiple model versions
         
@@ -77,10 +78,10 @@ class MLModelABTester:
         return model_performances
     
     def run_experiment(self, 
-                       models: List[AnomalyDetector], 
+                       models: list[AnomalyDetector], 
                        test_data: np.ndarray, 
                        ground_truth: np.ndarray, 
-                       significance_level: float = 0.05) -> Dict[str, Any]:
+                       significance_level: float = 0.05) -> dict[str, Any]:
         """
         Run a full A/B testing experiment
         
@@ -120,7 +121,7 @@ class MLModelABTester:
     
     def configure_experiment(self, 
                              base_model: AnomalyDetector, 
-                             parameter_grid: Dict[str, List[Any]]) -> List[AnomalyDetector]:
+                             parameter_grid: dict[str, list[Any]]) -> list[AnomalyDetector]:
         """
         Generate model variants with different configurations
         

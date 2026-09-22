@@ -176,5 +176,5 @@ targets:
 - [Security Policies](../SECURITY.md)
 - [Developer Guide](../DEVELOPER_GUIDE.md)
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Examples Version**: 1.1.0

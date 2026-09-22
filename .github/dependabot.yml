@@ -1,4 +1,4 @@
-# Dependabot configuration for automated dependency updates (2025 standards)
+# Dependabot configuration for automated dependency updates (2026 standards)
 version: 2
 updates:
   # Python dependencies

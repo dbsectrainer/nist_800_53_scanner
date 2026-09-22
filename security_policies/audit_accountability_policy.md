@@ -158,8 +158,8 @@ Applies to all information systems, applications, network devices, and user acti
 ## 13. Revision History
 
 - Version 1.0: Initial Release
-- Last Updated: {{ current_date }}
-- Next Review Date: {{ review_date }}
+- Last Updated: 2026-09-22
+- Next Review Date: 2027-09-22
 
 **Approved By**: Chief Information Security Officer
-**Effective Date**: {{ effective_date }}
+**Effective Date**: 2026-09-22

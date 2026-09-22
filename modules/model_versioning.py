@@ -3,7 +3,7 @@ import json
 import hashlib
 import pickle
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 class ModelVersionManager:
     """
@@ -28,7 +28,7 @@ class ModelVersionManager:
         model_bytes = pickle.dumps(model)
         return hashlib.sha256(model_bytes).hexdigest()
     
-    def save_model(self, model: Any, metadata: Optional[Dict[str, Any]] = None) -> str:
+    def save_model(self, model: Any, metadata: dict[str, Any] | None = None) -> str:
         """
         Save a model version with optional metadata
         
@@ -80,7 +80,7 @@ class ModelVersionManager:
         with open(model_path, 'rb') as f:
             return pickle.load(f)
     
-    def list_versions(self) -> Dict[str, Dict[str, Any]]:
+    def list_versions(self) -> dict[str, dict[str, Any]]:
         """
         List all available model versions
         
@@ -90,7 +90,7 @@ class ModelVersionManager:
         for version_id in os.listdir(self.base_path):
             metadata_path = os.path.join(self.base_path, version_id, 'metadata.json')
             if os.path.exists(metadata_path):
-                with open(metadata_path, 'r') as f:
+                with open(metadata_path) as f:
                     versions[version_id] = json.load(f)
         return versions
     

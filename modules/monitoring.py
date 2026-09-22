@@ -2,7 +2,7 @@ import time
 import logging
 import threading
 import psutil
-from typing import Dict, Any, Optional
+from typing import Any
 import json
 import os
 import socket
@@ -10,7 +10,7 @@ import socket
 
 class SystemMonitor:
     def __init__(
-        self, log_dir: str = "logs", monitoring_interval: int = 60, alert_thresholds: Optional[Dict[str, float]] = None
+        self, log_dir: str = "logs", monitoring_interval: int = 60, alert_thresholds: dict[str, float] | None = None
     ):
         """
         Initialize system monitoring.
@@ -42,7 +42,7 @@ class SystemMonitor:
         )
         self.logger = logging.getLogger(__name__)
 
-    def _get_system_metrics(self) -> Dict[str, Any]:
+    def _get_system_metrics(self) -> dict[str, Any]:
         """
         Collect current system metrics.
 
@@ -70,7 +70,7 @@ class SystemMonitor:
             "processes": sum(1 for _ in psutil.process_iter()),
         }
 
-    def _check_thresholds(self, metrics: Dict[str, Any]) -> None:
+    def _check_thresholds(self, metrics: dict[str, Any]) -> None:
         """
         Check if system metrics exceed defined thresholds.
 
@@ -89,7 +89,7 @@ class SystemMonitor:
         if metrics["disk_usage"]["percent"] > self.alert_thresholds["disk_percent"]:
             self.logger.warning(f"High disk usage: {metrics['disk_usage']['percent']}%")
 
-    def _log_metrics(self, metrics: Dict[str, Any]) -> None:
+    def _log_metrics(self, metrics: dict[str, Any]) -> None:
         """
         Log system metrics to a JSON file.
 
@@ -160,7 +160,7 @@ class SystemMonitor:
 
         recent_metrics = []
         for file in metric_files[:limit]:
-            with open(os.path.join(self.log_dir, file), "r") as f:
+            with open(os.path.join(self.log_dir, file)) as f:
                 recent_metrics.append(json.load(f))
 
         return recent_metrics

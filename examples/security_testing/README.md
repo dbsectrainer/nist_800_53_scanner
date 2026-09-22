@@ -196,5 +196,5 @@ python advanced_penetration_simulator.py \
 - [Shodan API Guide](https://developer.shodan.io/)
 - [OWASP Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Security Testing Version**: 1.1.0

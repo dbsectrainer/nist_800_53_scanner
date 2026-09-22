@@ -1,5 +1,4 @@
 import numpy as np
-from typing import Tuple, Any
 from .anomaly_detection import AnomalyDetector
 from .model_versioning import ModelVersionManager
 
@@ -42,7 +41,7 @@ class ModelRetrainingPipeline:
     
     def retrain_model(self, 
                       current_model: AnomalyDetector, 
-                      new_training_data: np.ndarray) -> Tuple[AnomalyDetector, str]:
+                      new_training_data: np.ndarray) -> tuple[AnomalyDetector, str]:
         """
         Retrain the model with new data and compare performance
         

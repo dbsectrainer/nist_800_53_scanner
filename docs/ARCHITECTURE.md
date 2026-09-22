@@ -208,5 +208,5 @@ The NIST 800-53 Scanner is a sophisticated, modular security compliance automati
 - Transparent security research
 - Collaborative threat intelligence
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Architecture Version**: 1.1.0

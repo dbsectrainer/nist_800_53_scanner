@@ -1,11 +1,8 @@
-import multiprocessing
-import threading
-import queue
 import os
-import socket
 import json
 import time
-from typing import List, Dict, Callable, Any
+from typing import Any
+from collections.abc import Callable
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import zmq  # For distributed computing communication
@@ -40,9 +37,9 @@ class DistributedScanner:
         self.logger.addHandler(handler)
 
     def _local_parallel_scan(self, 
-                              scan_targets: List[Any], 
+                              scan_targets: list[Any], 
                               scan_function: Callable,
-                              chunk_size: int = 10) -> List[Dict]:
+                              chunk_size: int = 10) -> list[dict]:
         """
         Perform parallel scanning on local machine
         
@@ -81,8 +78,8 @@ class DistributedScanner:
         return results
 
     def _process_chunk(self, 
-                        chunk: List[Any], 
-                        scan_function: Callable) -> List[Dict]:
+                        chunk: list[Any], 
+                        scan_function: Callable) -> list[dict]:
         """
         Process a chunk of scan targets
         
@@ -123,8 +120,8 @@ class DistributedScanner:
             raise
 
     def distributed_scan(self, 
-                         scan_targets: List[Any], 
-                         scan_function: Callable) -> List[Dict]:
+                         scan_targets: list[Any], 
+                         scan_function: Callable) -> list[dict]:
         """
         Perform distributed scanning across multiple machines
         

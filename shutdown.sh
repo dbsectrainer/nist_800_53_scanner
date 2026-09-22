@@ -11,10 +11,5 @@ pkill -f "python3 dashboard/app.py"
 echo "Stopping Docker services..."
 docker-compose down
 
-# Deactivate virtual environment if it's active
-if [[ "$VIRTUAL_ENV" != "" ]]; then
-    echo "Deactivating virtual environment..."
-    deactivate
-fi
-
 echo "Shutdown complete!"
+echo "Note: if you activated venv in this shell (source venv/bin/activate), run 'deactivate' manually."

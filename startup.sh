@@ -23,8 +23,11 @@ pip install -r requirements.txt
 pip install flask flask-cors plotly pandas numpy pyyaml validators psutil \
     pywinrm azure-identity azure-mgmt-security google-cloud-iam \
     paramiko aiokafka authlib aiofiles kubernetes flower \
-    opentelemetry-instrumentation-fastapi aws-lambda-powertools \
-    google-cloud-functions
+    opentelemetry-exporter-otlp-proto-http opentelemetry-instrumentation-fastapi \
+    aws-lambda-powertools google-cloud-functions
+
+# Ensure runtime directories exist
+mkdir -p logs reports
 
 # Check if Docker is running
 if ! docker info >/dev/null 2>&1; then

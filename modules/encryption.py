@@ -5,7 +5,7 @@ import json
 import os
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 from cryptography.fernet import Fernet, MultiFernet
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -66,10 +66,10 @@ class SecureDataHandler:
         self.keys_file = "encryption_keys.json"
         self.keys = self._load_or_create_keys()
 
-    def _load_or_create_keys(self) -> Dict:
+    def _load_or_create_keys(self) -> dict:
         """Load existing keys or create new ones."""
         if os.path.exists(self.keys_file):
-            with open(self.keys_file, "r") as f:
+            with open(self.keys_file) as f:
                 keys_data = json.load(f)
 
             # Unwrap keys
@@ -122,7 +122,7 @@ class SecureDataHandler:
 
         return MultiFernet(fernets)
 
-    def encrypt_data(self, data: Union[str, Dict, Any]) -> Dict[str, str]:
+    def encrypt_data(self, data: str | dict | Any) -> dict[str, str]:
         """
         Encrypt data with integrity protection.
 
@@ -147,7 +147,7 @@ class SecureDataHandler:
 
         return {"data": base64.urlsafe_b64encode(encrypted_data).decode("utf-8"), "hmac": h.hexdigest()}
 
-    def decrypt_data(self, encrypted_package: Dict[str, str]) -> Union[str, Dict, Any]:
+    def decrypt_data(self, encrypted_package: dict[str, str]) -> str | dict | Any:
         """
         Decrypt data and verify integrity.
 
@@ -180,7 +180,7 @@ class SecureDataHandler:
         except Exception as e:
             raise ValueError(f"Decryption failed: {str(e)}")
 
-    def secure_file(self, file_path: str) -> Dict[str, str]:
+    def secure_file(self, file_path: str) -> dict[str, str]:
         """
         Encrypt a file with integrity protection.
 
@@ -218,7 +218,7 @@ class SecureDataHandler:
 
         return {"encrypted_file": encrypted_file_path, "hmac_file": hmac_file_path}
 
-    def unsecure_file(self, encrypted_file_path: str, output_path: Optional[str] = None) -> str:
+    def unsecure_file(self, encrypted_file_path: str, output_path: str | None = None) -> str:
         """
         Decrypt a file and verify integrity.
 
@@ -236,7 +236,7 @@ class SecureDataHandler:
         with open(encrypted_file_path, "rb") as encrypted_file:
             encrypted_data = encrypted_file.read()
 
-        with open(hmac_file_path, "r") as hmac_file:
+        with open(hmac_file_path) as hmac_file:
             stored_hmac = hmac_file.read()
 
         # Verify HMAC

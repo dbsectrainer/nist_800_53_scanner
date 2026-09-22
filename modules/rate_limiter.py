@@ -1,7 +1,5 @@
 import time
-from typing import Dict, Optional, Tuple, List
 from dataclasses import dataclass
-from datetime import datetime
 import threading
 import json
 from pathlib import Path
@@ -21,12 +19,12 @@ class RateLimit:
 class RateLimitState:
     """Rate limit state for a key."""
 
-    requests: List[float]
-    blocked_until: Optional[float] = None
+    requests: list[float]
+    blocked_until: float | None = None
 
 
 class RateLimiter:
-    def __init__(self, limits: Dict[str, RateLimit], persistent: bool = True):
+    def __init__(self, limits: dict[str, RateLimit], persistent: bool = True):
         """
         Initialize rate limiter with multiple limit configurations.
 
@@ -35,7 +33,7 @@ class RateLimiter:
             persistent: Whether to persist rate limit state
         """
         self.limits = limits
-        self.states: Dict[str, Dict[str, RateLimitState]] = {}
+        self.states: dict[str, dict[str, RateLimitState]] = {}
         self.lock = threading.Lock()
         self.persistent = persistent
         self.state_file = Path("rate_limit_state.json")
@@ -52,7 +50,7 @@ class RateLimiter:
         """Load rate limit state from file."""
         try:
             if self.state_file.exists():
-                with open(self.state_file, "r") as f:
+                with open(self.state_file) as f:
                     state_data = json.load(f)
 
                 with self.lock:
@@ -105,7 +103,7 @@ class RateLimiter:
                     continue
 
                 # Find expired entries
-                expired_keys: List[str] = []
+                expired_keys: list[str] = []
                 for key, state in self.states[limit_name].items():
                     # Remove old requests
                     state.requests = [t for t in state.requests if current_time - t <= limit.window_seconds]
@@ -124,7 +122,7 @@ class RateLimiter:
             if any_removed:
                 self._save_state()
 
-    def is_rate_limited(self, limit_name: str, key: str) -> Tuple[bool, Optional[float]]:
+    def is_rate_limited(self, limit_name: str, key: str) -> tuple[bool, float | None]:
         """
         Check if a key is currently rate limited.
 
@@ -172,7 +170,7 @@ class RateLimiter:
 
             return False, None
 
-    def get_remaining(self, limit_name: str, key: str) -> Dict[str, float]:
+    def get_remaining(self, limit_name: str, key: str) -> dict[str, float]:
         """
         Get remaining requests and reset time for a key.
 
@@ -231,7 +229,7 @@ class RateLimitMiddleware:
         """
         self.rate_limiter = rate_limiter
 
-    def process_request(self, request_data: Dict) -> Tuple[bool, Optional[Dict[str, str]]]:
+    def process_request(self, request_data: dict) -> tuple[bool, dict[str, str] | None]:
         """
         Process request and apply rate limiting.
 

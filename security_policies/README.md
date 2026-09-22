@@ -146,5 +146,5 @@ This repository contains a comprehensive set of security policies aligned with N
 
 MIT License - Collaborative, open-source security policy framework
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **Version**: 1.0.0

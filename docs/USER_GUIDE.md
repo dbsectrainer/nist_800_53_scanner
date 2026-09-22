@@ -42,12 +42,12 @@ docker run -it nist-800-53-scanner scan --config /path/to/config.yaml
 git clone https://github.com/your-org/nist-800-53-scanner.git
 cd nist-800-53-scanner
 
-# Install dependencies
-pip install poetry
-poetry install
+# Install dependencies (via uv: https://docs.astral.sh/uv/)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv sync --frozen
 
 # Run scanner
-poetry run python scan.py --config config.yaml
+uv run python scan.py --config config.yaml
 ```
 
 ## 🔧 Configuration
@@ -236,5 +236,5 @@ nist-scanner logs --tail 100
 - [Compliance Framework Guides](https://www.nist.gov/cybersecurity)
 - [Security Best Practices](https://www.cisa.gov/cybersecurity)
 
-**Last Updated**: {{ current_date }}
+**Last Updated**: 2026-09-22
 **User Guide Version**: 1.1.0
