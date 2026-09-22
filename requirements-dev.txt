@@ -2,13 +2,13 @@
 -r requirements.txt
 
 # Testing Framework (Latest pytest ecosystem)
-pytest>=8.3.4
-pytest-asyncio>=0.24.0
-pytest-cov>=6.0.0
-pytest-xdist>=3.6.1
-pytest-mock>=3.14.0
-coverage[toml]>=7.6.9
-hypothesis>=6.122.3
+pytest>=9.1.1
+pytest-asyncio>=1.4.0
+pytest-cov>=7.1.0
+pytest-xdist>=3.8.0
+pytest-mock>=3.15.1
+coverage[toml]>=7.14.2
+hypothesis>=6.155.7
 
 # Code Quality & Linting - Ruff is the modern standard for 2026
 ruff>=0.8.4
@@ -21,13 +21,13 @@ pyright>=1.1.390
 types-redis>=4.6.0.20241004
 types-requests>=2.32.0.20241016
 types-pyyaml>=6.0.12.20240917
-boto3-stubs[essential]>=1.35.80
+boto3-stubs[essential]>=1.43.34
 
 # Security Scanning (Enhanced security tools)
-bandit[toml]>=1.8.0
-safety>=3.2.11
-semgrep>=1.96.0
+bandit[toml]>=1.9.4
+safety>=3.8.1
 pip-audit>=2.7.3
+# semgrep: install via `uvx semgrep` (conflicts with opentelemetry>=1.42 in main deps)
 
 # Documentation (Modern Sphinx)
 sphinx>=8.1.3
@@ -40,7 +40,7 @@ ipdb>=0.13.13
 debugpy>=1.8.10
 
 # Performance Profiling (Advanced profilers for 2026)
-py-spy>=0.4.0
+py-spy>=0.4.2
 memray>=1.15.0
 scalene>=1.5.49
 memory-profiler>=0.61.0
@@ -51,12 +51,12 @@ faker>=33.1.0
 freezegun>=1.5.1
 
 # Development Servers and Tools
-uvicorn[standard]>=0.34.0
+uvicorn[standard]>=0.49.0
 httpx>=0.28.1
 
 # Development Workflow Tools
-pre-commit>=4.0.1
-tox>=4.23.2
+pre-commit>=4.6.0
+tox>=4.55.1
 nox>=2024.10.9
 
 # Additional Development Tools
