@@ -95,7 +95,7 @@ monitoring:
   metrics:
     prometheus:
       enabled: true
-      port: 9091
+      port: 9092 # scanner metrics; Docker Prometheus UI uses host port 9091
 
     # Distributed Tracing
     tracing:

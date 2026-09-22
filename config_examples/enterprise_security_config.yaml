@@ -90,7 +90,7 @@ monitoring:
   metrics:
     prometheus:
       enabled: true
-      port: 9091
+      port: 9092
 
     tracing:
       jaeger:

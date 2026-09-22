@@ -102,7 +102,7 @@ class MultiTenantNISTComplianceScanner:
 
         # --- Prometheus metrics ---
         if monitoring_cfg.get("metrics", {}).get("prometheus", {}).get("enabled", False):
-            prometheus_port = monitoring_cfg.get("metrics", {}).get("prometheus", {}).get("port", 9091)
+            prometheus_port = monitoring_cfg.get("metrics", {}).get("prometheus", {}).get("port", 9092)
             try:
                 prometheus_client.start_http_server(prometheus_port)
                 self.logger.info(f"Prometheus metrics server started on port {prometheus_port}")
