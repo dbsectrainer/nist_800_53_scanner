@@ -125,6 +125,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "pytest-xdist>=3.8.0",
     "pytest-mock>=3.16.0",
+    "pytest-timeout>=2.3.1",
     "coverage[toml]>=7.16.2",
     "hypothesis>=6.168.3",
 
@@ -322,6 +323,7 @@ markers = [
     "asyncio: marks tests as asyncio tests",
 ]
 asyncio_mode = "auto"
+timeout = 120
 asyncio_default_fixture_loop_scope = "function"
 
 # Coverage Configuration
