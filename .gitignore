@@ -113,3 +113,7 @@ docker-compose.override.yml
 .terraform/
 *.tfstate
 *.tfstate.*
+
+# Wrapped data-encryption keys
+encryption_keys.json
+*.keys.json

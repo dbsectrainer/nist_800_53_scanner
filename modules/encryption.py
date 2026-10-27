@@ -44,26 +44,36 @@ class SecureKeyStorage:
         return key
 
     def wrap_key(self, key: bytes) -> bytes:
-        """Wrap a key using the master key."""
-        return aes_key_wrap(self.master_key, key)
+        """Wrap a Fernet key using the master key.
+
+        AES key wrap needs a multiple of 8 bytes, so the raw 32 bytes inside the
+        urlsafe-base64 Fernet key are wrapped rather than its 44-character text.
+        """
+        return aes_key_wrap(self.master_key, base64.urlsafe_b64decode(key))
 
     def unwrap_key(self, wrapped_key: bytes) -> bytes:
-        """Unwrap a key using the master key."""
-        return aes_key_unwrap(self.master_key, wrapped_key)
+        """Unwrap a key previously wrapped with wrap_key, returning the Fernet key."""
+        return base64.urlsafe_b64encode(aes_key_unwrap(self.master_key, wrapped_key))
 
 
 class SecureDataHandler:
-    def __init__(self, key_storage: SecureKeyStorage, key_rotation_interval: int = 30):
+    def __init__(
+        self,
+        key_storage: SecureKeyStorage,
+        key_rotation_interval: int = 30,
+        keys_file: str = "encryption_keys.json",
+    ) -> None:
         """
         Initialize encryption handler with secure key storage.
 
         Args:
             key_storage: SecureKeyStorage instance
             key_rotation_interval: Days between key rotations
+            keys_file: Path of the file holding the wrapped data keys
         """
         self.key_storage = key_storage
         self.key_rotation_interval = key_rotation_interval
-        self.keys_file = "encryption_keys.json"
+        self.keys_file = keys_file
         self.keys = self._load_or_create_keys()
 
     def _load_or_create_keys(self) -> dict:
@@ -81,8 +91,11 @@ class SecureDataHandler:
                 "created_at": keys_data["current"]["created_at"],
             }
 
-        # Create new key
-        return {"current": Fernet.generate_key(), "previous": None, "created_at": time.time()}
+        # Create new key and persist it immediately; otherwise anything encrypted
+        # before the next rotation would be unrecoverable after a restart.
+        self.keys = {"current": Fernet.generate_key(), "previous": None, "created_at": time.time()}
+        self._save_keys()
+        return self.keys
 
     def _save_keys(self):
         """Save wrapped keys securely."""
@@ -122,6 +135,16 @@ class SecureDataHandler:
 
         return MultiFernet(fernets)
 
+    def _hmac_valid(self, encrypted_data: bytes, expected_hex: str) -> bool:
+        """Check an HMAC against the current key and, after rotation, the previous one."""
+        for key in (self.keys["current"], self.keys["previous"]):
+            if key is None:
+                continue
+            candidate = hmac.new(key, encrypted_data, hashlib.sha256).hexdigest()
+            if hmac.compare_digest(candidate, expected_hex):
+                return True
+        return False
+
     def encrypt_data(self, data: str | dict | Any) -> dict[str, str]:
         """
         Encrypt data with integrity protection.
@@ -132,6 +155,9 @@ class SecureDataHandler:
         Returns:
             Dict containing encrypted data and HMAC
         """
+        if data is None:
+            raise TypeError("Cannot encrypt None")
+
         # Convert data to JSON string if needed
         if not isinstance(data, str):
             data = json.dumps(data)
@@ -162,8 +188,7 @@ class SecureDataHandler:
             encrypted_data = base64.urlsafe_b64decode(encrypted_package["data"].encode("utf-8"))
 
             # Verify HMAC
-            h = hmac.new(self.keys["current"], encrypted_data, hashlib.sha256)
-            if not hmac.compare_digest(h.hexdigest(), encrypted_package["hmac"]):
+            if not self._hmac_valid(encrypted_data, encrypted_package["hmac"]):
                 raise ValueError("Data integrity check failed")
 
             # Decrypt the data
@@ -240,8 +265,7 @@ class SecureDataHandler:
             stored_hmac = hmac_file.read()
 
         # Verify HMAC
-        h = hmac.new(self.keys["current"], encrypted_data, hashlib.sha256)
-        if not hmac.compare_digest(h.hexdigest(), stored_hmac):
+        if not self._hmac_valid(encrypted_data, stored_hmac):
             raise ValueError("File integrity check failed")
 
         # Decrypt the file

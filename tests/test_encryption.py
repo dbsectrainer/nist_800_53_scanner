@@ -2,12 +2,22 @@ import os
 import json
 import tempfile
 import pytest
-from modules.encryption import SecureDataHandler
+from modules.encryption import SecureDataHandler, SecureKeyStorage
+
+
+def make_handler(directory, name='default', **kwargs):
+    return SecureDataHandler(
+        SecureKeyStorage(str(directory / f'{name}.master.key')),
+        keys_file=str(directory / f'{name}.keys.json'),
+        **kwargs
+    )
 
 class TestSecureDataHandler:
-    def setup_method(self):
-        """Create a fresh encryption handler for each test"""
-        self.encryption_handler = SecureDataHandler()
+    @pytest.fixture(autouse=True)
+    def _handler(self, tmp_path):
+        """Create a fresh, isolated encryption handler for each test"""
+        self.tmp_path = tmp_path
+        self.encryption_handler = make_handler(tmp_path)
 
     def test_string_encryption(self):
         """Test encryption and decryption of simple string"""
@@ -62,34 +72,55 @@ class TestSecureDataHandler:
 
     def test_file_encryption(self):
         """Test file encryption and decryption"""
-        # Create a temporary file with test content
-        with tempfile.NamedTemporaryFile(delete=False, mode='w') as temp_file:
-            test_content = "Sensitive file contents that need protection"
-            temp_file.write(test_content)
-            temp_file.close()
-        
-        try:
-            # Encrypt the file
-            encrypted_file_path = self.encryption_handler.secure_file(temp_file.name)
-            
-            # Verify encryption created a new file
-            assert os.path.exists(encrypted_file_path), "Encrypted file should be created"
-            assert encrypted_file_path.endswith('.encrypted'), "Encrypted file should have .encrypted extension"
-            
-            # Decrypt the file
-            decrypted_file_path = self.encryption_handler.unsecure_file(encrypted_file_path)
-            
-            # Read decrypted file contents
-            with open(decrypted_file_path, 'r') as decrypted_file:
-                decrypted_content = decrypted_file.read()
-            
-            assert decrypted_content == test_content, "Decrypted file content should match original"
-        
-        finally:
-            # Cleanup temporary files
-            for file_path in [temp_file.name, encrypted_file_path, decrypted_file_path]:
-                if os.path.exists(file_path):
-                    os.unlink(file_path)
+        source = self.tmp_path / 'secret.txt'
+        test_content = "Sensitive file contents that need protection"
+        source.write_text(test_content)
+
+        paths = self.encryption_handler.secure_file(str(source))
+
+        assert paths['encrypted_file'].endswith('.encrypted')
+        assert os.path.exists(paths['hmac_file'])
+        assert test_content.encode() not in open(paths['encrypted_file'], 'rb').read()
+
+        decrypted_path = self.tmp_path / 'decrypted.txt'
+        result = self.encryption_handler.unsecure_file(paths['encrypted_file'], str(decrypted_path))
+
+        assert open(result).read() == test_content, "Decrypted file content should match original"
+
+    def test_tampered_file_is_rejected(self):
+        source = self.tmp_path / 'secret.txt'
+        source.write_text("original")
+        paths = self.encryption_handler.secure_file(str(source))
+
+        with open(paths['encrypted_file'], 'ab') as f:
+            f.write(b'tamper')
+
+        with pytest.raises(ValueError, match="integrity"):
+            self.encryption_handler.unsecure_file(paths['encrypted_file'])
+
+    def test_tampered_data_is_rejected(self):
+        package = self.encryption_handler.encrypt_data({'a': 1})
+        package['hmac'] = '0' * 64
+        with pytest.raises(ValueError, match="Decryption failed"):
+            self.encryption_handler.decrypt_data(package)
+
+    def test_keys_survive_restart(self):
+        """Data encrypted before a restart must still decrypt afterwards"""
+        package = self.encryption_handler.encrypt_data({'persisted': True})
+
+        restarted = make_handler(self.tmp_path)
+
+        assert restarted.decrypt_data(package) == {'persisted': True}
+
+    def test_decrypts_data_from_before_key_rotation(self):
+        package = self.encryption_handler.encrypt_data("written before rotation")
+
+        # Age the current key past the rotation interval
+        self.encryption_handler.keys['created_at'] -= 31 * 86400
+        self.encryption_handler.encrypt_data("triggers rotation")
+
+        assert self.encryption_handler.keys['previous'] is not None
+        assert self.encryption_handler.decrypt_data(package) == "written before rotation"
 
     def test_encryption_error_handling(self):
         """Test error handling for invalid encryption/decryption scenarios"""
@@ -115,17 +146,12 @@ class TestSecureDataHandler:
         assert decrypted_data == large_data, "Large data structure should be encrypted and decrypted correctly"
 
     def test_different_secret_keys(self):
-        """Test encryption with different secret keys"""
-        # Create two different encryption handlers
-        handler1 = SecureDataHandler(secret_key=b'secret_key_1')
-        handler2 = SecureDataHandler(secret_key=b'secret_key_2')
-        
-        original_data = {'sensitive': 'information'}
-        
-        # Encrypt with first handler
-        encrypted_data = handler1.encrypt_data(original_data)
-        
-        # Try to decrypt with second handler (should fail)
+        """Data must not be readable by a handler holding different keys"""
+        handler1 = make_handler(self.tmp_path, 'one')
+        handler2 = make_handler(self.tmp_path, 'two')
+
+        encrypted_data = handler1.encrypt_data({'sensitive': 'information'})
+
         with pytest.raises(ValueError, match="Decryption failed"):
             handler2.decrypt_data(encrypted_data)
 
