@@ -6,31 +6,34 @@ from flask import Flask
 from flask.testing import FlaskClient
 from modules.scan_api import ScanAPI
 from modules.authentication import AuthenticationManager
-from modules.rate_limiter import RateLimiter
+from modules.rate_limiter import RateLimit, RateLimiter
 from modules.input_validator import InputValidator
-from modules.encryption import SecureDataHandler
+from modules.encryption import SecureDataHandler, SecureKeyStorage
 from modules.monitoring import SystemMonitor
 from modules.report_versioning import ReportVersionManager
 
 class TestScanAPI:
     @pytest.fixture
-    def auth_manager(self):
+    def auth_manager(self, tmp_path):
         """Create an authentication manager for testing"""
-        auth_manager = AuthenticationManager()
+        auth_manager = AuthenticationManager(credentials_file=str(tmp_path / 'credentials.json'))
         # Create a test admin user
         auth_manager.create_user('testadmin', 'StrongP@ss123!', role='admin')
         auth_manager.create_user('testuser', 'UserP@ss456!', role='user')
         return auth_manager
 
     @pytest.fixture
-    def scan_api(self, auth_manager):
+    def scan_api(self, auth_manager, tmp_path):
         """Create a ScanAPI instance for testing"""
         return ScanAPI(
             auth_manager=auth_manager,
-            rate_limiter=RateLimiter(max_requests=10, time_window=3600),
-            encryption_handler=SecureDataHandler(),
-            monitoring_handler=SystemMonitor(),
-            report_manager=ReportVersionManager()
+            rate_limiter=RateLimiter({'default': RateLimit(10, 3600)}, persistent=False),
+            encryption_handler=SecureDataHandler(
+                SecureKeyStorage(str(tmp_path / 'master.key')),
+                keys_file=str(tmp_path / 'encryption_keys.json')
+            ),
+            monitoring_handler=SystemMonitor(log_dir=str(tmp_path / 'logs')),
+            report_manager=ReportVersionManager(base_path=str(tmp_path / 'reports'))
         )
 
     def test_api_authentication(self, scan_api, auth_manager):

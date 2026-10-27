@@ -1,4 +1,5 @@
 import html
+import ipaddress
 import os
 import re
 from pathlib import Path
@@ -289,6 +290,20 @@ class InputValidator:
             return False
 
     @staticmethod
+    def _is_valid_scan_target(target: str) -> bool:
+        """A scan target is an IP address, a hostname, or an http(s) URL."""
+        if not target or len(target) > 253 or any(c.isspace() for c in target):
+            return False
+        try:
+            ipaddress.ip_address(target)
+            return True
+        except ValueError:
+            pass
+        if "://" in target:
+            return bool(validators.url(target)) and urlparse(target).scheme in ("http", "https")
+        return bool(validators.hostname(target))
+
+    @staticmethod
     def validate_scan_parameters(params: dict[str, Any]) -> dict[str, Any]:
         """
         Validate parameters for a security scan with detailed feedback.
@@ -301,10 +316,11 @@ class InputValidator:
         """
         result = {"valid": False, "errors": []}
 
-        required_params = {
-            "target": (str, ["url", "hostname", "ip"]),
-            "scan_type": (str, ["full", "quick", "custom"]),
-        }
+        scan_types = ("full", "quick", "custom", "network", "web")
+
+        if not isinstance(params, dict):
+            result["errors"].append("Scan parameters must be an object")
+            return result
 
         optional_params = {
             "depth": (int, (1, 10)),
@@ -314,22 +330,25 @@ class InputValidator:
         }
 
         # Validate required parameters
-        for param, (expected_type, allowed_values) in required_params.items():
-            if param not in params:
-                result["errors"].append(f"Missing required parameter: {param}")
-                continue
+        if "target" not in params:
+            result["errors"].append("Missing required parameter: target")
+        elif not isinstance(params["target"], str):
+            result["errors"].append("Invalid type for target")
+        elif not InputValidator._is_valid_scan_target(params["target"]):
+            result["errors"].append("Invalid value for target")
 
-            if not isinstance(params[param], expected_type):
-                result["errors"].append(f"Invalid type for {param}")
-                continue
-
-            if allowed_values and params[param] not in allowed_values:
-                result["errors"].append(f"Invalid value for {param}")
+        if "scan_type" not in params:
+            result["errors"].append("Missing required parameter: scan_type")
+        elif not isinstance(params["scan_type"], str):
+            result["errors"].append("Invalid type for scan_type")
+        elif params["scan_type"] not in scan_types:
+            result["errors"].append("Invalid value for scan_type")
 
         # Validate optional parameters
         for param, (expected_type, value_range) in optional_params.items():
             if param in params:
-                if not isinstance(params[param], expected_type):
+                # bool is an int subclass but never a valid numeric parameter
+                if not isinstance(params[param], expected_type) or isinstance(params[param], bool):
                     result["errors"].append(f"Invalid type for {param}")
                     continue
 

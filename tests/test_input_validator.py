@@ -26,7 +26,7 @@ class TestInputValidator:
         """Test password strength validation"""
         valid_passwords = [
             'StrongP@ss123!',
-            'Secure_Password_2023!',
+            'Secure_Phrase_2023!',
             'C0mpl3x_P@ssw0rd'
         ]
         invalid_passwords = [
@@ -34,38 +34,50 @@ class TestInputValidator:
             'onlylowercase',
             'ONLYUPPERCASE',
             '12345678',
-            'NoSpecialChar'
+            'NoSpecialChar',
+            'Secure_Password_2023!',  # contains a banned common word
         ]
 
         for password in valid_passwords:
-            assert InputValidator.validate_password(password), f"{password} should be valid"
+            assert InputValidator.validate_password(password)["valid"], f"{password} should be valid"
 
         for password in invalid_passwords:
-            assert not InputValidator.validate_password(password), f"{password} should be invalid"
+            assert not InputValidator.validate_password(password)["valid"], f"{password} should be invalid"
 
     def test_input_sanitization(self):
-        """Test input sanitization"""
+        """Test input sanitization (HTML-escapes markup rather than stripping it)"""
         test_cases = [
             # String sanitization
-            ('<script>alert("XSS")</script>', 'scriptalertXSS/script'),
-            ('Hello & World', 'Hello  World'),
-            
+            ('<script>alert("XSS")</script>', '&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;'),
+            ('Hello & World', 'Hello &amp; World'),
+
             # Dictionary sanitization
             (
                 {'username': '<evil>admin</evil>', 'password': 'test&pass'},
-                {'username': 'eviladmin', 'password': 'testpass'}
+                {'username': '&lt;evil&gt;admin&lt;/evil&gt;', 'password': 'test&amp;pass'}
             ),
-            
-            # List sanitization
+
+            # List sanitization (non-strings pass through untouched)
             (
                 ['<script>test</script>', 'safe&input', 123],
-                ['scriptest/script', 'safeinput', 123]
+                ['&lt;script&gt;test&lt;/script&gt;', 'safe&amp;input', 123]
             )
         ]
 
         for input_data, expected_output in test_cases:
             sanitized = InputValidator.sanitize_input(input_data)
             assert sanitized == expected_output, f"Sanitization failed for {input_data}"
+
+    @pytest.mark.parametrize("payload", [
+        'javascript:alert(1)',
+        '<img src=x onerror=alert(1)>',
+        'vbscript:msgbox',
+    ])
+    def test_dangerous_patterns_removed(self, payload):
+        sanitized = InputValidator.sanitize_input(payload)
+        assert '<' not in sanitized and '>' not in sanitized
+        for pattern in ('javascript:', 'onerror=', 'vbscript:'):
+            assert pattern not in sanitized.lower()
 
     def test_scan_parameter_validation(self):
         """Test scan parameter validation"""
@@ -88,6 +100,10 @@ class TestInputValidator:
             # Missing required parameters
             {},
             {'target': 123},  # Invalid type for target
+            {'target': 'has space', 'scan_type': 'network'},  # Malformed target
+            {'target': '10.0.0.1', 'scan_type': 'bogus'},  # Unknown scan type
+            {'target': '10.0.0.1', 'scan_type': 'network', 'depth': 99},  # Depth out of range
+            {'target': '10.0.0.1', 'scan_type': 'network', 'depth': True},  # bool is not an int here
             {'scan_type': 'network'},  # Missing target
             
             # Invalid parameter types
@@ -99,10 +115,10 @@ class TestInputValidator:
         ]
 
         for params in valid_params:
-            assert InputValidator.validate_scan_parameters(params), f"{params} should be valid"
+            assert InputValidator.validate_scan_parameters(params)["valid"], f"{params} should be valid"
 
         for params in invalid_params:
-            assert not InputValidator.validate_scan_parameters(params), f"{params} should be invalid"
+            assert not InputValidator.validate_scan_parameters(params)["valid"], f"{params} should be invalid"
 
     def test_max_length_sanitization(self):
         """Test input sanitization with max length"""
@@ -124,6 +140,6 @@ class TestInputValidator:
 
         sanitized = InputValidator.sanitize_input(nested_input)
         
-        assert sanitized['user']['name'] == 'scriptevil/script'
-        assert sanitized['user']['details'] == ['testinput', 'scriptdangerous/script']
-        assert sanitized['sensitive_data'] == 'secretkey'
+        assert sanitized['user']['name'] == '&lt;script&gt;evil&lt;/script&gt;'
+        assert sanitized['user']['details'] == ['test&amp;input', '&lt;dangerous&gt;data&lt;/dangerous&gt;']
+        assert sanitized['sensitive_data'] == 'secret&amp;key'

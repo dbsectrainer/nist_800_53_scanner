@@ -131,6 +131,18 @@ class TestReportVersionManager:
         
         assert retrieved_report is None, "Should return None for non-existent report"
 
+    @pytest.mark.parametrize("report_id", ['../secret', '..\\secret', 'a/b', '', None, 'x' * 100])
+    def test_report_id_cannot_escape_base_path(self, report_id):
+        """Report IDs arrive from URLs and must never reach the filesystem unchecked"""
+        outside = os.path.join(os.path.dirname(self.temp_dir), 'secret.json')
+        with open(outside, 'w') as f:
+            json.dump({'report_id': 'secret'}, f)
+        try:
+            assert self.report_manager.get_report_by_id(report_id) is None
+            assert self.report_manager.get_report_by_id('../secret') is None
+        finally:
+            os.remove(outside)
+
     def test_report_storage_limit(self):
         """Test report storage limit functionality"""
         # Override report manager with a small max_reports limit
