@@ -166,7 +166,7 @@ dev = [
     # Development Tools
     "pre-commit>=4.6.0",
     "tox>=4.55.1",
-    "nox>=2024.10.9",
+    "nox>=2026.8.17",
 ]
 
 cloud = [
