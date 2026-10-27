@@ -2,8 +2,35 @@ import os
 import time
 import threading
 import multiprocessing
+import socket
 import pytest
 from modules.distributed_scanner import DistributedScanner
+
+def _free_port() -> int:
+    with socket.socket() as s:
+        s.bind(('127.0.0.1', 0))
+        return s.getsockname()[1]
+
+
+def _run_distributed(scan_targets, scan_function, worker_count=4):
+    """Start worker threads against a fresh broker port and run the scan"""
+    scanner = DistributedScanner(
+        max_workers=worker_count,
+        distributed_mode=True,
+        broker_address='127.0.0.1',
+        broker_port=_free_port()
+    )
+    workers = [
+        threading.Thread(target=scanner.worker_process, args=(scan_function,), kwargs={'idle_timeout': 10}, daemon=True)
+        for _ in range(worker_count)
+    ]
+    for worker in workers:
+        worker.start()
+    results = scanner.distributed_scan(scan_targets, scan_function, timeout=30)
+    for worker in workers:
+        worker.join(timeout=5)
+    return results
+
 
 class TestDistributedScanner:
     def setup_method(self):
@@ -110,13 +137,13 @@ class TestDistributedScanner:
         # Create a distributed scanner in distributed mode
         distributed_scanner = DistributedScanner(
             distributed_mode=True,
-            broker_address='localhost',
-            broker_port=5556
+            broker_address='127.0.0.1',
+            broker_port=_free_port()
         )
         
         # Simulate worker process initialization
         try:
-            distributed_scanner.worker_process(mock_scan_function)
+            distributed_scanner.worker_process(mock_scan_function, idle_timeout=0.3)
         except Exception as e:
             pytest.fail(f"Worker process initialization failed: {e}")
 
@@ -134,14 +161,7 @@ class TestDistributedScanner:
         # Large number of targets
         scan_targets = list(range(500))
         
-        # Create distributed scanner
-        distributed_scanner = DistributedScanner(
-            max_workers=4,
-            distributed_mode=True
-        )
-        
-        # Perform distributed scan
-        results = distributed_scanner.distributed_scan(scan_targets, mock_scan_function)
+        results = _run_distributed(scan_targets, mock_scan_function)
         
         # Verify results
         assert len(results) > 0, "Distributed scan should return results"
@@ -160,15 +180,8 @@ class TestDistributedScanner:
                 'status': 'scanned'
             }
         
-        # Create distributed scanner with high worker count
-        distributed_scanner = DistributedScanner(
-            max_workers=os.cpu_count() * 2,
-            distributed_mode=True
-        )
-        
-        # Perform distributed scan
         start_time = time.time()
-        results = distributed_scanner.distributed_scan(scan_targets, mock_scan_function)
+        results = _run_distributed(scan_targets, mock_scan_function, worker_count=(os.cpu_count() or 1) * 2)
         total_time = time.time() - start_time
         
         # Verify scalability
@@ -189,14 +202,7 @@ class TestDistributedScanner:
                 'status': 'scanned'
             }
         
-        # Create distributed scanner
-        distributed_scanner = DistributedScanner(
-            max_workers=4,
-            distributed_mode=True
-        )
-        
-        # Perform distributed scan
-        results = distributed_scanner.distributed_scan(scan_targets, mock_scan_function_with_errors)
+        results = _run_distributed(scan_targets, mock_scan_function_with_errors)
         
         # Verify error handling
         assert len(results) > 0, "Should return some results despite errors"
