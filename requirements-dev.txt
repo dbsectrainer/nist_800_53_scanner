@@ -37,7 +37,7 @@ myst-parser>=4.0.0
 
 # Debugging (Modern debuggers)
 ipdb>=0.13.13
-debugpy>=1.8.10
+debugpy>=1.8.22
 
 # Performance Profiling (Advanced profilers for 2026)
 py-spy>=0.4.2
