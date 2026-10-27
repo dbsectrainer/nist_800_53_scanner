@@ -19,18 +19,29 @@ class TestMLIntegration:
         """
         Test anomaly detection prediction on sample data
         """
-        # Generate sample data
-        normal_data = np.random.normal(0, 1, (100, 10))
-        anomalous_data = np.random.normal(10, 5, (10, 10))
+        rng = np.random.default_rng(0)
+        self.anomaly_detector.train(rng.normal(0, 1, (1000, 10)))
 
-        # Combine normal and anomalous data
+        normal_data = rng.normal(0, 1, (100, 10))
+        anomalous_data = rng.normal(10, 5, (10, 10))
         test_data = np.vstack([normal_data, anomalous_data])
 
-        # Predict anomalies
         predictions = self.anomaly_detector.predict(test_data)
 
-        assert predictions is not None, "Prediction failed"
         assert len(predictions) == len(test_data), "Prediction length mismatch"
+        assert set(np.unique(predictions)) <= {0, 1}, "Predictions must be 0 (normal) or 1 (anomaly)"
+        assert predictions[100:].mean() > 0.8, "Far-out points should be flagged as anomalies"
+        assert predictions[:100].mean() < 0.3, "In-distribution points should mostly pass"
+
+    def test_predict_requires_training(self):
+        with pytest.raises(RuntimeError, match="trained"):
+            self.anomaly_detector.predict(np.zeros((3, 10)))
+
+    def test_train_rejects_unusable_data(self):
+        with pytest.raises(ValueError):
+            self.anomaly_detector.train(np.zeros(10))  # 1-D
+        with pytest.raises(ValueError):
+            self.anomaly_detector.train(np.zeros((1, 10)))  # single sample
 
     def test_model_training(self):
         """
@@ -47,22 +58,17 @@ class TestMLIntegration:
 
     def test_anomaly_threshold_sensitivity(self):
         """
-        Test the model's sensitivity to different anomaly thresholds
+        Higher contamination (the detector's sensitivity setting) flags at least as many points
         """
-        # Generate data with known anomalies
-        normal_data = np.random.normal(0, 1, (100, 10))
-        anomalous_data = np.random.normal(10, 5, (10, 10))
-        test_data = np.vstack([normal_data, anomalous_data])
+        rng = np.random.default_rng(1)
+        training_data = rng.normal(0, 1, (1000, 10))
+        test_data = np.vstack([rng.normal(0, 1, (100, 10)), rng.normal(10, 5, (10, 10))])
 
-        # Test multiple threshold levels
-        thresholds = [0.9, 0.95, 0.99]
-        for threshold in thresholds:
-            self.anomaly_detector.set_threshold(threshold)
-            predictions = self.anomaly_detector.predict(test_data)
-            
-            # Ensure predictions are made
-            assert predictions is not None, f"Prediction failed for threshold {threshold}"
-            
-            # Check that higher thresholds result in fewer anomalies
-            anomaly_count = np.sum(predictions)
-            assert 0 <= anomaly_count <= len(test_data), f"Invalid anomaly count for threshold {threshold}"
+        anomaly_counts = []
+        for contamination in [0.02, 0.1, 0.3]:
+            detector = AnomalyDetector(config={'contamination': contamination})
+            detector.train(training_data)
+            anomaly_counts.append(int(np.sum(detector.predict(test_data))))
+
+        assert anomaly_counts == sorted(anomaly_counts), f"Sensitivity should be monotonic: {anomaly_counts}"
+        assert anomaly_counts[-1] > anomaly_counts[0], "Highest sensitivity should flag more points than lowest"

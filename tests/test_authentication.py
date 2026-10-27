@@ -4,16 +4,10 @@ import time
 from modules.authentication import AuthenticationManager
 
 class TestAuthenticationManager:
-    def setup_method(self):
-        """Create a fresh authentication manager for each test"""
-        self.auth_manager = AuthenticationManager()
-        # Use a test-specific credentials file
-        self.auth_manager.credentials_file = 'test_credentials.json'
-
-    def teardown_method(self):
-        """Clean up test credentials file after each test"""
-        if os.path.exists(self.auth_manager.credentials_file):
-            os.remove(self.auth_manager.credentials_file)
+    @pytest.fixture(autouse=True)
+    def _auth_manager(self, tmp_path):
+        """Create a fresh authentication manager backed by an isolated credentials file"""
+        self.auth_manager = AuthenticationManager(credentials_file=str(tmp_path / 'credentials.json'))
 
     def test_create_user(self):
         """Test user creation"""

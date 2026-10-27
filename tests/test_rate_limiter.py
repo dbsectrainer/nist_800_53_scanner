@@ -1,142 +1,115 @@
-import time
 import threading
+import time
+
 import pytest
-from modules.rate_limiter import RateLimiter
+
+from modules.rate_limiter import RateLimit, RateLimiter, RateLimitMiddleware
+
+LIMIT = "default"
+
+
+def make_limiter(max_requests=5, window_seconds=1, block_duration=1):
+    return RateLimiter(
+        {LIMIT: RateLimit(max_requests, window_seconds, block_duration=block_duration)},
+        persistent=False,
+    )
+
 
 class TestRateLimiter:
     def setup_method(self):
-        """Create a fresh rate limiter for each test"""
-        self.rate_limiter = RateLimiter(max_requests=5, time_window=1)
+        self.rate_limiter = make_limiter()
+
+    def allowed(self, key, limiter=None):
+        limited, _ = (limiter or self.rate_limiter).is_rate_limited(LIMIT, key)
+        return not limited
 
     def test_basic_rate_limiting(self):
-        """Test basic rate limiting functionality"""
-        identifier = 'test_user'
-        
-        # Allow first 5 requests
         for _ in range(5):
-            assert self.rate_limiter.is_allowed(identifier), "First 5 requests should be allowed"
-        
-        # 6th request should be denied
-        assert not self.rate_limiter.is_allowed(identifier), "6th request should be denied"
+            assert self.allowed("test_user"), "First 5 requests should be allowed"
+        assert not self.allowed("test_user"), "6th request should be denied"
+
+    def test_denial_reports_retry_after(self):
+        for _ in range(5):
+            self.allowed("retry_user")
+        limited, retry_after = self.rate_limiter.is_rate_limited(LIMIT, "retry_user")
+        assert limited
+        assert 0 < retry_after <= 1
+
+    def test_unknown_limit_is_not_limited(self):
+        assert self.rate_limiter.is_rate_limited("nonexistent", "user") == (False, None)
 
     def test_time_window_reset(self):
-        """Test rate limit reset after time window"""
-        identifier = 'time_window_user'
-        
-        # Fill up rate limit
         for _ in range(5):
-            assert self.rate_limiter.is_allowed(identifier), "Requests should be allowed"
-        
-        # Wait for time window to expire
-        time.sleep(1.1)
-        
-        # Should be allowed again after time window
-        assert self.rate_limiter.is_allowed(identifier), "Requests should be allowed after time window"
+            assert self.allowed("window_user")
+        assert not self.allowed("window_user")
+
+        time.sleep(1.1)  # block_duration and window are both 1s
+
+        assert self.allowed("window_user"), "Requests should be allowed after the block expires"
 
     def test_multiple_identifiers(self):
-        """Test rate limiting with different identifiers"""
-        identifiers = ['user1', 'user2', 'user3']
-        
-        # Each identifier should have independent rate limiting
-        for identifier in identifiers:
+        for identifier in ("user1", "user2", "user3"):
             for _ in range(5):
-                assert self.rate_limiter.is_allowed(identifier), f"First 5 requests for {identifier} should be allowed"
-            
-            assert not self.rate_limiter.is_allowed(identifier), f"6th request for {identifier} should be denied"
+                assert self.allowed(identifier), f"First 5 requests for {identifier} should be allowed"
+            assert not self.allowed(identifier), f"6th request for {identifier} should be denied"
 
     def test_concurrent_access(self):
-        """Test rate limiter under concurrent access"""
-        identifier = 'concurrent_user'
-        allowed_requests = [0]
-        
+        allowed_requests = []
+
         def make_request():
-            if self.rate_limiter.is_allowed(identifier):
-                allowed_requests[0] += 1
-        
-        # Create multiple threads to simulate concurrent requests
-        threads = []
-        for _ in range(10):
-            thread = threading.Thread(target=make_request)
+            if self.allowed("concurrent_user"):
+                allowed_requests.append(1)
+
+        threads = [threading.Thread(target=make_request) for _ in range(10)]
+        for thread in threads:
             thread.start()
-            threads.append(thread)
-        
-        # Wait for all threads to complete
         for thread in threads:
             thread.join()
-        
-        # Should not exceed max requests
-        assert allowed_requests[0] <= 5, "Concurrent requests should not exceed rate limit"
 
-    def test_reset_rate_limit(self):
-        """Test manual rate limit reset"""
-        identifier = 'reset_user'
-        
-        # Fill up rate limit
+        assert len(allowed_requests) == 5, "Exactly the limit should get through under contention"
+
+    def test_reset(self):
         for _ in range(5):
-            assert self.rate_limiter.is_allowed(identifier), "First 5 requests should be allowed"
-        
-        # Deny 6th request
-        assert not self.rate_limiter.is_allowed(identifier), "6th request should be denied"
-        
-        # Reset rate limit
-        self.rate_limiter.reset_rate_limit(identifier)
-        
-        # Should be allowed again after reset
-        assert self.rate_limiter.is_allowed(identifier), "Requests should be allowed after reset"
+            assert self.allowed("reset_user")
+        assert not self.allowed("reset_user")
+
+        self.rate_limiter.reset(LIMIT, "reset_user")
+
+        assert self.allowed("reset_user"), "Requests should be allowed again after reset"
+
+    def test_get_remaining(self):
+        assert self.rate_limiter.get_remaining(LIMIT, "fresh")["remaining"] == 5
+        for _ in range(2):
+            self.allowed("fresh")
+        assert self.rate_limiter.get_remaining(LIMIT, "fresh")["remaining"] == 3
+        assert self.rate_limiter.get_remaining("nonexistent", "fresh")["remaining"] == 0
 
     def test_custom_rate_limit(self):
-        """Test rate limiter with custom configuration"""
-        # Create rate limiter with different parameters
-        custom_limiter = RateLimiter(max_requests=3, time_window=2)
-        identifier = 'custom_user'
-        
-        # Allow first 3 requests
+        custom = make_limiter(max_requests=3, window_seconds=2, block_duration=2)
         for _ in range(3):
-            assert custom_limiter.is_allowed(identifier), "First 3 requests should be allowed"
-        
-        # 4th request should be denied
-        assert not custom_limiter.is_allowed(identifier), "4th request should be denied"
-        
-        # Wait for time window to expire
-        time.sleep(2.1)
-        
-        # Should be allowed again after time window
-        assert custom_limiter.is_allowed(identifier), "Requests should be allowed after time window"
+            assert self.allowed("custom_user", custom)
+        assert not self.allowed("custom_user", custom)
 
-    def test_edge_cases(self):
-        """Test edge cases and boundary conditions"""
-        # Zero max requests
-        zero_limiter = RateLimiter(max_requests=0, time_window=1)
-        identifier = 'edge_case_user'
-        
-        # No requests should be allowed
-        assert not zero_limiter.is_allowed(identifier), "No requests should be allowed with max_requests=0"
-        
-        # Extremely short time window
-        short_window_limiter = RateLimiter(max_requests=1, time_window=0.1)
-        
-        # First request allowed
-        assert short_window_limiter.is_allowed(identifier), "First request should be allowed"
-        
-        # Wait just beyond time window
-        time.sleep(0.11)
-        
-        # Should be allowed again
-        assert short_window_limiter.is_allowed(identifier), "Request should be allowed after short time window"
+        time.sleep(2.1)
+
+        assert self.allowed("custom_user", custom)
+
+    def test_zero_max_requests_blocks_everything(self):
+        zero = make_limiter(max_requests=0)
+        assert not self.allowed("edge_case_user", zero)
 
     def test_request_tracking(self):
-        """Verify request tracking mechanism"""
-        identifier = 'tracking_user'
-        
-        # Track requests
-        requests = []
-        for _ in range(10):
-            if self.rate_limiter.is_allowed(identifier):
-                requests.append(time.time())
-        
-        # Verify number of tracked requests
-        assert len(requests) == 5, "Should track exactly 5 requests"
-        
-        # Verify timestamps are within expected range
-        time_differences = [requests[i+1] - requests[i] for i in range(len(requests)-1)]
-        assert all(diff < 1 for diff in time_differences), "Requests should be within time window"
+        accepted = sum(self.allowed("tracking_user") for _ in range(10))
+        assert accepted == 5, "Should track exactly 5 requests"
+
+    def test_middleware_headers(self):
+        middleware = RateLimitMiddleware(self.rate_limiter)
+        allowed, headers = middleware.process_request({"client_ip": "10.0.0.1"})
+        assert allowed
+        assert headers["X-RateLimit-Remaining"] == "4"
+
+        for _ in range(5):
+            middleware.process_request({"client_ip": "10.0.0.1"})
+        allowed, headers = middleware.process_request({"client_ip": "10.0.0.1"})
+        assert not allowed
+        assert "Retry-After" in headers
