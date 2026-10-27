@@ -31,8 +31,10 @@ class ModelRetrainingPipeline:
         predictions = model.predict(test_data)
         
         # Example performance metrics (customize as needed)
-        false_positive_rate = np.mean(predictions[test_data.mean(axis=1) < 0])
-        false_negative_rate = 1 - np.mean(predictions[test_data.mean(axis=1) >= 0])
+        negative_rows = predictions[test_data.mean(axis=1) < 0]
+        non_negative_rows = predictions[test_data.mean(axis=1) >= 0]
+        false_positive_rate = np.mean(negative_rows) if len(negative_rows) else 0.0
+        false_negative_rate = 1 - np.mean(non_negative_rows) if len(non_negative_rows) else 0.0
         
         # Composite performance score
         performance_score = 1 - (false_positive_rate + false_negative_rate) / 2
@@ -50,7 +52,7 @@ class ModelRetrainingPipeline:
         :return: Tuple of (retrained model, version_id)
         """
         # Create a copy of the current model to retrain
-        retrained_model = current_model.__class__()
+        retrained_model = current_model.__class__(current_model.config)
         retrained_model.train(new_training_data)
         
         # Evaluate current and retrained models

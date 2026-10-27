@@ -4,6 +4,7 @@ import pytest
 from modules.model_versioning import ModelVersionManager
 from modules.model_retraining import ModelRetrainingPipeline
 from modules.anomaly_detection import AnomalyDetector
+from modules.model_monitoring import ModelPerformanceMonitor
 
 class TestModelInfrastructure:
     @pytest.fixture
@@ -18,7 +19,9 @@ class TestModelInfrastructure:
         """
         Create an AnomalyDetector for testing
         """
-        return AnomalyDetector(config={})
+        detector = AnomalyDetector(config={})
+        detector.train(np.random.normal(0, 1, (1000, 10)))
+        return detector
     
     def test_model_versioning(self, model_version_manager, anomaly_detector):
         """
@@ -43,7 +46,6 @@ class TestModelInfrastructure:
         loaded_model = model_version_manager.load_model(version_id)
         assert isinstance(loaded_model, AnomalyDetector)
     
-    @pytest.mark.skip(reason="ModelRetrainingPipeline calls AnomalyDetector.train()/predict(), which do not exist")
     def test_model_retraining_pipeline(self, model_version_manager, anomaly_detector):
         """
         Test automated model retraining pipeline
@@ -70,15 +72,14 @@ class TestModelInfrastructure:
         if version_id:
             assert os.path.exists(os.path.join(model_version_manager.base_path, version_id))
     
-    @pytest.mark.skip(reason="ModelPerformanceMonitor (modules.model_monitoring) is not implemented")
-    def test_model_performance_monitoring(self, model_version_manager, anomaly_detector):
+    def test_model_performance_monitoring(self, model_version_manager, anomaly_detector, tmp_path):
         """
         Test model performance monitoring
         """
         # Create performance monitor
-        performance_monitor = ModelPerformanceMonitor(  # noqa: F821
+        performance_monitor = ModelPerformanceMonitor(
             model_version_manager, 
-            log_path='test_model_performance.log'
+            log_path=str(tmp_path / 'performance.log')
         )
         
         # Generate test data
@@ -98,14 +99,13 @@ class TestModelInfrastructure:
         assert 'false_negative_rate' in metrics
         assert 'anomaly_detection_rate' in metrics
     
-    @pytest.mark.skip(reason="ModelPerformanceMonitor (modules.model_monitoring) is not implemented")
-    def test_model_drift_detection(self, model_version_manager, anomaly_detector):
+    def test_model_drift_detection(self, model_version_manager, anomaly_detector, tmp_path):
         """
         Test model drift detection
         """
-        performance_monitor = ModelPerformanceMonitor(  # noqa: F821
+        performance_monitor = ModelPerformanceMonitor(
             model_version_manager, 
-            log_path='test_model_drift.log'
+            log_path=str(tmp_path / 'drift.log')
         )
         
         # Generate test data with potential drift
@@ -121,37 +121,29 @@ class TestModelInfrastructure:
         # Drift detection result can be true or false depending on data
         assert isinstance(drift_detected, bool)
     
-    @pytest.mark.skip(reason="ModelRetrainingPipeline calls AnomalyDetector.train()/predict(), which do not exist")
-    def test_automated_retraining(self, model_version_manager, anomaly_detector):
+    def test_automated_retraining(self, model_version_manager, anomaly_detector, capsys):
         """
-        Test automated retraining with data stream
+        Test automated retraining over a data stream
         """
         retraining_pipeline = ModelRetrainingPipeline(
-            model_version_manager, 
+            model_version_manager,
             performance_threshold=0.8
         )
-        
-        # Generate large data stream
+
         data_stream = np.random.normal(0, 1, (5000, 10))
-        
-        # Capture output to check retraining messages
-        import io
-        import sys
-        
-        # Redirect stdout to capture print statements
-        captured_output = io.StringIO()
-        sys.stdout = captured_output
-        
-        # Perform automated retraining
         retraining_pipeline.automated_retraining(
-            anomaly_detector, 
-            data_stream, 
+            anomaly_detector,
+            data_stream,
             batch_size=1000
         )
-        
-        # Restore stdout
-        sys.stdout = sys.__stdout__
-        
-        # Check if retraining occurred
-        output = captured_output.getvalue()
-        assert "Model retrained" in output or len(output) > 0
+
+        # A batch only produces output when the retrained model was kept,
+        # so every announced version must actually be on disk.
+        announced = [
+            line.split("New version: ")[1]
+            for line in capsys.readouterr().out.splitlines()
+            if "Model retrained" in line
+        ]
+        saved = model_version_manager.list_versions()
+        for version_id in announced:
+            assert version_id in saved

@@ -18,8 +18,8 @@ class TestMLABTesting:
         Create sample anomaly detection models with different configurations
         """
         models = []
-        for threshold in [0.5, 0.7, 0.9]:
-            model = AnomalyDetector(threshold=threshold)
+        for contamination in [0.05, 0.1, 0.2]:
+            model = AnomalyDetector(config={'contamination': contamination})
             training_data = np.random.normal(0, 1, (1000, 10))
             model.train(training_data)
             models.append(model)
