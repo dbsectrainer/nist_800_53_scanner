@@ -33,6 +33,8 @@ class SystemMonitor:
         self.monitoring_interval = monitoring_interval
         self.is_monitoring = False
         self.monitoring_thread = None
+        self._stop_event = threading.Event()
+        self._state_lock = threading.Lock()
 
         # Configure logging
         logging.basicConfig(
@@ -96,7 +98,7 @@ class SystemMonitor:
         Args:
             metrics: System metrics to log
         """
-        log_file = os.path.join(self.log_dir, f"metrics_{int(time.time())}.json")
+        log_file = os.path.join(self.log_dir, f"metrics_{time.time_ns() // 1_000_000}.json")
         with open(log_file, "w") as f:
             json.dump(metrics, f, indent=2)
 
@@ -104,7 +106,7 @@ class SystemMonitor:
         """
         Continuous monitoring loop.
         """
-        while self.is_monitoring:
+        while not self._stop_event.is_set():
             try:
                 # Collect metrics
                 metrics = self._get_system_metrics()
@@ -115,34 +117,41 @@ class SystemMonitor:
                 # Log metrics
                 self._log_metrics(metrics)
 
-                # Wait for next interval
-                time.sleep(self.monitoring_interval)
+                # Wait for next interval (returns early when monitoring is stopped)
+                self._stop_event.wait(self.monitoring_interval)
 
             except Exception as e:
                 self.logger.error(f"Monitoring error: {str(e)}")
                 # Wait before retrying to prevent rapid error logging
-                time.sleep(5)
+                self._stop_event.wait(5)
 
     def start_monitoring(self) -> None:
         """
         Start system monitoring in a separate thread.
         """
-        if not self.is_monitoring:
+        with self._state_lock:
+            if self.is_monitoring:
+                return
             self.is_monitoring = True
+            self._stop_event.clear()
             self.monitoring_thread = threading.Thread(target=self._monitoring_loop)
             self.monitoring_thread.daemon = True
             self.monitoring_thread.start()
-            self.logger.info("System monitoring started")
+        self.logger.info("System monitoring started")
 
     def stop_monitoring(self) -> None:
         """
         Stop system monitoring.
         """
-        if self.is_monitoring:
+        with self._state_lock:
+            if not self.is_monitoring:
+                return
             self.is_monitoring = False
-            if self.monitoring_thread:
-                self.monitoring_thread.join()
-            self.logger.info("System monitoring stopped")
+            self._stop_event.set()
+            thread = self.monitoring_thread
+        if thread:
+            thread.join()
+        self.logger.info("System monitoring stopped")
 
     def get_recent_metrics(self, limit: int = 5) -> list:
         """
@@ -154,8 +163,17 @@ class SystemMonitor:
         Returns:
             List of recent metric logs
         """
+        def file_stamp(name: str) -> int:
+            return int(name[len("metrics_") : -len(".json")])
+
         metric_files = sorted(
-            [f for f in os.listdir(self.log_dir) if f.startswith("metrics_") and f.endswith(".json")], reverse=True
+            (
+                f
+                for f in os.listdir(self.log_dir)
+                if f.startswith("metrics_") and f.endswith(".json") and f[len("metrics_") : -len(".json")].isdigit()
+            ),
+            key=file_stamp,
+            reverse=True,
         )
 
         recent_metrics = []

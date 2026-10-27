@@ -72,7 +72,7 @@ class TestSystemMonitor:
         # Custom log handler to capture warnings
         class CaptureHandler(logging.Handler):
             def emit(self, record):
-                log_capture.append(record.getMessage())
+                log_capture.append(f'{record.levelname} {record.getMessage()}')
         
         # Add capture handler
         capture_handler = CaptureHandler()
@@ -161,7 +161,7 @@ class TestSystemMonitor:
             
             class CaptureHandler(logging.Handler):
                 def emit(self, record):
-                    log_capture.append(record.getMessage())
+                    log_capture.append(f'{record.levelname} {record.getMessage()}')
             
             # Add capture handler
             capture_handler = CaptureHandler()
