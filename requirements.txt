@@ -58,11 +58,11 @@ python-dotenv>=1.0.1
 argon2-cffi>=23.1.0
 
 # Monitoring & Observability (Modern OpenTelemetry)
-prometheus-client>=0.25.0
-opentelemetry-api>=1.42.1
-opentelemetry-sdk>=1.42.1
-opentelemetry-exporter-otlp-proto-http>=1.42.1
-opentelemetry-instrumentation-fastapi>=0.63b1
+prometheus-client>=0.26.0
+opentelemetry-api>=1.44.0
+opentelemetry-sdk>=1.44.0
+opentelemetry-exporter-otlp-proto-http>=1.44.0
+opentelemetry-instrumentation-fastapi>=0.65b0
 
 # Async & HTTP Client
 httpx>=0.28.1
