@@ -1,0 +1,47 @@
+- rule_id: AU-2-LOCAL-001
+  control: AU-2
+  title: Local application logging is enabled
+  method: examine
+  evidence:
+    type: app.logging_config
+    required_fields: [local_logging_enabled]
+  condition: local_logging_enabled
+  observed: "local logging enabled: {local_logging_enabled}"
+  remediation: Enable monitoring.logging.local in the configuration.
+
+- rule_id: AU-11-RETENTION-001
+  control: AU-11
+  title: Audit record retention meets the organization-defined period
+  method: examine
+  parameters: {min_retention_days: 365}
+  evidence:
+    type: app.logging_config
+    required_fields: [retention_days]
+  assessable_when: exists(retention_days)
+  condition: retention_days >= min_retention_days
+  observed: "retention {retention_days} days; required {min_retention_days}"
+  remediation: Increase logging.retention_days.
+
+- rule_id: AU-12-AUDITD-001
+  control: AU-12
+  title: Host audit rules are loaded
+  method: test
+  parameters: {min_audit_rules: 1}
+  evidence:
+    type: linux.audit
+    required_fields: [audit_rule_count]
+  condition: audit_rule_count >= min_audit_rules
+  observed: "{audit_rule_count} audit rule(s) configured"
+  remediation: Configure auditd rules under /etc/audit/rules.d.
+
+- rule_id: IR-3-EXERCISE-001
+  control: IR-3
+  title: Incident response capability tested
+  method: interview
+  remediation: Provide incident response exercise results.
+
+- rule_id: CP-4-RESTORE-001
+  control: CP-4
+  title: Backup restoration verified
+  method: test
+  remediation: Provide restore-test evidence; configured backups alone do not show restoration succeeds.

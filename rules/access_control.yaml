@@ -1,0 +1,68 @@
+# Illustrative proprietary rule format (not OSCAL). Parameter values are
+# organizational examples, not NIST requirements.
+- rule_id: AC-2-INACTIVE-001
+  control: AC-2
+  title: Inactive local accounts are disabled
+  method: test
+  parameters: {max_inactive_days: 90}
+  evidence:
+    type: linux.accounts
+    required_fields: [accounts, login_data_complete]
+  assessable_when: login_data_complete
+  condition: >
+    len([a for a in accounts if a['last_login_epoch'] is not None
+         and age_days(a['last_login_epoch']) > max_inactive_days]) == 0
+  observed: "{len([a for a in accounts if a['last_login_epoch'] is not None and age_days(a['last_login_epoch']) > max_inactive_days])} account(s) inactive over {max_inactive_days} days"
+  remediation: Disable or remove inactive accounts, or document an approved exception.
+
+- rule_id: AC-6-PRIV-001
+  control: AC-6
+  title: Privileged (sudo/wheel/admin) membership within organizational limit
+  method: test
+  parameters: {max_privileged_users: 5}
+  evidence:
+    type: linux.accounts
+    required_fields: [sudo_users]
+  condition: len(sudo_users) <= max_privileged_users
+  observed: "{len(sudo_users)} privileged user(s); limit {max_privileged_users}"
+  remediation: Reduce privileged group membership to authorized administrators.
+
+- rule_id: AC-6-ROOTLOGIN-001
+  control: AC-6
+  title: Direct root login over SSH is disabled
+  method: test
+  evidence:
+    type: linux.sshd_config
+    required_fields: [settings]
+  condition: "'permitrootlogin' in settings and settings['permitrootlogin'] in ['no', 'prohibit-password', 'forced-commands-only', 'without-password']"
+  observed: "PermitRootLogin is {settings['permitrootlogin'] if 'permitrootlogin' in settings else 'unset (default)'}"
+  remediation: Set PermitRootLogin no in sshd_config.
+
+- rule_id: AC-2-REVIEW-001
+  control: AC-2
+  title: Account reviews performed within the organization-defined interval
+  method: interview   # needs assessor or identity-governance evidence
+  remediation: Provide account review records; assign an owner.
+
+- rule_id: IA-5-SSHKEY-001
+  control: IA-5
+  title: SSH private keys are not accessible by group or others
+  method: test
+  parameters: {max_key_mode: 384}   # 0o600
+  evidence:
+    type: linux.ssh_keys
+    required_fields: [private_keys]
+  condition: len([k for k in private_keys if k['mode'] > max_key_mode]) == 0
+  observed: "{len([k for k in private_keys if k['mode'] > max_key_mode])} key(s) with permissive modes"
+  remediation: chmod 600 on private key files.
+
+- rule_id: IA-2-SSHPASSWORD-001
+  control: IA-2
+  title: SSH password authentication is disabled
+  method: test
+  evidence:
+    type: linux.sshd_config
+    required_fields: [settings]
+  condition: "'passwordauthentication' in settings and settings['passwordauthentication'] == 'no'"
+  observed: "PasswordAuthentication is {settings['passwordauthentication'] if 'passwordauthentication' in settings else 'unset (default yes)'}"
+  remediation: Set PasswordAuthentication no and require key or MFA-based authentication.

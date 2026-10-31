@@ -1,0 +1,14 @@
+# Organizational parameters, exceptions and applicability decisions.
+parameters: {}
+systems: {}
+exceptions: []
+#  - rule_id: AC-6-PRIV-001
+#    asset_id: host-1
+#    owner: system.owner
+#    approved_by: ao.name        # risk acceptance is a human decision
+#    reason: ...
+#    expires: 2027-03-31
+not_applicable: []
+#  - control: SC-8
+#    rationale: No external connections in boundary
+#    decided_by: assessor.name

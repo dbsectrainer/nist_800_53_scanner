@@ -862,7 +862,7 @@ class ComplianceDashboard:
 
         db = self.get_db()
         flat = calc.get_control_flat_list()
-        non_compliant = [c for c in flat if not c.compliant]
+        non_compliant = [c for c in flat if c.status == "other_than_satisfied"]
         created = sync_poam_from_report(non_compliant, meta.report_id, db)
 
         return jsonify(
@@ -1663,7 +1663,7 @@ class ComplianceDashboard:
     def api_scan_trigger(self):
         try:
             subprocess.Popen(  # noqa: S603, S607
-                ["python", "scan.py"],
+                ["python", "scan.py", "--config", os.environ.get("NIST_SCANNER_CONFIG", "config.yaml"), "--format", "json"],
                 cwd=self.project_root,
             )
         except Exception as exc:
@@ -1727,7 +1727,7 @@ class ComplianceDashboard:
 
         db = self.get_db()
         flat = calc.get_control_flat_list()
-        non_compliant = [c for c in flat if not c.compliant]
+        non_compliant = [c for c in flat if c.status == "other_than_satisfied"]
 
         # Severity breakdown from poam_items
         sev_rows = db.execute(

@@ -192,7 +192,7 @@ class AccessControlScanner:
             {
                 "control_id": "AC-2(3)",
                 "description": "Account Management - Disable Inactive Accounts",
-                "compliant": inactive_count <= self.security_thresholds["max_inactive_days"],
+                "compliant": inactive_count == 0,
                 "details": {"inactive_accounts": inactive_count},
                 "remediation": "Review and disable accounts inactive beyond policy threshold.",
             }

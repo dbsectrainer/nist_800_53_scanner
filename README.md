@@ -1,6 +1,6 @@
 # NIST 800-53 Compliance Scanner
 
-> Comprehensive NIST 800-53 Rev. 5 compliance scanner supporting AWS, Azure, GCP, and on-premise environments — with Grafana dashboards and automated alerting.
+> Evidence-driven NIST 800-53 Rev. 5 assessment engine: collects read-only evidence, evaluates it with versioned policy-as-code rules, and reports honest per-objective states and OSCAL output. Early-stage — see "Assessment model" for what is and is not covered.
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/) [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/) [![Grafana](https://img.shields.io/badge/grafana-dashboards-orange.svg)](https://grafana.com/) [![NIST 800-53](https://img.shields.io/badge/NIST-800--53%20Rev%205-green.svg)](https://csrc.nist.gov/publications/detail/sp/800-53/rev-5/final) [![FedRAMP](https://img.shields.io/badge/FedRAMP-Moderate%20Aligned-blue.svg)](https://www.fedramp.gov/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -8,8 +8,8 @@
 
 ## Overview
 
-1. Scans AWS, Azure, GCP, and on-premise environments against all 18 NIST 800-53 Rev. 5 control families, covering Low, Moderate, and High impact baselines.
-2. Produces compliance reports in JSON, Markdown, and HTML formats with per-control pass/fail status and remediation guidance.
+1. Collects evidence (currently Linux host accounts, SSH keys/config, auditd and scanner logging config) and evaluates it against rules in `rules/`. Coverage is a small, explicit set of controls; everything else is reported as `not_assessed`, never as compliant. See [docs/ASSESSMENT_MODEL.md](docs/ASSESSMENT_MODEL.md).
+2. Produces Markdown, JSON, and OSCAL (assessment-results, plus POA&M when findings are open) reports with per-objective status (satisfied / other than satisfied / not assessed / not applicable), evidence references, and remediation guidance.
 3. Exposes Prometheus metrics from the Flask dashboard and provisions a Grafana overview dashboard via configuration-as-code.
 4. Enforces alert rules through `alert_rules.yml` so teams receive notifications when compliance posture drops below defined thresholds.
 5. Supports multi-tenant operation, rate limiting, encrypted storage of scan results, and OpenTelemetry distributed tracing for production-grade observability.
@@ -126,8 +126,8 @@ Alert rules in `alert_rules.yml` integrate with Prometheus Alertmanager to notif
 
 ### Reporting and POA&M
 
-- JSON, Markdown, and HTML output formats from `scan.py --report`
-- Report versioning via `dashboard/report_versioning.py` tracks history over time
+- Markdown, JSON, and OSCAL output via `scan.py --format markdown|json|oscal`
+- Report versioning via `modules/report_versioning.py` tracks history over time
 - `dashboard/poam_generator.py` produces Plan of Action and Milestones documents for non-compliant controls, supporting FedRAMP continuous monitoring requirements
 
 ### Security and Compliance
@@ -170,11 +170,14 @@ pip install -r requirements.txt
 cp config_examples/basic_config.yaml config.yaml
 # Edit config.yaml to supply cloud credentials and scan targets
 
-# Run a scan
-python scan.py --config config.yaml --environment cloud
+# Run a scan and write a Markdown report
+python scan.py --config config.yaml
 
-# Generate a Markdown compliance report
-python scan.py --config config.yaml --report markdown
+# OSCAL assessment-results (and POA&M if findings are open)
+python scan.py --config config.yaml --format oscal
+
+# Account for coverage against the full NIST OSCAL catalog (not bundled)
+python scan.py --config config.yaml --catalog NIST_SP-800-53_rev5_catalog.json
 ```
 
 ### Docker Deployment
@@ -205,13 +208,10 @@ Security note: expose `/metrics` only on trusted networks. For production, termi
 
 ---
 
-## Production Ready Status
+## Project Status
 
-**Core scanning, observability, and CI pipeline are operational.**
+**Early-stage.** The collect/evaluate/OSCAL engine under `engine/` is the supported scan path. The older `modules/*Scanner` classes (including the cloud IAM and WinRM helpers) are not run by `scan.py`; porting their checks to collectors and rules is planned.
 
-- NIST 800-53 Rev. 5 control family modules implemented for AC, AU, CM, IA, IR, SC, and SI
-- Multi-cloud adapters for AWS (boto3), Azure (azure-identity), and GCP (google-cloud-iam)
-- On-premise scanning via SSH (Paramiko) and WinRM (pywinrm)
 - Flask dashboard with Prometheus metrics endpoint and Grafana provisioning
 - Alert rules file (`alert_rules.yml`) and Prometheus scrape config (`prometheus.yml`) included
 - Docker Compose stack for one-command local deployment
@@ -233,7 +233,7 @@ ruff check .
 mypy scan.py dashboard/app.py
 
 # Run a scan against config
-python scan.py --config config.yaml --environment cloud --report markdown
+python scan.py --config config.yaml --format markdown
 
 # Verify Prometheus metrics are exposed
 docker-compose up -d

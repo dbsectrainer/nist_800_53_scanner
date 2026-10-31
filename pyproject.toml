@@ -193,7 +193,7 @@ nist-scanner = "scan:main"
 nist-auth = "manage_auth:main"
 
 [tool.setuptools]
-packages = ["modules"]
+packages = ["modules", "engine", "engine.collectors"]
 
 [tool.setuptools.package-data]
 modules = ["py.typed"]
