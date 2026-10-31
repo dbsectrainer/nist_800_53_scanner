@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import socket
-from abc import ABC, abstractmethod
+from abc import ABC
 
 from ..models import CollectionError, Evidence
 
@@ -17,29 +17,41 @@ class Collector(ABC):
 
     def __init__(self, config: dict | None = None):
         self.config = config or {}
+        self.partial_errors = []
         self.logger = logging.getLogger(self.__class__.__name__)
 
     @property
     def asset_id(self) -> str:
         return self.config.get("asset_id") or socket.gethostname()
 
-    @abstractmethod
     def gather(self) -> dict:
-        """Return the raw evidence payload. Raise on any failure."""
+        """Return the raw evidence payload for one asset. Raise on any failure."""
+        raise NotImplementedError
+
+    def gather_assets(self) -> list[tuple[str, dict]]:
+        """Return ``[(asset_id, payload)]``. Override for collectors spanning several assets.
+
+        Append to ``self.partial_errors`` for assets that fail while others succeed.
+        """
+        return [(self.asset_id, self.gather())]
 
     def collect(self) -> tuple[list[Evidence], list[CollectionError]]:
+        self.partial_errors: list[CollectionError] = []
         try:
-            payload = self.gather()
+            items = self.gather_assets()
         except Exception as exc:  # unreachable host, expired creds, missing tool...
             self.logger.warning("%s failed: %s", self.name, exc)
-            return [], [CollectionError(self.name, self.evidence_type, str(exc), self.asset_id)]
-        return [
+            return [], [CollectionError(self.name, self.evidence_type, str(exc), self.asset_id),
+                        *self.partial_errors]
+        evidence = [
             Evidence(
                 type=self.evidence_type,
-                asset_id=self.asset_id,
+                asset_id=asset_id,
                 collector=self.name,
                 collector_version=self.version,
                 payload=payload,
                 ttl_hours=self.ttl_hours,
             )
-        ], []
+            for asset_id, payload in items
+        ]
+        return evidence, list(self.partial_errors)

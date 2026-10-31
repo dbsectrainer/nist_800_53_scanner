@@ -61,7 +61,8 @@ class AccessControlScanner:
                 {
                     "control_id": "AC-WINDOWS-CUSTOM",
                     "description": "Custom Windows Access Control Checks",
-                    "compliant": True,
+                    "compliant": None,  # not assessed: no automated check implemented
+                    "status": "not_assessed",
                     "details": {"additional_checks": "Placeholder for future custom Windows security checks"},
                     "remediation": "Continuously update and expand Windows-specific security checks",
                 }
@@ -99,7 +100,8 @@ class AccessControlScanner:
             {
                 "control_id": "AC-2",
                 "description": "Account Management",
-                "compliant": True,
+                "compliant": None,  # not assessed: no automated check implemented
+                "status": "not_assessed",
                 "remediation": "Review and enforce account management policies.",
             }
         )
@@ -107,7 +109,8 @@ class AccessControlScanner:
             {
                 "control_id": "AC-6",
                 "description": "Least Privilege",
-                "compliant": True,
+                "compliant": None,  # not assessed: no automated check implemented
+                "status": "not_assessed",
                 "remediation": "Enforce least privilege access across all systems.",
             }
         )
@@ -115,7 +118,8 @@ class AccessControlScanner:
             {
                 "control_id": "AC-17",
                 "description": "Remote Access",
-                "compliant": True,
+                "compliant": None,  # not assessed: no automated check implemented
+                "status": "not_assessed",
                 "remediation": "Implement and enforce remote access policies.",
             }
         )
@@ -216,7 +220,8 @@ class AccessControlScanner:
                 {
                     "control_id": "AC-3(5)",
                     "description": "SSH Key Security",
-                    "compliant": True,
+                    "compliant": None,  # not assessed: no automated check implemented
+                    "status": "not_assessed",
                     "details": {"insecure_keys": insecure_keys},
                     "remediation": "Set SSH private key permissions to 600.",
                 }

@@ -197,6 +197,7 @@ packages = ["modules", "engine", "engine.collectors"]
 
 [tool.setuptools.package-data]
 modules = ["py.typed"]
+engine = ["data/*.json"]
 
 # Ruff Configuration (Modern Python linter/formatter - 2025 standard)
 [tool.ruff]

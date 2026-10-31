@@ -32,7 +32,7 @@ an assessor supplies evidence.
 
 A proprietary format (not OSCAL). Conditions are a restricted, deterministic
 expression language (no `eval`, no attribute access, whitelisted functions
-`len any all sum min max abs exists age_days`). Rule `parameters` are
+`len any all sum min max abs exists age_days split lower get int`). Rule `parameters` are
 organizational example values (for example a 90-day inactivity limit), not
 NIST requirements. Override them in `parameters.yaml`:
 rule defaults < `parameters` (global) < `systems.<system_id>`.
@@ -46,9 +46,21 @@ rule defaults < `parameters` (global) < `systems.<system_id>`.
 
 ## Coverage
 
-Without `--catalog`, coverage is measured against the controls referenced by
-loaded rules only, which overstates coverage. Pass an OSCAL catalog
-(`--catalog`) to count every catalog control without a rule as `not_assessed`.
+Coverage is measured against a published baseline (default `moderate`;
+`--baseline low|moderate|high|all`, or `engine.baseline` in the config). Control
+IDs for Rev. 5 (catalog 5.2.0) and the three baselines ship in
+`engine/data/rev5_control_ids.json`, extracted from NIST's OSCAL content at a
+pinned commit. Every baseline control without a rule is `not_assessed`, so the
+control-coverage figure is deliberately low until more rules exist. Enhancements
+such as `AC-2.1` are separate controls: a rule on `AC-2` does not cover them.
+`--baseline rules` limits the denominator to rule-referenced controls (an
+optimistic view). `--catalog FILE` uses a full OSCAL catalog instead;
+`--fetch-catalog DEST` downloads the pinned one and verifies its SHA-256.
+
+Asset coverage compares `engine.expected_assets` in the config with assets that
+have fresh evidence. With no inventory configured it is reported as unknown,
+never 100%.
+
 There is intentionally no single aggregate "compliance %", and the dashboard
 reports `ato_status: not_determined`: the scanner supplies evidence, it does
 not authorize.
@@ -58,3 +70,26 @@ not authorize.
 Subclass `engine.collectors.base.Collector`, set `evidence_type`, implement
 `gather()` returning a payload dict (raise on failure), and register it in
 `engine/collectors/__init__.py`. Then write a rule against that evidence type.
+
+## Collectors and the configuration that enables them
+
+Always attempted (a collector that cannot gather its evidence is a coverage
+gap): Linux accounts, SSH keys, sshd config, auditd, listening services
+(`ss`), kernel parameters, FIPS flag, pending package updates (apt/dnf),
+scanner logging config.
+
+Enabled by config:
+
+| Config | Collector | Evidence type |
+|---|---|---|
+| `firewall.config_paths: [...]` | JSON firewall exports (unreadable files are recorded, never treated as permissive) | `network.firewall_rules` |
+| `vulnerability_scan.report_path` | Imported scan report (`completed_at`, `findings[].severity`) | `vuln.scan_report` |
+| `cloud_providers.aws.enabled` | IAM root MFA, admin users, console users without MFA | `aws.iam` |
+| `cloud_providers.azure.enabled` | Global Administrators, guest accounts | `azure.directory` |
+| `cloud_providers.gcp.enabled` + `projects` | Service accounts, public IAM members (one asset per project) | `gcp.iam` |
+| `windows.enabled` | Local admins, disabled accounts, minimum password length (local PowerShell) | `windows.accounts` |
+
+`engine.baseline` and `engine.expected_assets` set the coverage universe.
+Cloud SDKs are imported lazily; clients and fetchers are injectable in tests, so
+no credentials are needed. The Windows collector has only been exercised with a
+fake runner, not on a real Windows host.

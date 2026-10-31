@@ -1,0 +1,86 @@
+- rule_id: AC-6-AWS-ADMINS-001
+  control: AC-6
+  title: AWS users with AdministratorAccess within organizational limit
+  method: test
+  parameters: {max_privileged_users: 5}
+  evidence: {type: aws.iam, required_fields: [admin_users]}
+  condition: len(admin_users) <= max_privileged_users
+  observed: "{len(admin_users)} admin user(s); limit {max_privileged_users}"
+  remediation: Remove direct AdministratorAccess grants; use roles with least privilege.
+
+- rule_id: IA-2-AWS-ROOTMFA-001
+  control: IA-2
+  title: AWS root account has MFA enabled
+  method: test
+  evidence: {type: aws.iam, required_fields: [root_mfa_enabled]}
+  condition: root_mfa_enabled
+  observed: "root MFA enabled: {root_mfa_enabled}"
+  remediation: Enable MFA on the root account.
+
+- rule_id: IA-2-AWS-USERMFA-001
+  control: IA-2
+  title: AWS console users have MFA
+  method: test
+  evidence: {type: aws.iam, required_fields: [console_users_without_mfa]}
+  condition: len(console_users_without_mfa) == 0
+  observed: "{len(console_users_without_mfa)} console user(s) without MFA"
+  remediation: Require MFA for all IAM users with console access.
+
+- rule_id: AC-6-AZURE-GLOBALADMINS-001
+  control: AC-6
+  title: Azure Global Administrators within organizational limit
+  method: test
+  parameters: {max_global_admins: 5}
+  evidence: {type: azure.directory, required_fields: [global_admins]}
+  condition: len(global_admins) <= max_global_admins
+  observed: "{len(global_admins)} Global Administrator(s); limit {max_global_admins}"
+  remediation: Reduce Global Administrator assignments; use least-privilege roles.
+
+- rule_id: AC-2-AZURE-GUESTS-001
+  control: AC-2
+  title: Azure guest accounts within organizational limit
+  method: test
+  parameters: {max_guest_users: 3}
+  evidence: {type: azure.directory, required_fields: [guest_users]}
+  condition: len(guest_users) <= max_guest_users
+  observed: "{len(guest_users)} guest account(s); limit {max_guest_users}"
+  remediation: Review and remove unneeded guest accounts.
+
+- rule_id: AC-3-GCP-PUBLIC-001
+  control: AC-3
+  title: No public principals in GCP project IAM policy
+  method: test
+  evidence: {type: gcp.iam, required_fields: [public_members]}
+  condition: len(public_members) == 0
+  observed: "public principals: {public_members}"
+  remediation: Remove allUsers / allAuthenticatedUsers bindings.
+
+- rule_id: AC-2-GCP-SERVICEACCOUNTS-001
+  control: AC-2
+  title: GCP service accounts within organizational limit
+  method: test
+  parameters: {max_service_accounts: 10}
+  evidence: {type: gcp.iam, required_fields: [service_account_count]}
+  condition: service_account_count <= max_service_accounts
+  observed: "{service_account_count} service account(s); limit {max_service_accounts}"
+  remediation: Review and remove unused service accounts.
+
+- rule_id: AC-6-WINADMINS-001
+  control: AC-6
+  title: Local Administrators group within organizational limit
+  method: test
+  parameters: {max_admin_users: 3}
+  evidence: {type: windows.accounts, required_fields: [admin_users]}
+  condition: len(admin_users) <= max_admin_users
+  observed: "{len(admin_users)} local administrator(s); limit {max_admin_users}"
+  remediation: Reduce Administrators group membership.
+
+- rule_id: IA-5-WINPASSWORD-001
+  control: IA-5
+  title: Minimum password length meets the organization-defined value
+  method: test
+  parameters: {min_password_length_required: 12}
+  evidence: {type: windows.accounts, required_fields: [min_password_length]}
+  condition: min_password_length >= min_password_length_required
+  observed: "minimum length {min_password_length}; required {min_password_length_required}"
+  remediation: Set the minimum password length via local or group policy.

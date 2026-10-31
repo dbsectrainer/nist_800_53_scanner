@@ -130,6 +130,8 @@ class AssessmentRun:
     started_at: datetime = field(default_factory=utcnow)
     run_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     catalog_controls: list[str] = field(default_factory=list)
+    expected_assets: list[str] = field(default_factory=list)
+    baseline: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -140,4 +142,6 @@ class AssessmentRun:
             "errors": [e.to_dict() for e in self.errors],
             "assessments": [a.to_dict() for a in self.assessments],
             "catalog_controls": self.catalog_controls,
+            "expected_assets": self.expected_assets,
+            "baseline": self.baseline,
         }

@@ -58,6 +58,10 @@ def make_functions(now: datetime) -> dict[str, Callable[..., Any]]:
         "abs": abs,
         "exists": lambda v: v is not None and v != "" and v != [],
         "age_days": age_days,
+        "split": lambda s, sep: str(s).split(sep),
+        "lower": lambda s: str(s).lower(),
+        "int": int,
+        "get": lambda d, k, default=None: d.get(k, default),
     }
 
 

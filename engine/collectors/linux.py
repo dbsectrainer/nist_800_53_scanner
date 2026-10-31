@@ -106,6 +106,8 @@ class SshdConfigCollector(Collector):
                 if not line:
                     continue
                 parts = line.split(None, 1)
+                if parts and parts[0].lower() == "match":
+                    break  # settings after Match are conditional, not global
                 if len(parts) == 2:
                     settings.setdefault(parts[0].lower(), parts[1].strip())  # first value wins
         return {"settings": settings}
@@ -134,3 +136,88 @@ class AuditdCollector(Collector):
                         k, v = line.split("=", 1)
                         settings[k.strip()] = v.strip()
         return {"audit_rule_count": rule_count, "auditd_settings": settings}
+
+
+class ListeningServicesCollector(Collector):
+    name = "linux_listening_services"
+    evidence_type = "linux.listening_services"
+
+    @staticmethod
+    def parse_ss(output: str) -> list[dict]:
+        listeners = []
+        for line in output.splitlines():
+            cols = line.split()
+            if len(cols) < 5:
+                continue
+            proto, local = cols[0], cols[4]
+            host, _, port = local.rpartition(":")
+            if not port.isdigit():
+                continue
+            host = host.strip("[]")
+            listeners.append({
+                "proto": proto, "address": host, "port": int(port),
+                "loopback": host.startswith("127.") or host in ("::1", "localhost"),
+            })
+        return listeners
+
+    def gather(self) -> dict:
+        result = subprocess.run(["ss", "-H", "-tuln"], capture_output=True, text=True, timeout=15, check=False)
+        if result.returncode != 0:
+            raise RuntimeError(f"ss failed: {result.stderr.strip() or result.returncode}")
+        return {"listeners": self.parse_ss(result.stdout)}
+
+
+class SysctlCollector(Collector):
+    name = "linux_sysctl"
+    evidence_type = "linux.sysctl"
+    KEYS = ("kernel.randomize_va_space", "net.ipv4.ip_forward", "net.ipv4.conf.all.accept_redirects")
+
+    def gather(self) -> dict:
+        root = self.config.get("proc_sys_root", "/proc/sys")
+        values: dict[str, str] = {}
+        for key in self.KEYS:
+            path = os.path.join(root, *key.split("."))
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    values[key] = fh.read().strip()
+            except OSError:
+                continue
+        if not values:
+            raise FileNotFoundError(f"no kernel parameters readable under {root}")
+        return {"values": values}
+
+
+class CryptoPolicyCollector(Collector):
+    name = "linux_crypto_policy"
+    evidence_type = "linux.crypto"
+
+    def gather(self) -> dict:
+        path = self.config.get("fips_flag_path", "/proc/sys/crypto/fips_enabled")
+        with open(path, encoding="utf-8") as fh:
+            return {"fips_enabled": int(fh.read().strip())}
+
+
+class PackageUpdatesCollector(Collector):
+    name = "linux_package_updates"
+    evidence_type = "linux.patches"
+    ttl_hours = 24.0
+
+    def _run(self, cmd: list[str]) -> str:
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=120, check=False)
+        if res.returncode not in (0, 100):  # dnf check-update returns 100 when updates exist
+            raise RuntimeError(f"{cmd[0]} failed: {res.stderr.strip() or res.returncode}")
+        return res.stdout
+
+    def gather(self) -> dict:
+        import shutil
+
+        if shutil.which("apt-get"):
+            out = self._run(["apt-get", "-s", "upgrade"])
+            inst = [l for l in out.splitlines() if l.startswith("Inst ")]
+            return {"manager": "apt", "pending_updates": len(inst),
+                    "pending_security_updates": sum(1 for l in inst if "-security" in l)}
+        if shutil.which("dnf"):
+            out = self._run(["dnf", "-q", "updateinfo", "list", "security"])
+            sec = [l for l in out.splitlines() if l.strip() and not l.startswith("Last metadata")]
+            return {"manager": "dnf", "pending_updates": len(sec), "pending_security_updates": len(sec)}
+        raise RuntimeError("no supported package manager (apt-get, dnf) found")

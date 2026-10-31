@@ -169,6 +169,7 @@ class MultiTenantNISTComplianceScanner:
         catalog_path: Optional[str] = None,
         rules_dir: Optional[str] = None,
         policy_path: Optional[str] = None,
+        baseline: Optional[str] = None,
     ) -> AssessmentRun:
         """
         Collect evidence and evaluate it against policy-as-code rules.
@@ -195,6 +196,7 @@ class MultiTenantNISTComplianceScanner:
             rules_dir=rules_dir,
             policy_path=policy_path,
             catalog_path=catalog_path,
+            baseline=baseline,
             parallel=parallel,
         )
         self.compliance_scan_counter.labels(
@@ -258,15 +260,21 @@ class MultiTenantNISTComplianceScanner:
             "",
             "## Summary",
             f"- Control coverage: {summary['controls_assessed']}/{summary['controls_total']} "
-            f"controls assessed ({summary['control_coverage_pct']}%)",
+            f"controls assessed ({summary['control_coverage_pct']}%) against baseline "
+            f"'{summary['baseline']}'",
         ]
         for status in Status:
             lines.append(f"- {labels[status]} objectives: {summary['objective_counts'].get(status.value, 0)}")
         lines += [
             f"- Evidence items: {summary['evidence_items']} (stale: {summary['evidence_stale']})",
             f"- Collection errors (coverage gaps): {summary['collection_errors']}",
-            "",
         ]
+        ac = summary["asset_coverage"]
+        lines.append(
+            "- Asset coverage: unknown (no engine.expected_assets configured)" if ac is None else
+            f"- Asset coverage: {ac['with_fresh_evidence']}/{ac['expected']} expected assets have fresh evidence"
+            + (f"; missing: {', '.join(ac['missing'])}" if ac["missing"] else ""))
+        lines.append("")
         if run.errors:
             lines.append("## Collection errors")
             lines += [f"- **{e.collector}** ({e.evidence_type}): {e.message}" for e in run.errors]
@@ -295,15 +303,26 @@ def main() -> None:
     parser.add_argument("--api-key", help="API key for authenticated scanning")
     parser.add_argument("--format", choices=["markdown", "json", "oscal"], default="markdown",
                         help="Report format (oscal writes assessment-results and POA&M)")
-    parser.add_argument("--catalog", help="OSCAL catalog JSON (e.g. NIST SP 800-53 rev5) for coverage accounting")
+    parser.add_argument("--baseline", choices=["low", "moderate", "high", "all", "rules"],
+                        help="Control universe for coverage (default: engine.baseline or moderate; "
+                             "'rules' = only rule-referenced controls)")
+    parser.add_argument("--catalog", help="OSCAL catalog JSON to use instead of --baseline "
+                                          "(download the pinned one with --fetch-catalog)")
+    parser.add_argument("--fetch-catalog", metavar="DEST", help="Download the pinned NIST OSCAL catalog to DEST and exit")
     parser.add_argument("--rules-dir", help="Directory of policy-as-code rule files")
     parser.add_argument("--parameters", help="Organizational parameters/exceptions YAML")
 
     args = parser.parse_args()
 
+    if args.fetch_catalog:
+        from engine.catalog import fetch_catalog
+        print(fetch_catalog(args.fetch_catalog))
+        return
+
     scanner = MultiTenantNISTComplianceScanner(args.config, args.tenant)
     run = scanner.run_scans(api_key=args.api_key, catalog_path=args.catalog,
-                            rules_dir=args.rules_dir, policy_path=args.parameters)
+                            rules_dir=args.rules_dir, policy_path=args.parameters,
+                            baseline=args.baseline)
     print(scanner.generate_report(run, fmt=args.format))
 
 

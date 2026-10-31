@@ -1,0 +1,103 @@
+# Organizational parameter values below are examples, not NIST requirements.
+- rule_id: CM-6-SSHD-EMPTYPW-001
+  control: CM-6
+  title: SSH daemon rejects empty passwords
+  method: test
+  evidence: {type: linux.sshd_config, required_fields: [settings]}
+  condition: get(settings, 'permitemptypasswords', 'no') == 'no'   # OpenSSH default is "no"
+  observed: "PermitEmptyPasswords is {get(settings, 'permitemptypasswords', 'unset (default no)')}"
+  remediation: Set PermitEmptyPasswords no in sshd_config.
+
+- rule_id: CM-6-SSHD-MAXAUTH-001
+  control: CM-6
+  title: SSH MaxAuthTries within the organization-defined limit
+  method: test
+  parameters: {max_auth_tries: 4}
+  evidence: {type: linux.sshd_config, required_fields: [settings]}
+  assessable_when: "'maxauthtries' in settings"
+  # Non-numeric values raise during int() and become not_assessed.
+  condition: "int(settings['maxauthtries']) <= max_auth_tries"
+  observed: "MaxAuthTries is {get(settings, 'maxauthtries', 'unset')}; limit {max_auth_tries}"
+  remediation: Set MaxAuthTries to the organizational limit.
+
+- rule_id: CM-6-SYSCTL-ASLR-001
+  control: CM-6
+  title: Kernel address space layout randomization is fully enabled
+  method: test
+  evidence: {type: linux.sysctl, required_fields: [values]}
+  assessable_when: "'kernel.randomize_va_space' in values"
+  condition: values['kernel.randomize_va_space'] == '2'
+  observed: "kernel.randomize_va_space = {get(values, 'kernel.randomize_va_space', 'unreadable')}"
+  remediation: Set kernel.randomize_va_space=2.
+
+- rule_id: CM-7-LISTENERS-001
+  control: CM-7
+  title: Only authorized network services listen on non-loopback addresses
+  method: test
+  parameters: {allowed_ports: [22]}
+  evidence: {type: linux.listening_services, required_fields: [listeners]}
+  condition: len([l for l in listeners if not l['loopback'] and l['port'] not in allowed_ports]) == 0
+  observed: "{len([l for l in listeners if not l['loopback'] and l['port'] not in allowed_ports])} unauthorized listener(s)"
+  remediation: Disable unneeded services or add them to the approved ports parameter with justification.
+
+- rule_id: SC-8-SSH-CIPHERS-001
+  control: SC-8
+  title: SSH daemon does not allow weak ciphers
+  method: test
+  parameters: {weak_ciphers: [3des-cbc, arcfour, arcfour128, arcfour256, blowfish-cbc, cast128-cbc]}
+  evidence: {type: linux.sshd_config, required_fields: [settings]}
+  # An unset or +/-/^ modified list depends on build defaults, so it cannot be judged from the file alone.
+  assessable_when: "'ciphers' in settings and settings['ciphers'][0] not in '+-^'"
+  condition: len([c for c in split(settings['ciphers'], ',') if lower(c) in weak_ciphers]) == 0
+  observed: "Ciphers: {settings['ciphers']}"
+  remediation: Remove weak ciphers from the Ciphers directive.
+
+- rule_id: SC-13-FIPS-001
+  control: SC-13
+  title: FIPS mode is enabled when the organization requires FIPS-validated cryptography
+  method: test
+  parameters: {require_fips: true}
+  evidence: {type: linux.crypto, required_fields: [fips_enabled]}
+  condition: (not require_fips) or fips_enabled == 1
+  observed: "fips_enabled={fips_enabled}; required={require_fips}"
+  remediation: Enable FIPS mode (e.g. fips-mode-setup --enable) using a validated cryptographic module.
+
+- rule_id: SC-7-FIREWALL-001
+  control: SC-7
+  title: No firewall rule allows traffic from any source
+  method: test
+  evidence: {type: network.firewall_rules, required_fields: [rules, unreadable]}
+  assessable_when: len(unreadable) == 0
+  condition: len([r for r in rules if r['source'] == '0.0.0.0/0' and r['action'] == 'allow']) == 0
+  observed: "{len([r for r in rules if r['source'] == '0.0.0.0/0' and r['action'] == 'allow'])} allow-from-anywhere rule(s)"
+  remediation: Restrict firewall rules to required source networks.
+
+- rule_id: SI-2-PATCH-001
+  control: SI-2
+  title: No pending security updates beyond the organizational limit
+  method: test
+  parameters: {max_pending_security_updates: 0}
+  evidence: {type: linux.patches, required_fields: [pending_security_updates]}
+  condition: pending_security_updates <= max_pending_security_updates
+  observed: "{pending_security_updates} pending security update(s)"
+  remediation: Apply pending security updates within the organizational timeframe.
+
+- rule_id: RA-5-SCAN-001
+  control: RA-5
+  title: Vulnerability scan completed within the organization-defined frequency
+  method: examine
+  parameters: {max_scan_age_days: 30}
+  evidence: {type: vuln.scan_report, required_fields: [completed_at], max_age_hours: 720}
+  condition: age_days(completed_at) <= max_scan_age_days
+  observed: "last scan {completed_at}"
+  remediation: Run and import a vulnerability scan.
+
+- rule_id: RA-5-CRITICAL-001
+  control: RA-5
+  title: No open critical vulnerabilities in the latest scan
+  method: examine
+  parameters: {max_critical: 0}
+  evidence: {type: vuln.scan_report, required_fields: [critical_count], max_age_hours: 720}
+  condition: critical_count <= max_critical
+  observed: "{critical_count} critical finding(s)"
+  remediation: Remediate or formally accept critical vulnerabilities.

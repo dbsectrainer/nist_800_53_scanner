@@ -56,7 +56,10 @@ def summarize(run: AssessmentRun) -> dict[str, Any]:
     assessed = sum(1 for s in rollup.values() if s != Status.NOT_ASSESSED)
     ages = [e.age_hours() for e in run.evidence]
     stale = sum(1 for e in run.evidence if not e.is_fresh())
+    assets = _asset_coverage(run)
     return {
+        "baseline": run.baseline or None,
+        "asset_coverage": assets,
         "objective_counts": dict(objective_counts),
         "control_counts": dict(control_counts),
         "controls_total": total_controls,
@@ -70,4 +73,23 @@ def summarize(run: AssessmentRun) -> dict[str, Any]:
             {"control": a.control_id, "rule": a.rule_id, "asset": a.asset_id}
             for a in run.assessments if a.status == Status.OTHER_THAN_SATISFIED
         ],
+    }
+
+
+def _asset_coverage(run: AssessmentRun) -> Optional[dict[str, Any]]:
+    """Expected assets (from config inventory) vs. assets with fresh evidence.
+
+    ``None`` when no inventory is configured: coverage is then unknown, not 100%.
+    """
+    if not run.expected_assets:
+        return None
+    fresh = {e.asset_id for e in run.evidence if e.is_fresh()}
+    expected = set(run.expected_assets)
+    covered = expected & fresh
+    return {
+        "expected": len(expected),
+        "with_fresh_evidence": len(covered),
+        "coverage_pct": round(len(covered) / len(expected) * 100, 1),
+        "missing": sorted(expected - fresh),
+        "unexpected": sorted(fresh - expected),
     }

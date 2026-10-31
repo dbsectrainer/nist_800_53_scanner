@@ -40,7 +40,8 @@ class NetworkSecurityScanner:
         results.append({
             'control_id': 'SC-7',
             'description': 'AWS Network Boundary Protection',
-            'compliant': True,  # Placeholder
+            'compliant': None,  # not assessed: no automated check implemented
+            'status': 'not_assessed',
             'remediation': 'Review and tighten VPC security group rules'
         })
 
@@ -48,7 +49,8 @@ class NetworkSecurityScanner:
         results.append({
             'control_id': 'SC-5',
             'description': 'Azure Network Isolation',
-            'compliant': True,  # Placeholder
+            'compliant': None,  # not assessed: no automated check implemented
+            'status': 'not_assessed',
             'remediation': 'Configure Network Security Groups with least privilege'
         })
 
@@ -56,7 +58,8 @@ class NetworkSecurityScanner:
         results.append({
             'control_id': 'SC-7(3)',
             'description': 'GCP Network Segmentation',
-            'compliant': True,  # Placeholder
+            'compliant': None,  # not assessed: no automated check implemented
+            'status': 'not_assessed',
             'remediation': 'Implement network segmentation using VPC firewall rules'
         })
 
@@ -74,7 +77,8 @@ class NetworkSecurityScanner:
         results.append({
             'control_id': 'SC-7(4)',
             'description': 'Linux Firewall Configuration',
-            'compliant': True,  # Placeholder
+            'compliant': None,  # not assessed: no automated check implemented
+            'status': 'not_assessed',
             'remediation': 'Configure iptables/nftables with strict rules'
         })
 
@@ -82,7 +86,8 @@ class NetworkSecurityScanner:
         results.append({
             'control_id': 'SC-7(5)',
             'description': 'Windows Firewall Configuration',
-            'compliant': True,  # Placeholder
+            'compliant': None,  # not assessed: no automated check implemented
+            'status': 'not_assessed',
             'remediation': 'Review and update Windows Defender Firewall policies'
         })
 

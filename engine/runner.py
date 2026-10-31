@@ -6,8 +6,9 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Optional
 
-from .collectors import DEFAULT_COLLECTORS
+from .collectors import build_collectors
 from .collectors.base import Collector
+from .catalog import baseline_ids
 from .coverage import load_catalog_ids
 from .evaluate import evaluate_all
 from .models import AssessmentRun
@@ -22,18 +23,26 @@ def run_assessment(
     rules_dir: Optional[str] = None,
     policy_path: Optional[str] = None,
     catalog_path: Optional[str] = None,
+    baseline: Optional[str] = None,
     collectors: Optional[list[Collector]] = None,
     parallel: bool = False,
 ) -> AssessmentRun:
     rules = load_rules(rules_dir or os.path.join(ROOT, "rules"))
     policy = Policy.load(policy_path or os.path.join(ROOT, "parameters.yaml"))
-    collectors = collectors if collectors is not None else [c(config) for c in DEFAULT_COLLECTORS]
+    collectors = collectors if collectors is not None else build_collectors(config)
 
+    engine_cfg = config.get("engine") or {}
     run = AssessmentRun(system_id=system_id)
+    run.expected_assets = list(engine_cfg.get("expected_assets") or [])
+    rule_controls = {r.control for r in rules}
     if catalog_path:
         run.catalog_controls = load_catalog_ids(catalog_path)
+        run.baseline = "custom-catalog"
     else:
-        run.catalog_controls = sorted({r.control for r in rules})
+        # Denominator is a published baseline (default moderate); "rules" limits it to rule-referenced controls.
+        run.baseline = baseline or engine_cfg.get("baseline") or "moderate"
+        ids = [] if run.baseline == "rules" else baseline_ids(run.baseline)
+        run.catalog_controls = sorted(set(ids) | rule_controls)
 
     if parallel and len(collectors) > 1:
         with ThreadPoolExecutor(max_workers=min(8, len(collectors))) as pool:

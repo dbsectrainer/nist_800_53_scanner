@@ -176,8 +176,8 @@ python scan.py --config config.yaml
 # OSCAL assessment-results (and POA&M if findings are open)
 python scan.py --config config.yaml --format oscal
 
-# Account for coverage against the full NIST OSCAL catalog (not bundled)
-python scan.py --config config.yaml --catalog NIST_SP-800-53_rev5_catalog.json
+# Choose the control universe used for coverage (default: moderate baseline)
+python scan.py --config config.yaml --baseline high
 ```
 
 ### Docker Deployment
