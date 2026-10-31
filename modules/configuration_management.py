@@ -338,14 +338,14 @@ class ConfigurationManagementScanner(ConfigurationScanner):
                 "description": "Baseline Configuration",
                 "compliant": None,  # not assessed: no automated check implemented
                 "status": "not_assessed",
-                                "remediation": "Maintain and enforce baseline configuration documentation.",
+                "remediation": "Maintain and enforce baseline configuration documentation.",
             },
             {
                 "control_id": "CM-6",
                 "description": "Configuration Settings",
                 "compliant": None,  # not assessed: no automated check implemented
                 "status": "not_assessed",
-                                "remediation": "Apply security configuration settings using documented baselines.",
+                "remediation": "Apply security configuration settings using documented baselines.",
             },
         ]
 

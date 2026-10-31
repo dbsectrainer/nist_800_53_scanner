@@ -77,9 +77,30 @@ def validate(expression: str) -> ast.Expression:
     if len(nodes) > MAX_NODES:
         raise ExpressionError("expression too complex")
     allowed = (
-        ast.Expression, ast.BoolOp, ast.And, ast.Or, ast.UnaryOp, ast.Not, ast.USub, ast.BinOp,
-        ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Compare, ast.Name, ast.Load, ast.Store, ast.Constant,
-        ast.Subscript, ast.Call, ast.List, ast.Tuple, ast.IfExp, ast.ListComp, ast.GeneratorExp,
+        ast.Expression,
+        ast.BoolOp,
+        ast.And,
+        ast.Or,
+        ast.UnaryOp,
+        ast.Not,
+        ast.USub,
+        ast.BinOp,
+        ast.Add,
+        ast.Sub,
+        ast.Mult,
+        ast.Div,
+        ast.Compare,
+        ast.Name,
+        ast.Load,
+        ast.Store,
+        ast.Constant,
+        ast.Subscript,
+        ast.Call,
+        ast.List,
+        ast.Tuple,
+        ast.IfExp,
+        ast.ListComp,
+        ast.GeneratorExp,
         ast.comprehension,
     ) + tuple(_CMP)
     for node in nodes:
@@ -162,5 +183,5 @@ def evaluate(expression: str, variables: dict[str, Any], now: datetime) -> Any:
         return ev(tree, dict(variables))
     except ExpressionError:
         raise
-    except (TypeError, ValueError, ZeroDivisionError, AttributeError) as exc:
+    except (TypeError, ValueError, ZeroDivisionError, AttributeError, OverflowError, OSError) as exc:
         raise ExpressionError(str(exc)) from exc

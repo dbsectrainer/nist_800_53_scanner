@@ -74,6 +74,15 @@ def _result_status(raw: dict) -> str:
     return "not_assessed"
 
 
+# Worst-state-wins ranking used when several assessments target one control.
+_STATUS_SEVERITY = {
+    "other_than_satisfied": 0,
+    "not_assessed": 1,
+    "not_applicable": 2,
+    "satisfied": 3,
+}
+
+
 @dataclass
 class ControlResult:
     control_id: str
@@ -406,10 +415,15 @@ class ReportReader:
             # Fall back to file modification time (UTC-aware so mixed reports sort together)
             scan_date = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
 
-        # Quick-peek at results to get counts without full decryption
+        # Roll up worst-state-wins per control so list metadata matches the
+        # calculator. Plaintext results are counted directly; encrypted reports
+        # are decrypted here so they do not always show zero controls.
         results_field = self._results_field(raw)
-        total = 0
-        compliant = 0
+        if isinstance(results_field, dict) and _is_encrypted_envelope(results_field):
+            decrypted = self._decrypt_results(results_field)
+            if isinstance(decrypted, dict):
+                results_field = decrypted
+        control_status: Dict[str, str] = {}
 
         if isinstance(results_field, dict) and _is_scan_results(results_field):
             groups = (
@@ -419,11 +433,17 @@ class ReportReader:
             )
             for controls in groups:
                 for ctrl in controls:
-                    total += 1
-                    if _result_status(ctrl) == "satisfied":
-                        compliant += 1
+                    if not isinstance(ctrl, dict):
+                        continue
+                    control_id = ctrl.get("control_id", "UNKNOWN")
+                    status = _result_status(ctrl)
+                    current = control_status.get(control_id)
+                    if current is None or _STATUS_SEVERITY[status] < _STATUS_SEVERITY[current]:
+                        control_status[control_id] = status
         # Encrypted reports: counts unavailable at meta stage — leave as 0
 
+        total = len(control_status)
+        compliant = sum(1 for st in control_status.values() if st == "satisfied")
         pct = round((compliant / total * 100.0), 2) if total > 0 else 0.0
         return ReportMeta(
             report_id=report_id,
@@ -527,7 +547,9 @@ class MetricsCalculator:
         Flatten all scan categories into a single list of ControlResult objects.
 
         The ``family`` field is derived from the control ID prefix
-        (e.g. ``"AC-2"`` → ``"AC"``).
+        (e.g. ``"AC-2"`` → ``"AC"``). When several assessments target the same
+        control (per asset or per rule), the worst state wins so dashboard
+        metrics stay per control, matching the engine's control rollup.
         """
         flat: List[ControlResult] = []
         # New-format runs keep assessments beside evidence/errors lists; only
@@ -558,7 +580,12 @@ class MetricsCalculator:
                         status=status,
                     )
                 )
-        return flat
+        worst: Dict[str, ControlResult] = {}
+        for row in flat:
+            current = worst.get(row.control_id)
+            if current is None or _STATUS_SEVERITY[row.status] < _STATUS_SEVERITY[current.status]:
+                worst[row.control_id] = row
+        return list(worst.values())
 
     def get_compliance_by_family(self) -> Dict[str, FamilyMetrics]:
         """

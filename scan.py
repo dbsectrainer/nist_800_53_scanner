@@ -3,6 +3,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import yaml
 from datetime import datetime
 from typing import Dict, Optional
@@ -37,6 +38,12 @@ class ScanAuthError(PermissionError):
 
 class ScanRateLimitError(RuntimeError):
     """Scan rate limit exceeded."""
+
+
+def _safe_filename(value: str) -> str:
+    """Reduce a tenant id to a single path-safe filename component."""
+    cleaned = re.sub(r"[^A-Za-z0-9_.-]+", "_", value).strip("._-")
+    return cleaned or "default"
 
 
 class MultiTenantNISTComplianceScanner:
@@ -222,7 +229,8 @@ class MultiTenantNISTComplianceScanner:
         :return: Path to the generated report file
         """
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        base = os.path.join(output_dir, f"nist_800_53_report_{self.tenant_id or 'default'}_{stamp}")
+        tenant = _safe_filename(self.tenant_id or "default")
+        base = os.path.join(output_dir, f"nist_800_53_report_{tenant}_{stamp}")
 
         if fmt == "oscal":
             path = base + ".oscal.json"

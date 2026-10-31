@@ -50,6 +50,8 @@
   control: AC-3
   title: No public principals in GCP project IAM policy
   method: test
+  # Project-level bindings only; inherited folder/organization bindings are not
+  # evaluated by this evidence, so this is not a complete org-wide check.
   evidence: {type: gcp.iam, required_fields: [public_members]}
   condition: len(public_members) == 0
   observed: "public principals: {public_members}"
@@ -80,7 +82,9 @@
   title: Minimum password length meets the organization-defined value
   method: test
   parameters: {min_password_length_required: 12}
-  evidence: {type: windows.accounts, required_fields: [min_password_length]}
+  evidence: {type: windows.accounts, required_fields: [min_password_length, domain_joined]}
+  # Local policy is not authoritative on a domain-joined host (GPO wins).
+  assessable_when: not domain_joined
   condition: min_password_length >= min_password_length_required
-  observed: "minimum length {min_password_length}; required {min_password_length_required}"
+  observed: "minimum length {min_password_length}; required {min_password_length_required}; domain joined: {domain_joined}"
   remediation: Set the minimum password length via local or group policy.

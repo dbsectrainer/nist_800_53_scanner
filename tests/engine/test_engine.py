@@ -17,18 +17,28 @@ NOW = datetime(2026, 11, 1, tzinfo=timezone.utc)
 
 def rule(**kw):
     base = {
-        "rule_id": "T-1", "control": "AC-2", "title": "t", "method": "test",
+        "rule_id": "T-1",
+        "control": "AC-2",
+        "title": "t",
+        "method": "test",
         "parameters": {"limit": 2},
         "evidence": {"type": "x.y", "required_fields": ["n"]},
-        "condition": "n <= limit", "observed": "{n} vs {limit}", "remediation": "fix",
+        "condition": "n <= limit",
+        "observed": "{n} vs {limit}",
+        "remediation": "fix",
     }
     base.update(kw)
     return parse_rule(base)
 
 
 def ev(payload, age_hours=0, asset="a1"):
-    return Evidence(type="x.y", asset_id="a1" if asset is None else asset, collector="c",
-                    payload=payload, collected_at=NOW - timedelta(hours=age_hours))
+    return Evidence(
+        type="x.y",
+        asset_id="a1" if asset is None else asset,
+        collector="c",
+        payload=payload,
+        collected_at=NOW - timedelta(hours=age_hours),
+    )
 
 
 def run_with(rules, evidence=(), errors=(), policy=None):
@@ -37,10 +47,17 @@ def run_with(rules, evidence=(), errors=(), policy=None):
 
 
 # --- expression safety -------------------------------------------------
-@pytest.mark.parametrize("bad", [
-    "__import__('os').system('x')", "().__class__", "open('f')", "[x for x in y for z in w]",
-    "lambda: 1", "a.b",
-])
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "__import__('os').system('x')",
+        "().__class__",
+        "open('f')",
+        "[x for x in y for z in w]",
+        "lambda: 1",
+        "a.b",
+    ],
+)
 def test_unsafe_expressions_rejected(bad):
     with pytest.raises(ExpressionError):
         evaluate(bad, {"y": [1], "w": [1], "a": 1}, NOW)
@@ -50,6 +67,19 @@ def test_expression_basics():
     assert evaluate("len([a for a in xs if a > 1]) == 2", {"xs": [1, 2, 3]}, NOW)
     assert evaluate("age_days(ts) > 1", {"ts": NOW.timestamp() - 3 * 86400}, NOW)
     assert evaluate("x is None or x > 1", {"x": None}, NOW)
+
+
+def test_out_of_range_timestamp_is_an_expression_error_not_a_crash():
+    with pytest.raises(ExpressionError):
+        evaluate("age_days(ts) > 1", {"ts": 1e300}, NOW)
+
+
+def test_evidence_hash_covers_provenance_not_just_payload():
+    base = dict(type="x.y", collector="c", payload={"n": 1}, collected_at=NOW)
+    a = Evidence(asset_id="host-a", **base)
+    assert a.sha256 != Evidence(asset_id="host-b", **base).sha256
+    assert a.sha256 != Evidence(asset_id="host-a", **{**base, "method": "test"}).sha256
+    assert a.sha256 != Evidence(asset_id="host-a", **{**base, "collected_at": NOW - timedelta(hours=1)}).sha256
 
 
 # --- statuses ----------------------------------------------------------
@@ -91,6 +121,7 @@ def test_collector_error_is_not_assessed_not_pass():
 
 def test_error_for_one_asset_not_hidden_by_other_asset_pass():
     from engine.models import CollectionError
+
     out = run_with([rule()], [ev({"n": 1})], [CollectionError("c", "x.y", "creds expired", "a2")]).assessments
     assert {a.status for a in out} == {Status.SATISFIED, Status.NOT_ASSESSED}
 
@@ -117,8 +148,17 @@ def test_applicable_when_and_documented_na():
 # --- parameters and exceptions ----------------------------------------
 def test_parameter_inheritance():
     pol = Policy(global_params={"limit": 10}, system_params={"sys": {"limit": 1}})
-    assert run_with([rule()], [ev({"n": 5})], policy=Policy(global_params={"limit": 10})).assessments[0].status == Status.SATISFIED
+    assert (
+        run_with([rule()], [ev({"n": 5})], policy=Policy(global_params={"limit": 10})).assessments[0].status
+        == Status.SATISFIED
+    )
     assert run_with([rule()], [ev({"n": 5})], policy=pol).assessments[0].status == Status.OTHER_THAN_SATISFIED
+
+
+def test_organization_parameters_override_same_named_evidence_fields():
+    # Payload claims limit=10; the rule parameter (2) must win.
+    a = run_with([rule()], [ev({"n": 5, "limit": 10})]).assessments[0]
+    assert a.status == Status.OTHER_THAN_SATISFIED
 
 
 def test_exception_recorded_but_not_hidden_and_expiry_enforced():
@@ -192,8 +232,11 @@ def test_exception_can_select_by_control():
 # --- coverage + oscal ---------------------------------------------------
 def test_catalog_controls_without_rules_are_not_assessed(tmp_path):
     cat = tmp_path / "cat.json"
-    cat.write_text(json.dumps({"catalog": {"groups": [{"controls": [
-        {"id": "ac-2", "controls": [{"id": "ac-2.1"}]}, {"id": "pe-1"}]}]}}))
+    cat.write_text(
+        json.dumps(
+            {"catalog": {"groups": [{"controls": [{"id": "ac-2", "controls": [{"id": "ac-2.1"}]}, {"id": "pe-1"}]}]}}
+        )
+    )
     assert load_catalog_ids(str(cat)) == ["AC-2", "AC-2.1", "PE-1"]
     run = run_with([rule()], [ev({"n": 1})])
     run.catalog_controls = load_catalog_ids(str(cat))
@@ -264,13 +307,31 @@ def test_poam_omits_empty_remediation():
     assert [p["name"] for p in item.get("props", [])] == ["control-id"]
 
 
+def test_oscal_omits_not_applicable_and_uses_evidence_method():
+    na = run_with([rule(applicable_when="n > 100")], [ev({"n": 1})])
+    assert not to_assessment_results(na)["assessment-results"]["results"][0].get("findings")
+
+    tested = Evidence(type="x.y", asset_id="a", collector="c", payload={"n": 1}, method="test", collected_at=NOW)
+    doc = to_assessment_results(run_with([rule()], [tested]))
+    observation = doc["assessment-results"]["results"][0]["observations"][0]
+    assert observation["methods"] == ["TEST"]
+
+
+def test_poam_defines_the_tool_actor_it_references():
+    poam = to_poam(run_with([rule()], [ev({"n": 9})]))["plan-of-action-and-milestones"]
+    actor_uuid = poam["poam-items"][0]["origins"][0]["actors"][0]["actor-uuid"]
+    assert actor_uuid in {c["uuid"] for c in poam["local-definitions"]["components"]}
+
+
 # --- OSCAL schema validation (offline copies of the NIST 1.1.2 schemas) ---
 def _validator(name):
     jsonschema = pytest.importorskip("jsonschema")
     regex = pytest.importorskip("regex")  # OSCAL patterns use \p{...}
     import jsonschema._keywords as keywords
+
     keywords.re = regex
     import os
+
     path = os.path.join(os.path.dirname(__file__), "schemas", name)
     with open(path) as fh:
         return jsonschema.Draft7Validator(json.load(fh))
@@ -278,8 +339,10 @@ def _validator(name):
 
 def test_oscal_outputs_validate_against_nist_schema():
     stale = ev({"n": 9}, age_hours=99, asset="stale")
-    run = run_with([rule(), rule(rule_id="T-2", method="interview", condition=None)],
-                   [ev({"n": 9}), ev({"n": 1}, asset="b"), stale])
+    run = run_with(
+        [rule(), rule(rule_id="T-2", method="interview", condition=None)],
+        [ev({"n": 9}), ev({"n": 1}, asset="b"), stale],
+    )
     exc_policy = Policy(not_applicable=[{"rule_id": "T-1", "asset_id": "c", "rationale": "r", "decided_by": "d"}])
     run2 = run_with([rule()], [ev({"n": 1}, asset="c")], policy=exc_policy)
     no_fix = run_with([rule(remediation="")], [ev({"n": 9})])

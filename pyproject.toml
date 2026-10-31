@@ -331,7 +331,7 @@ asyncio_default_fixture_loop_scope = "function"
 
 # Coverage Configuration
 [tool.coverage.run]
-source = ["modules"]
+source = ["modules", "engine"]
 branch = true
 parallel = true
 omit = [

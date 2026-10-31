@@ -23,6 +23,8 @@ credential is a coverage gap (`not_assessed`), not proof of compliance.
 OSCAL has no "not assessed" state, so those findings are exported as
 `not-satisfied` with `reason: other` and an explanation in `remarks`; the
 scanner's own status is kept in the `assessment-status` property.
+`not_applicable` decisions stay in the scanner reports and are omitted from
+OSCAL findings (they are scope decisions, not evidence of satisfaction).
 
 Methods (`examine`, `interview`, `test`) are recorded per rule. A rule with
 no condition, or a method requiring a human, is always `not_assessed` until
@@ -104,3 +106,30 @@ Enabled by config:
 Cloud SDKs are imported lazily; clients and fetchers are injectable in tests, so
 no credentials are needed. The Windows collector has only been exercised with a
 fake runner, not on a real Windows host.
+
+Coverage and honesty notes:
+
+- **Evidence hashes** cover the whole observation (type, asset, collector,
+  version, method, payload and collection time), not just the payload.
+  Imported firewall and vulnerability exports also carry their file SHA-256.
+- **sshd** `Include` files are followed with first-value-wins ordering. An
+  unreadable include sets `complete: false` and the sshd rules become
+  `not_assessed`.
+- **SSH keys** scans every `id_*` private key (not just legacy default names);
+  an unreadable home or `.ssh` directory is recorded as a coverage gap.
+- **auditd** evidence includes the running state (`pgrep`/`systemctl`); an
+  unknown state is `not_assessed`, and rules on disk alone no longer pass.
+- **Package updates** evidence carries the package-index timestamp; a stale
+  index is `not_assessed` rather than reporting zero pending updates.
+- **Privileged users** include primary-group membership and explicit sudoers
+  grants; sudoers alias/comma-list forms are not parsed, and unreadable
+  sudoers files are skipped best-effort.
+- **AWS** admin detection covers direct/group `AdministratorAccess` and inline
+  `*:*` policies; credentials honor `instance_profile` (ambient chain),
+  `static` keys or `assume_role`. **GCP** evaluates the project-level IAM
+  policy only; inherited folder/organization bindings are not included.
+- **Windows** uses the well-known Administrators SID and `secedit` rather than
+  localized `net accounts` text; local password policy is `not_assessed` on
+  domain-joined hosts because domain policy is authoritative.
+- **Firewall** exports are normalized (`any`, `allow`, `deny`), and an empty
+  ruleset is `not_assessed` because default policy cannot be inferred.

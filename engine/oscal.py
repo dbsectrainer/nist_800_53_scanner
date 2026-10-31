@@ -13,7 +13,7 @@ _STATE = {  # OSCAL finding target status state
     Status.SATISFIED: "satisfied",
     Status.OTHER_THAN_SATISFIED: "not-satisfied",
     Status.NOT_ASSESSED: "not-satisfied",  # OSCAL has no 'not assessed' state; reason documents it
-    Status.NOT_APPLICABLE: "satisfied",
+    # NOT_APPLICABLE findings are omitted from OSCAL: 'satisfied' would overstate them.
 }
 
 
@@ -40,27 +40,35 @@ def to_assessment_results(run: AssessmentRun, title: str = "NIST SP 800-53 Asses
         key = (e.type, e.asset_id, e.sha256)
         obs_uuid = _stable_uuid("obs", *key, _occurrence(obs_seen, key))
         obs_ids[e.id] = obs_uuid
-        observations.append({
-            "uuid": obs_uuid,
-            "title": f"{e.type} on {e.asset_id}",
-            "description": f"Evidence collected by {e.collector} v{e.collector_version}",
-            "methods": ["TEST"],
-            "types": ["finding"],
-            "collected": _iso(e.collected_at),
-            "props": [
-                {"name": "sha256", "value": e.sha256},
-                {"name": "evidence-type", "value": e.type},
-                {"name": "asset-id", "value": e.asset_id},
-            ],
-        })
+        observations.append(
+            {
+                "uuid": obs_uuid,
+                "title": f"{e.type} on {e.asset_id}",
+                "description": f"Evidence collected by {e.collector} v{e.collector_version}",
+                "methods": [e.method.upper()],
+                "types": ["finding"],
+                "collected": _iso(e.collected_at),
+                "props": [
+                    {"name": "sha256", "value": e.sha256},
+                    {"name": "evidence-type", "value": e.type},
+                    {"name": "asset-id", "value": e.asset_id},
+                ],
+            }
+        )
 
     findings = []
     finding_seen: dict[tuple[str, ...], int] = {}
     for a in run.assessments:
+        if a.status == Status.NOT_APPLICABLE:
+            # N/A is a documented scope decision, not evidence of satisfaction.
+            # It stays in the scanner's own report; OSCAL has no equivalent state.
+            continue
         status = {"state": _STATE[a.status]}
-        props = [{"name": "assessment-status", "value": a.status.value},
-                 {"name": "assessment-method", "value": a.method.value},
-                 {"name": "rule-id", "value": a.rule_id}]
+        props = [
+            {"name": "assessment-status", "value": a.status.value},
+            {"name": "assessment-method", "value": a.method.value},
+            {"name": "rule-id", "value": a.rule_id},
+        ]
         if a.asset_id:
             props.append({"name": "asset-id", "value": a.asset_id})
         if a.status in (Status.NOT_ASSESSED, Status.NOT_APPLICABLE) or a.reason:
@@ -68,8 +76,7 @@ def to_assessment_results(run: AssessmentRun, title: str = "NIST SP 800-53 Asses
             status["reason"] = "other"
             status["remarks"] = a.reason or a.status.value
         finding = {
-            "uuid": _stable_uuid("finding", a.rule_id, a.asset_id,
-                                 _occurrence(finding_seen, (a.rule_id, a.asset_id))),
+            "uuid": _stable_uuid("finding", a.rule_id, a.asset_id, _occurrence(finding_seen, (a.rule_id, a.asset_id))),
             "title": a.title,
             "description": a.observed or a.reason or a.title,
             "props": props,
@@ -93,17 +100,22 @@ def to_assessment_results(run: AssessmentRun, title: str = "NIST SP 800-53 Asses
                 "version": "1.0",
                 "oscal-version": OSCAL_VERSION,
                 "remarks": "Scanner output provides evidence and recommendations only; "
-                           "authorization decisions are made by the authorizing official.",
+                "authorization decisions are made by the authorizing official.",
             },
-            "import-ap": {"href": "#unspecified-assessment-plan"},
-            "results": [{
-                "uuid": _stable_uuid("result", run.run_id),
-                "title": f"Scan of {run.system_id}",
-                "description": "Automated evidence-based assessment",
-                "start": _iso(run.started_at),
-                "reviewed-controls": {"control-selections": [{"include-all": {}}]},
-                "props": [{"name": "collection-errors", "value": str(len(run.errors))}],
-            }],
+            "import-ap": {
+                "href": "urn:nist-scanner:assessment-plan:not-provided",
+                "remarks": "No assessment plan was supplied; findings are generated from collected evidence.",
+            },
+            "results": [
+                {
+                    "uuid": _stable_uuid("result", run.run_id),
+                    "title": f"Scan of {run.system_id}",
+                    "description": "Automated evidence-based assessment",
+                    "start": _iso(run.started_at),
+                    "reviewed-controls": {"control-selections": [{"include-all": {}}]},
+                    "props": [{"name": "collection-errors", "value": str(len(run.errors))}],
+                }
+            ],
         }
     }
     result = doc["assessment-results"]["results"][0]
@@ -117,6 +129,7 @@ def to_assessment_results(run: AssessmentRun, title: str = "NIST SP 800-53 Asses
 
 def to_poam(run: AssessmentRun, title: str = "NIST SP 800-53 POA&M") -> dict[str, Any]:
     items = []
+    tool_uuid = _stable_uuid("tool", "nist-scanner")
     seen: dict[tuple[str, ...], int] = {}
     for a in run.assessments:
         if a.status != Status.OTHER_THAN_SATISFIED:
@@ -130,11 +143,10 @@ def to_poam(run: AssessmentRun, title: str = "NIST SP 800-53 POA&M") -> dict[str
         if action:
             props.append({"name": "recommended-action", "value": action})
         item = {
-            "uuid": _stable_uuid("poam", a.rule_id, a.asset_id,
-                                 _occurrence(seen, (a.rule_id, a.asset_id))),
+            "uuid": _stable_uuid("poam", a.rule_id, a.asset_id, _occurrence(seen, (a.rule_id, a.asset_id))),
             "title": a.title,
             "description": a.observed or a.title,
-            "origins": [{"actors": [{"type": "tool", "actor-uuid": _stable_uuid("tool", "nist-scanner")}]}],
+            "origins": [{"actors": [{"type": "tool", "actor-uuid": tool_uuid}]}],
         }
         if props:
             item["props"] = props
@@ -142,9 +154,28 @@ def to_poam(run: AssessmentRun, title: str = "NIST SP 800-53 POA&M") -> dict[str
     return {
         "plan-of-action-and-milestones": {
             "uuid": _stable_uuid("poam-doc", run.run_id),
-            "metadata": {"title": title, "last-modified": _iso(run.started_at),
-                         "version": "1.0", "oscal-version": OSCAL_VERSION},
-            "import-ssp": {"href": "#unspecified-ssp"},
+            "metadata": {
+                "title": title,
+                "last-modified": _iso(run.started_at),
+                "version": "1.0",
+                "oscal-version": OSCAL_VERSION,
+            },
+            "import-ssp": {
+                "href": "urn:nist-scanner:ssp:not-provided",
+                "remarks": "No system security plan was supplied with this assessment.",
+            },
+            # Resolve the tool actor referenced by every POA&M item.
+            "local-definitions": {
+                "components": [
+                    {
+                        "uuid": tool_uuid,
+                        "type": "software",
+                        "title": "nist-800-53-scanner",
+                        "description": "Automated evidence collection and assessment engine",
+                        "status": {"state": "operational"},
+                    }
+                ]
+            },
             "poam-items": items,
         }
     }

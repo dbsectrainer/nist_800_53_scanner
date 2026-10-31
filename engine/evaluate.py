@@ -61,7 +61,9 @@ def evaluate_rule(
         return [make(Status.NOT_APPLICABLE, reason=f"{na['rationale']} (decided by {na['decided_by']})")]
 
     if not rule.automated:
-        return [make(Status.NOT_ASSESSED, reason=f"method '{rule.method.value}' requires an assessor; no automated test")]
+        return [
+            make(Status.NOT_ASSESSED, reason=f"method '{rule.method.value}' requires an assessor; no automated test")
+        ]
 
     relevant = [e for e in evidence if e.type == rule.evidence_type]
     relevant_errors = [e for e in errors if e.evidence_type == rule.evidence_type]
@@ -75,33 +77,59 @@ def evaluate_rule(
         asset = ev.asset_id
         na_asset = policy.find_not_applicable(rule, asset)
         if na_asset:
-            out.append(make(Status.NOT_APPLICABLE, asset, evidence_refs=[ev.id],
-                            reason=f"{na_asset['rationale']} (decided by {na_asset['decided_by']})"))
+            out.append(
+                make(
+                    Status.NOT_APPLICABLE,
+                    asset,
+                    evidence_refs=[ev.id],
+                    reason=f"{na_asset['rationale']} (decided by {na_asset['decided_by']})",
+                )
+            )
             continue
         if not ev.is_fresh(rule.max_age_hours, now):
-            out.append(make(Status.NOT_ASSESSED, asset, evidence_refs=[ev.id],
-                            reason=f"evidence stale ({ev.age_hours(now):.1f}h old)"))
+            out.append(
+                make(
+                    Status.NOT_ASSESSED,
+                    asset,
+                    evidence_refs=[ev.id],
+                    reason=f"evidence stale ({ev.age_hours(now):.1f}h old)",
+                )
+            )
             continue
         missing = [f for f in rule.required_fields if f not in ev.payload]
         if missing:
-            out.append(make(Status.NOT_ASSESSED, asset, evidence_refs=[ev.id],
-                            reason=f"evidence missing required fields: {', '.join(missing)}"))
+            out.append(
+                make(
+                    Status.NOT_ASSESSED,
+                    asset,
+                    evidence_refs=[ev.id],
+                    reason=f"evidence missing required fields: {', '.join(missing)}",
+                )
+            )
             continue
 
-        variables = {**policy.parameters_for(rule, system_id), **ev.payload}
+        # Organizational parameters win over evidence fields with the same name,
+        # so collector output cannot silently change a threshold.
+        variables = {**ev.payload, **policy.parameters_for(rule, system_id)}
         try:
             if rule.applicable_when and not evaluate(rule.applicable_when, variables, now):
-                out.append(make(Status.NOT_APPLICABLE, asset, evidence_refs=[ev.id],
-                                reason="rule scope not matched"))
+                out.append(make(Status.NOT_APPLICABLE, asset, evidence_refs=[ev.id], reason="rule scope not matched"))
                 continue
             if rule.assessable_when and not evaluate(rule.assessable_when, variables, now):
-                out.append(make(Status.NOT_ASSESSED, asset, evidence_refs=[ev.id],
-                                reason="evidence incomplete for this assessment"))
+                out.append(
+                    make(
+                        Status.NOT_ASSESSED,
+                        asset,
+                        evidence_refs=[ev.id],
+                        reason="evidence incomplete for this assessment",
+                    )
+                )
                 continue
             ok = bool(evaluate(rule.condition or "False", variables, now))
         except ExpressionError as exc:
-            out.append(make(Status.NOT_ASSESSED, asset, evidence_refs=[ev.id],
-                            reason=f"rule could not be evaluated: {exc}"))
+            out.append(
+                make(Status.NOT_ASSESSED, asset, evidence_refs=[ev.id], reason=f"rule could not be evaluated: {exc}")
+            )
             continue
 
         observed = _render(rule.observed_template, variables, now) if rule.observed_template else ""
@@ -122,11 +150,10 @@ def evaluate_rule(
     return out
 
 
-def evaluate_all(run: AssessmentRun, rules: list[Rule], policy: Policy,
-                 now: Optional[datetime] = None) -> AssessmentRun:
+def evaluate_all(
+    run: AssessmentRun, rules: list[Rule], policy: Policy, now: Optional[datetime] = None
+) -> AssessmentRun:
     run.assessments = []
     for rule in rules:
-        run.assessments.extend(
-            evaluate_rule(rule, run.evidence, run.errors, policy, run.system_id, now)
-        )
+        run.assessments.extend(evaluate_rule(rule, run.evidence, run.errors, policy, run.system_id, now))
     return run

@@ -71,7 +71,8 @@ def summarize(run: AssessmentRun) -> dict[str, Any]:
         "collection_errors": len(run.errors),
         "open_findings": [
             {"control": a.control_id, "rule": a.rule_id, "asset": a.asset_id}
-            for a in run.assessments if a.status == Status.OTHER_THAN_SATISFIED
+            for a in run.assessments
+            if a.status == Status.OTHER_THAN_SATISFIED
         ],
     }
 

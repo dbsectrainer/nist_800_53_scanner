@@ -42,15 +42,25 @@ def test_default_denominator_is_moderate_baseline_and_rules_are_unioned():
 def test_asset_coverage_unknown_without_inventory_and_measured_with_one():
     assert summarize(run_assessment({}, collectors=[Stub({"asset_id": "h1"})]))["asset_coverage"] is None
     cfg = {"engine": {"expected_assets": ["h1", "h2"]}}
-    ac = summarize(run_assessment(cfg, collectors=[Stub({"asset_id": "h1"}), Stub({"asset_id": "h3"})]))["asset_coverage"]
+    ac = summarize(run_assessment(cfg, collectors=[Stub({"asset_id": "h1"}), Stub({"asset_id": "h3"})]))[
+        "asset_coverage"
+    ]
     assert ac["expected"] == 2 and ac["with_fresh_evidence"] == 1 and ac["missing"] == ["h2"]
     assert ac["unexpected"] == ["h3"] and ac["coverage_pct"] == 50.0
 
 
 def test_stale_evidence_does_not_count_for_asset_coverage():
     run = AssessmentRun(system_id="s", expected_assets=["h1"])
-    run.evidence.append(Evidence(type="t", asset_id="h1", collector="c", payload={},
-                                 collected_at=utcnow() - timedelta(hours=100), ttl_hours=24))
+    run.evidence.append(
+        Evidence(
+            type="t",
+            asset_id="h1",
+            collector="c",
+            payload={},
+            collected_at=utcnow() - timedelta(hours=100),
+            ttl_hours=24,
+        )
+    )
     assert summarize(run)["asset_coverage"]["with_fresh_evidence"] == 0
 
 

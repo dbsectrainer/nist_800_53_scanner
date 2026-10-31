@@ -109,6 +109,23 @@ class CloudAccessScanner:
             return ClientSecretCredential(tenant_id, client_id, client_secret)
         return DefaultAzureCredential()
 
+    # Public wrappers used by the assessment engine's collectors; they keep the
+    # engine off the legacy private helpers.
+    def build_azure_credential(self) -> ClientSecretCredential | DefaultAzureCredential:
+        """Return the configured Azure credential (service principal or default chain)."""
+        return self._build_azure_credential()
+
+    async def fetch_azure_directory(self, graph_client: GraphServiceClient) -> dict[str, list[str]]:
+        """Return Global Administrator and guest user lists from Microsoft Graph."""
+        return {
+            "global_admins": await self._fetch_azure_global_admins(graph_client),
+            "guest_users": await self._fetch_azure_guest_users(graph_client),
+        }
+
+    def build_gcp_credentials(self) -> service_account.Credentials | None:
+        """Return configured GCP credentials, or None for Application Default Credentials."""
+        return self._build_gcp_credentials()
+
     async def _fetch_azure_global_admins(self, graph_client: GraphServiceClient) -> list[str]:
         """
         Query Azure AD for members of the Global Administrator directory role

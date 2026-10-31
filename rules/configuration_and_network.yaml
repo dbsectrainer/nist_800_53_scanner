@@ -3,7 +3,8 @@
   control: CM-6
   title: SSH daemon rejects empty passwords
   method: test
-  evidence: {type: linux.sshd_config, required_fields: [settings]}
+  evidence: {type: linux.sshd_config, required_fields: [settings, complete]}
+  assessable_when: complete
   condition: get(settings, 'permitemptypasswords', 'no') == 'no'   # OpenSSH default is "no"
   observed: "PermitEmptyPasswords is {get(settings, 'permitemptypasswords', 'unset (default no)')}"
   remediation: Set PermitEmptyPasswords no in sshd_config.
@@ -13,8 +14,8 @@
   title: SSH MaxAuthTries within the organization-defined limit
   method: test
   parameters: {max_auth_tries: 4}
-  evidence: {type: linux.sshd_config, required_fields: [settings]}
-  assessable_when: "'maxauthtries' in settings"
+  evidence: {type: linux.sshd_config, required_fields: [settings, complete]}
+  assessable_when: complete and 'maxauthtries' in settings
   # Non-numeric values raise during int() and become not_assessed.
   condition: "int(settings['maxauthtries']) <= max_auth_tries"
   observed: "MaxAuthTries is {get(settings, 'maxauthtries', 'unset')}; limit {max_auth_tries}"
@@ -45,9 +46,9 @@
   title: SSH daemon does not allow weak ciphers
   method: test
   parameters: {weak_ciphers: [3des-cbc, arcfour, arcfour128, arcfour256, blowfish-cbc, cast128-cbc]}
-  evidence: {type: linux.sshd_config, required_fields: [settings]}
+  evidence: {type: linux.sshd_config, required_fields: [settings, complete]}
   # An unset or +/-/^ modified list depends on build defaults, so it cannot be judged from the file alone.
-  assessable_when: "'ciphers' in settings and settings['ciphers'][0] not in '+-^'"
+  assessable_when: "complete and 'ciphers' in settings and settings['ciphers'][0] not in '+-^'"
   condition: len([c for c in split(settings['ciphers'], ',') if lower(c) in weak_ciphers]) == 0
   observed: "Ciphers: {settings['ciphers']}"
   remediation: Remove weak ciphers from the Ciphers directive.
@@ -66,21 +67,27 @@
   control: SC-7
   title: No firewall rule allows traffic from any source
   method: test
+  parameters:
+    any_sources: [any, 0.0.0.0/0, '::/0', '*']
+    allow_actions: [allow, accept, permit]
   evidence: {type: network.firewall_rules, required_fields: [rules, unreadable]}
-  assessable_when: len(unreadable) == 0
-  condition: len([r for r in rules if r['source'] == '0.0.0.0/0' and r['action'] == 'allow']) == 0
-  observed: "{len([r for r in rules if r['source'] == '0.0.0.0/0' and r['action'] == 'allow'])} allow-from-anywhere rule(s)"
+  # An unreadable export or an empty ruleset cannot prove the policy: both are coverage gaps.
+  assessable_when: len(unreadable) == 0 and len(rules) > 0
+  condition: len([r for r in rules if r['source'] in any_sources and r['action'] in allow_actions]) == 0
+  observed: "{len([r for r in rules if r['source'] in any_sources and r['action'] in allow_actions])} allow-from-anywhere rule(s)"
   remediation: Restrict firewall rules to required source networks.
 
 - rule_id: SI-2-PATCH-001
   control: SI-2
   title: No pending security updates beyond the organizational limit
   method: test
-  parameters: {max_pending_security_updates: 0}
-  evidence: {type: linux.patches, required_fields: [pending_security_updates]}
+  parameters: {max_pending_security_updates: 0, max_index_age_hours: 24}
+  evidence: {type: linux.patches, required_fields: [pending_security_updates, index_updated_at]}
+  # Scanning a stale package index can hide pending updates; require a recent index.
+  assessable_when: exists(index_updated_at) and age_days(index_updated_at) <= max_index_age_hours / 24
   condition: pending_security_updates <= max_pending_security_updates
-  observed: "{pending_security_updates} pending security update(s)"
-  remediation: Apply pending security updates within the organizational timeframe.
+  observed: "{pending_security_updates} pending security update(s); package index {index_updated_at}"
+  remediation: Apply pending security updates within the organizational timeframe and refresh the package index.
 
 - rule_id: RA-5-SCAN-001
   control: RA-5

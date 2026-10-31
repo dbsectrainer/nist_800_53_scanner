@@ -22,10 +22,11 @@
   parameters: {max_privileged_users: 5}
   evidence:
     type: linux.accounts
-    required_fields: [sudo_users]
-  condition: len(sudo_users) <= max_privileged_users
-  observed: "{len(sudo_users)} privileged user(s); limit {max_privileged_users}"
-  remediation: Reduce privileged group membership to authorized administrators.
+    required_fields: [sudo_users, sudoers_users]
+  condition: >
+    len(sudo_users) + len([u for u in sudoers_users if u not in sudo_users]) <= max_privileged_users
+  observed: "{len(sudo_users)} privileged group member(s), {len([u for u in sudoers_users if u not in sudo_users])} sudoers grant(s); limit {max_privileged_users}"
+  remediation: Reduce privileged group membership and direct sudoers grants to authorized administrators.
 
 - rule_id: AC-6-ROOTLOGIN-001
   control: AC-6
@@ -33,9 +34,11 @@
   method: test
   evidence:
     type: linux.sshd_config
-    required_fields: [settings]
-  condition: "'permitrootlogin' in settings and settings['permitrootlogin'] in ['no', 'prohibit-password', 'forced-commands-only', 'without-password']"
-  observed: "PermitRootLogin is {settings['permitrootlogin'] if 'permitrootlogin' in settings else 'unset (default)'}"
+    required_fields: [settings, complete]
+  # Unset is version-dependent (OpenSSH later defaults to prohibit-password), so require it explicitly.
+  assessable_when: complete and 'permitrootlogin' in settings
+  condition: settings['permitrootlogin'] in ['no', 'prohibit-password', 'forced-commands-only', 'without-password']
+  observed: "PermitRootLogin is {get(settings, 'permitrootlogin', 'unset')}"
   remediation: Set PermitRootLogin no in sshd_config.
 
 - rule_id: AC-2-REVIEW-001
@@ -51,7 +54,9 @@
   parameters: {max_key_mode: 384}   # 0o600
   evidence:
     type: linux.ssh_keys
-    required_fields: [private_keys]
+    required_fields: [private_keys, unreadable]
+  # Any home we could not inspect is a coverage gap, not a pass.
+  assessable_when: len(unreadable) == 0
   condition: len([k for k in private_keys if k['mode'] > max_key_mode]) == 0
   observed: "{len([k for k in private_keys if k['mode'] > max_key_mode])} key(s) with permissive modes"
   remediation: chmod 600 on private key files.
@@ -62,7 +67,8 @@
   method: test
   evidence:
     type: linux.sshd_config
-    required_fields: [settings]
+    required_fields: [settings, complete]
+  assessable_when: complete
   condition: "'passwordauthentication' in settings and settings['passwordauthentication'] == 'no'"
   observed: "PasswordAuthentication is {settings['passwordauthentication'] if 'passwordauthentication' in settings else 'unset (default yes)'}"
   remediation: Set PasswordAuthentication no and require key or MFA-based authentication.

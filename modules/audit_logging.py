@@ -319,7 +319,7 @@ class AuditLoggingScanner:
                 "description": "Audit Reduction and Report Generation",
                 "compliant": None,  # not assessed: no automated check implemented
                 "status": "not_assessed",
-                                "remediation": "Ensure audit reduction and reporting tools are configured.",
+                "remediation": "Ensure audit reduction and reporting tools are configured.",
             },
         ]
 

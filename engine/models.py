@@ -49,14 +49,29 @@ class Evidence:
     collector: str
     payload: dict[str, Any]
     collector_version: str = "1"
+    method: str = "examine"  # NIST SP 800-53A method: examine | interview | test
     collected_at: datetime = field(default_factory=utcnow)
     ttl_hours: float = 24.0
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     sha256: str = ""
 
     def __post_init__(self) -> None:
+        if self.method not in {m.value for m in Method}:
+            raise ValueError(f"unknown assessment method: {self.method!r}")
         if not self.sha256:
-            self.sha256 = hashlib.sha256(canonical_json(self.payload).encode()).hexdigest()
+            self.sha256 = hashlib.sha256(canonical_json(self._provenance()).encode()).hexdigest()
+
+    def _provenance(self) -> dict[str, Any]:
+        """Everything that identifies the observation, not just its payload."""
+        return {
+            "type": self.type,
+            "asset_id": self.asset_id,
+            "collector": self.collector,
+            "collector_version": self.collector_version,
+            "method": self.method,
+            "payload": self.payload,
+            "collected_at": self.collected_at.isoformat(),
+        }
 
     def age_hours(self, now: Optional[datetime] = None) -> float:
         return ((now or utcnow()) - self.collected_at).total_seconds() / 3600.0
