@@ -34,7 +34,7 @@ class RateLimiter:
         """
         self.limits = limits
         self.states: dict[str, dict[str, RateLimitState]] = {}
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()  # is_rate_limited re-enters via _save_state
         self.persistent = persistent
         self.state_file = Path("rate_limit_state.json")
 

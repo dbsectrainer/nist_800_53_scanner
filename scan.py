@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import logging
 import os
+import re
 import yaml
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
-# Cloud and Authentication Imports
-import boto3
-from azure.identity import DefaultAzureCredential
-
-# Compliance and Security Modules
-from modules.access_control import AccessControlScanner
-from modules.audit_logging import AuditLoggingScanner
-from modules.network_security import NetworkSecurityScanner
-from modules.configuration_management import ConfigurationScanner
-from modules.incident_response import IncidentResponseScanner
+# Assessment engine (collect -> evaluate -> prove)
+from engine.coverage import summarize
+from engine.models import AssessmentRun, Status
+from engine.oscal import to_assessment_results, to_poam
+from engine.rules import RuleError
+from engine.runner import run_assessment
 
 # New Security Modules
 from modules.authentication import AuthenticationManager
@@ -32,8 +30,20 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 
-# FastAPI (for API key exception type only)
-from fastapi import HTTPException
+
+
+class ScanAuthError(PermissionError):
+    """Invalid API key."""
+
+
+class ScanRateLimitError(RuntimeError):
+    """Scan rate limit exceeded."""
+
+
+def _safe_filename(value: str) -> str:
+    """Reduce a tenant id to a single path-safe filename component."""
+    cleaned = re.sub(r"[^A-Za-z0-9_.-]+", "_", value).strip("._-")
+    return cleaned or "default"
 
 
 class MultiTenantNISTComplianceScanner:
@@ -161,144 +171,175 @@ class MultiTenantNISTComplianceScanner:
         result = InputValidator.validate_scan_parameters(scan_params)
         return result.get("valid", False)
 
-    def run_scans(self, api_key: Optional[str] = None) -> Dict[str, List[Dict]]:
+    def run_scans(
+        self,
+        api_key: Optional[str] = None,
+        catalog_path: Optional[str] = None,
+        rules_dir: Optional[str] = None,
+        policy_path: Optional[str] = None,
+        baseline: Optional[str] = None,
+    ) -> AssessmentRun:
         """
-        Run comprehensive security control scans with multi-tenant support and authentication
+        Collect evidence and evaluate it against policy-as-code rules.
+
+        Collector failures, missing or stale evidence produce ``not_assessed``
+        results; they are never reported as compliant.
 
         :param api_key: Optional API key for authentication
-        :return: Dictionary of scan results by control category
+        :return: The completed assessment run
         """
-        # Authenticate API key if provided
         if api_key:
             user = self.auth_manager.validate_api_key(api_key)
             if not user:
-                raise HTTPException(status_code=401, detail="Invalid API key")
+                raise ScanAuthError("Invalid API key")
 
-        # Rate limit scan execution
         is_limited, _ = self.rate_limiter.is_rate_limited("default", self.tenant_id or "default")
         if is_limited:
-            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+            raise ScanRateLimitError("Rate limit exceeded")
 
-        scan_results: Dict[str, List[Dict]] = {
-            "access_control": [],
-            "audit_logging": [],
-            "network_security": [],
-            "configuration_management": [],
-            "incident_response": [],
-        }
-
-        # Initialize scanners with tenant-specific configuration
-        scanners = [
-            AccessControlScanner(self.tenant_config),
-            AuditLoggingScanner(self.tenant_config),
-            NetworkSecurityScanner(self.tenant_config),
-            ConfigurationScanner(self.tenant_config),
-            IncidentResponseScanner(self.tenant_config),
-        ]
-
-        # Parallel scanning support
-        if self.tenant_config.get("scan_options", {}).get("parallel_scanning", False):
-            from concurrent.futures import ThreadPoolExecutor, as_completed
-
-            max_workers = self.tenant_config["scan_options"].get("max_concurrent_scans", 5)
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = {executor.submit(scanner.scan): scanner for scanner in scanners}
-                for future in as_completed(futures):
-                    scanner = futures[future]
-                    category = scanner.__class__.__name__.lower().replace("scanner", "")
-                    try:
-                        scan_results[category] = future.result()
-                        self.compliance_scan_counter.labels(
-                            tenant_id=self.tenant_id or "default",
-                            cloud_provider=category,
-                        ).inc()
-                    except Exception as e:
-                        self.logger.error(f"Error in {scanner.__class__.__name__}: {e}")
-        else:
-            # Sequential scanning
-            for scanner in scanners:
-                category = scanner.__class__.__name__.lower().replace("scanner", "")
-                try:
-                    scan_results[category] = scanner.scan()
-                    self.compliance_scan_counter.labels(
-                        tenant_id=self.tenant_id or "default",
-                        cloud_provider=category,
-                    ).inc()
-                except Exception as e:
-                    self.logger.error(f"Error in {scanner.__class__.__name__}: {e}")
-
-        # Encrypt sensitive scan results
-        encrypted_results = self.encryption_handler.encrypt_data(scan_results)
-
-        # Create versioned report
-        self.report_manager.create_report_version(
-            {
-                "results": encrypted_results,
-                "tenant_id": self.tenant_id,
-            }
+        parallel = self.tenant_config.get("scan_options", {}).get("parallel_scanning", False)
+        run = run_assessment(
+            self.tenant_config,
+            system_id=self.tenant_id or "default",
+            rules_dir=rules_dir,
+            policy_path=policy_path,
+            catalog_path=catalog_path,
+            baseline=baseline,
+            parallel=parallel,
         )
+        self.compliance_scan_counter.labels(
+            tenant_id=self.tenant_id or "default", cloud_provider="engine"
+        ).inc()
 
-        return scan_results
+        # Encrypt and version the full run (evidence + assessments). The stored
+        # "results" value must be the ciphertext envelope itself: report readers
+        # decrypt that value, and tenant context belongs in metadata.
+        self.report_manager.create_report_version(
+            self.encryption_handler.encrypt_data(run.to_dict()),
+            metadata={"tenant_id": self.tenant_id},
+        )
+        return run
 
-    def generate_report(self, scan_results: Dict[str, List[Dict]]) -> str:
+    def generate_report(self, run: AssessmentRun, fmt: str = "markdown", output_dir: str = ".") -> str:
         """
-        Generate a comprehensive compliance report with tenant context
+        Write the assessment report.
 
-        :param scan_results: Dictionary of scan results
+        :param run: Completed assessment run
+        :param fmt: markdown | json | oscal
         :return: Path to the generated report file
         """
-        report_filename = (
-            f"nist_800_53_report_{self.tenant_id or 'default'}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-        )
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        tenant = _safe_filename(self.tenant_id or "default")
+        base = os.path.join(output_dir, f"nist_800_53_report_{tenant}_{stamp}")
 
-        with open(report_filename, "w") as report_file:
-            report_file.write("# NIST 800-53 Compliance Report\n")
-            report_file.write(f"## Tenant: {self.tenant_id or 'Default'}\n")
-            report_file.write(f"## Scan Date: {datetime.now()}\n\n")
+        if fmt == "oscal":
+            path = base + ".oscal.json"
+            with open(path, "w") as fh:
+                json.dump(to_assessment_results(run), fh, indent=2)
+            poam = to_poam(run)
+            # OSCAL forbids an empty poam-items list, so only write when findings are open.
+            if poam["plan-of-action-and-milestones"]["poam-items"]:
+                with open(base + ".poam.oscal.json", "w") as fh:
+                    json.dump(poam, fh, indent=2)
+        elif fmt == "json":
+            path = base + ".json"
+            with open(path, "w") as fh:
+                json.dump({**run.to_dict(), "summary": summarize(run)}, fh, indent=2)
+        elif fmt == "markdown":
+            path = base + ".md"
+            with open(path, "w") as fh:
+                fh.write(self._render_markdown(run))
+        else:
+            raise ValueError(f"Unsupported report format: {fmt}")
 
-            total_controls = 0
-            compliant_controls = 0
+        self.logger.info(f"Assessment report generated: {path}")
+        return path
 
-            for category, results in scan_results.items():
-                report_file.write(f"## {category.replace('_', ' ').title()} Controls\n")
-
-                for result in results:
-                    total_controls += 1
-                    status = "Compliant" if result["compliant"] else "Non-Compliant"
-                    report_file.write(f"- **{result['control_id']}**: {status}\n")
-                    report_file.write(f"  - Description: {result['description']}\n")
-
-                    if not result["compliant"]:
-                        report_file.write(
-                            f"  - Remediation: {result.get('remediation', 'No specific remediation provided')}\n"
-                        )
-
-                    compliant_controls += 1 if result["compliant"] else 0
-
-            compliance_percentage = (compliant_controls / total_controls * 100) if total_controls > 0 else 0
-            report_file.write(f"\n## Overall Compliance: {compliance_percentage:.2f}%")
-
-        self.logger.info(f"Compliance report generated: {report_filename}")
-        return report_filename
+    def _render_markdown(self, run: AssessmentRun) -> str:
+        summary = summarize(run)
+        labels = {
+            Status.SATISFIED: "Satisfied",
+            Status.OTHER_THAN_SATISFIED: "Other than satisfied",
+            Status.NOT_ASSESSED: "Not assessed",
+            Status.NOT_APPLICABLE: "Not applicable",
+        }
+        lines = [
+            "# NIST 800-53 Assessment Report",
+            f"## System: {run.system_id}",
+            f"## Run: {run.run_id} ({run.started_at.isoformat()})",
+            "",
+            "> Scanner output is evidence and recommendations only; it is not an authorization decision.",
+            "",
+            "## Summary",
+            f"- Control coverage: {summary['controls_assessed']}/{summary['controls_total']} "
+            f"controls assessed ({summary['control_coverage_pct']}%) against baseline "
+            f"'{summary['baseline']}'",
+        ]
+        for status in Status:
+            lines.append(f"- {labels[status]} objectives: {summary['objective_counts'].get(status.value, 0)}")
+        lines += [
+            f"- Evidence items: {summary['evidence_items']} (stale: {summary['evidence_stale']})",
+            f"- Collection errors (coverage gaps): {summary['collection_errors']}",
+        ]
+        ac = summary["asset_coverage"]
+        lines.append(
+            "- Asset coverage: unknown (no engine.expected_assets configured)" if ac is None else
+            f"- Asset coverage: {ac['with_fresh_evidence']}/{ac['expected']} expected assets have fresh evidence"
+            + (f"; missing: {', '.join(ac['missing'])}" if ac["missing"] else ""))
+        lines.append("")
+        if run.errors:
+            lines.append("## Collection errors")
+            lines += [f"- **{e.collector}** ({e.evidence_type}): {e.message}" for e in run.errors]
+            lines.append("")
+        lines.append("## Assessments")
+        for a in sorted(run.assessments, key=lambda x: (x.control_id, x.rule_id)):
+            lines.append(f"- **{a.control_id}** {a.title} [{a.rule_id}]: {labels[a.status]}"
+                         + (f" (asset {a.asset_id})" if a.asset_id else ""))
+            if a.observed:
+                lines.append(f"  - Observed: {a.observed}")
+            if a.reason:
+                lines.append(f"  - Reason: {a.reason}")
+            if a.exception:
+                lines.append(f"  - Exception: {a.exception}")
+            if a.status == Status.OTHER_THAN_SATISFIED and a.recommended_action:
+                lines.append(f"  - Recommended action: {a.recommended_action}")
+            for ref in a.evidence_refs:
+                lines.append(f"  - Evidence: {ref}")
+        return "\n".join(lines) + "\n"
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Multi-Tenant NIST 800-53 Security Compliance Scanner")
     parser.add_argument("--config", required=True, help="Path to configuration file")
     parser.add_argument("--tenant", help="Tenant identifier for multi-tenant scanning")
-    parser.add_argument(
-        "--environment",
-        choices=["cloud", "onprem"],
-        default="cloud",
-        help="Environment type",
-    )
     parser.add_argument("--api-key", help="API key for authenticated scanning")
+    parser.add_argument("--format", choices=["markdown", "json", "oscal"], default="markdown",
+                        help="Report format (oscal writes assessment-results and POA&M)")
+    parser.add_argument("--baseline", choices=["low", "moderate", "high", "all", "rules"],
+                        help="Control universe for coverage (default: engine.baseline or moderate; "
+                             "'rules' = only rule-referenced controls)")
+    parser.add_argument("--catalog", help="OSCAL catalog JSON to use instead of --baseline "
+                                          "(download the pinned one with --fetch-catalog)")
+    parser.add_argument("--fetch-catalog", metavar="DEST", help="Download the pinned NIST OSCAL catalog to DEST and exit")
+    parser.add_argument("--rules-dir", help="Directory of policy-as-code rule files")
+    parser.add_argument("--parameters", help="Organizational parameters/exceptions YAML")
 
     args = parser.parse_args()
 
+    if args.fetch_catalog:
+        from engine.catalog import fetch_catalog
+        print(fetch_catalog(args.fetch_catalog))
+        return
+
     scanner = MultiTenantNISTComplianceScanner(args.config, args.tenant)
-    scan_results = scanner.run_scans(api_key=args.api_key)
-    scanner.generate_report(scan_results)
+    try:
+        run = scanner.run_scans(api_key=args.api_key, catalog_path=args.catalog,
+                                rules_dir=args.rules_dir, policy_path=args.parameters,
+                                baseline=args.baseline)
+    except RuleError as exc:
+        # Invalid rule/policy files are configuration errors, not a 500-style traceback.
+        parser.error(str(exc))
+    print(scanner.generate_report(run, fmt=args.format))
 
 
 if __name__ == "__main__":

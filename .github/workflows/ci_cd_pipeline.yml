@@ -85,7 +85,7 @@ jobs:
         run: uv sync --frozen --extra dev
 
       - name: Run unit tests with coverage
-        run: uv run pytest tests/ --cov=modules --cov-report=xml --cov-report=term -v
+        run: uv run pytest tests/ --cov=modules --cov=engine --cov-report=xml --cov-report=term -v
 
   distributed-scan-test:
     needs: unit-tests

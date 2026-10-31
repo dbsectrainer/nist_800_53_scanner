@@ -209,6 +209,10 @@ body {
   background: #fee2e2;
   color: #991b1b;
 }
+.ato-pending {
+  background: #e0e7ff;
+  color: #3730a3;
+}
 
 /* ── Severity / status badges ──────────────────────────────── */
 .badge {

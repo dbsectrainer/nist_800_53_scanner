@@ -14,9 +14,9 @@ import json
 import logging
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -60,16 +60,40 @@ _SCAN_CATEGORIES = {
 # ---------------------------------------------------------------------------
 
 
+
+def _result_status(raw: dict) -> str:
+    """Normalise a result to a status string; unknown/legacy never counts as satisfied."""
+    status = raw.get("status")
+    if status in ("satisfied", "other_than_satisfied", "not_assessed", "not_applicable"):
+        return status
+    compliant = raw.get("compliant")
+    if compliant is True:
+        return "satisfied"
+    if compliant is False:
+        return "other_than_satisfied"
+    return "not_assessed"
+
+
+# Worst-state-wins ranking used when several assessments target one control.
+_STATUS_SEVERITY = {
+    "other_than_satisfied": 0,
+    "not_assessed": 1,
+    "not_applicable": 2,
+    "satisfied": 3,
+}
+
+
 @dataclass
 class ControlResult:
     control_id: str
     family: str           # e.g. "AC" extracted from "AC-2"
     description: str
-    compliant: bool
+    compliant: bool       # True only when status == "satisfied"
     remediation: str
     details: dict
     report_id: str
     scan_date: datetime
+    status: str = "not_assessed"  # satisfied | other_than_satisfied | not_assessed | not_applicable
 
 
 @dataclass
@@ -90,7 +114,7 @@ class OverallMetrics:
     compliant: int
     non_compliant: int
     compliance_pct: float
-    ato_status: str       # "authorized" ≥90%, "conditional" ≥80%, "not_authorized" otherwise
+    ato_status: str       # always "not_determined": authorization is a human (AO) decision
     last_scan_date: Optional[datetime]
     families: Dict[str, FamilyMetrics]
     report_id: Optional[str]
@@ -228,10 +252,12 @@ def _parse_datetime(value: str) -> Optional[datetime]:
     if not value:
         return None
     try:
-        return datetime.fromisoformat(value)
+        dt = datetime.fromisoformat(value)
     except (ValueError, TypeError):
         logger.debug("Could not parse datetime string %r", value)
         return None
+    # Normalise naive timestamps to UTC so reports with and without offsets sort together.
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
 def _is_encrypted_envelope(obj: object) -> bool:
@@ -246,7 +272,7 @@ def _is_encrypted_envelope(obj: object) -> bool:
 
 def _is_scan_results(obj: object) -> bool:
     """Return True when obj looks like a plain scan-results dict."""
-    return isinstance(obj, dict) and bool(_SCAN_CATEGORIES & set(obj.keys()))
+    return isinstance(obj, dict) and (bool(_SCAN_CATEGORIES & set(obj.keys())) or "assessments" in obj)
 
 
 def _extract_family(control_id: str) -> str:
@@ -320,7 +346,7 @@ class ReportReader:
         for path in self._reports_dir.glob("*.json"):
             raw = self._read_json(path)
             if raw and raw.get("report_id") == report_id:
-                return self._decrypt_results(raw.get("results"))
+                return self._decrypt_results(self._results_field(raw))
 
         logger.warning("Report not found: %s", report_id)
         return None
@@ -364,6 +390,19 @@ class ReportReader:
             logger.warning("Could not read %s: %s", path, exc)
             return None
 
+    @staticmethod
+    def _results_field(raw: dict) -> Any:
+        """Return the payload a report document holds.
+
+        Versioned reports store it under ``results``. A plain engine run
+        (``scan.py --format json``) has no wrapper, so the document itself is
+        the payload when it looks like scan results.
+        """
+        results = raw.get("results")
+        if results is not None:
+            return results
+        return raw if _is_scan_results(raw) else None
+
     def _read_meta(self, path: Path) -> Optional[ReportMeta]:
         """Parse a report file into a ReportMeta, or return None."""
         raw = self._read_json(path)
@@ -371,25 +410,40 @@ class ReportReader:
             return None
 
         report_id = raw.get("report_id") or path.stem
-        scan_date = _parse_datetime(raw.get("timestamp", ""))
+        scan_date = _parse_datetime(raw.get("timestamp") or raw.get("started_at") or "")
         if scan_date is None:
-            # Fall back to file modification time
-            scan_date = datetime.fromtimestamp(path.stat().st_mtime)
+            # Fall back to file modification time (UTC-aware so mixed reports sort together)
+            scan_date = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
 
-        # Quick-peek at results to get counts without full decryption
-        results_field = raw.get("results")
-        total = 0
-        compliant = 0
+        # Roll up worst-state-wins per control so list metadata matches the
+        # calculator. Plaintext results are counted directly; encrypted reports
+        # are decrypted here so they do not always show zero controls.
+        results_field = self._results_field(raw)
+        if isinstance(results_field, dict) and _is_encrypted_envelope(results_field):
+            decrypted = self._decrypt_results(results_field)
+            if isinstance(decrypted, dict):
+                results_field = decrypted
+        control_status: Dict[str, str] = {}
 
         if isinstance(results_field, dict) and _is_scan_results(results_field):
-            for controls in results_field.values():
-                if isinstance(controls, list):
-                    for ctrl in controls:
-                        total += 1
-                        if ctrl.get("compliant"):
-                            compliant += 1
+            groups = (
+                [results_field["assessments"]]
+                if "assessments" in results_field
+                else [c for c in results_field.values() if isinstance(c, list)]
+            )
+            for controls in groups:
+                for ctrl in controls:
+                    if not isinstance(ctrl, dict):
+                        continue
+                    control_id = ctrl.get("control_id", "UNKNOWN")
+                    status = _result_status(ctrl)
+                    current = control_status.get(control_id)
+                    if current is None or _STATUS_SEVERITY[status] < _STATUS_SEVERITY[current]:
+                        control_status[control_id] = status
         # Encrypted reports: counts unavailable at meta stage — leave as 0
 
+        total = len(control_status)
+        compliant = sum(1 for st in control_status.values() if st == "satisfied")
         pct = round((compliant / total * 100.0), 2) if total > 0 else 0.0
         return ReportMeta(
             report_id=report_id,
@@ -403,7 +457,7 @@ class ReportReader:
         raw = self._read_json(path)
         if not raw:
             return None
-        return self._decrypt_results(raw.get("results"))
+        return self._decrypt_results(self._results_field(raw))
 
     def _decrypt_results(self, results_field) -> Optional[dict]:
         """
@@ -493,29 +547,45 @@ class MetricsCalculator:
         Flatten all scan categories into a single list of ControlResult objects.
 
         The ``family`` field is derived from the control ID prefix
-        (e.g. ``"AC-2"`` → ``"AC"``).
+        (e.g. ``"AC-2"`` → ``"AC"``). When several assessments target the same
+        control (per asset or per rule), the worst state wins so dashboard
+        metrics stay per control, matching the engine's control rollup.
         """
         flat: List[ControlResult] = []
-        for _, controls in self._results.items():
+        # New-format runs keep assessments beside evidence/errors lists; only
+        # the assessments are control results.
+        groups = (
+            [("assessments", self._results["assessments"])]
+            if "assessments" in self._results
+            else list(self._results.items())
+        )
+        for _, controls in groups:
             if not isinstance(controls, list):
                 continue
             for raw in controls:
                 if not isinstance(raw, dict):
                     continue
                 control_id = raw.get("control_id", "UNKNOWN")
+                status = _result_status(raw)
                 flat.append(
                     ControlResult(
                         control_id=control_id,
                         family=_extract_family(control_id),
-                        description=raw.get("description", ""),
-                        compliant=bool(raw.get("compliant", False)),
-                        remediation=raw.get("remediation", ""),
+                        description=raw.get("description") or raw.get("title", ""),
+                        compliant=status == "satisfied",
+                        remediation=raw.get("remediation") or raw.get("recommended_action", ""),
                         details=raw.get("details") or {},
                         report_id=self._meta.report_id,
                         scan_date=self._meta.scan_date,
+                        status=status,
                     )
                 )
-        return flat
+        worst: Dict[str, ControlResult] = {}
+        for row in flat:
+            current = worst.get(row.control_id)
+            if current is None or _STATUS_SEVERITY[row.status] < _STATUS_SEVERITY[current.status]:
+                worst[row.control_id] = row
+        return list(worst.values())
 
     def get_compliance_by_family(self) -> Dict[str, FamilyMetrics]:
         """
@@ -552,10 +622,8 @@ class MetricsCalculator:
         """
         Calculate top-level compliance metrics.
 
-        ATO status thresholds:
-          ≥ 90 % → "authorized"
-          ≥ 80 % → "conditional"
-          < 80 % → "not_authorized"
+        ``ato_status`` is always "not_determined": the scanner supplies
+        evidence only; authorization decisions belong to the AO.
         """
         families = self.get_compliance_by_family()
         total = sum(f.total for f in families.values())
@@ -563,12 +631,7 @@ class MetricsCalculator:
         non_compliant = total - compliant
         pct = round((compliant / total * 100.0), 2) if total > 0 else 0.0
 
-        if pct >= 90.0:
-            ato_status = "authorized"
-        elif pct >= 80.0:
-            ato_status = "conditional"
-        else:
-            ato_status = "not_authorized"
+        ato_status = "not_determined"
 
         return OverallMetrics(
             total=total,

@@ -298,7 +298,8 @@ class ConfigurationScanner:
             {
                 "control_id": "CM-2",
                 "description": "Baseline Configuration",
-                "compliant": True,
+                "compliant": None,  # not assessed: no automated check implemented
+                "status": "not_assessed",
                 "remediation": "Maintain and enforce baseline configuration documentation.",
             }
         )
@@ -307,7 +308,8 @@ class ConfigurationScanner:
             {
                 "control_id": "CM-6",
                 "description": "Configuration Settings",
-                "compliant": True,
+                "compliant": None,  # not assessed: no automated check implemented
+                "status": "not_assessed",
                 "remediation": "Apply security configuration settings using documented baselines.",
             }
         )
@@ -316,7 +318,8 @@ class ConfigurationScanner:
             {
                 "control_id": "CM-8",
                 "description": "System Component Inventory",
-                "compliant": True,
+                "compliant": None,  # not assessed: no automated check implemented
+                "status": "not_assessed",
                 "remediation": "Maintain an accurate inventory of all system components.",
             }
         )
@@ -333,15 +336,15 @@ class ConfigurationManagementScanner(ConfigurationScanner):
             {
                 "control_id": "CM-2",
                 "description": "Baseline Configuration",
-                "compliant": True,
-                "details": {"baseline_documented": True},
+                "compliant": None,  # not assessed: no automated check implemented
+                "status": "not_assessed",
                 "remediation": "Maintain and enforce baseline configuration documentation.",
             },
             {
                 "control_id": "CM-6",
                 "description": "Configuration Settings",
-                "compliant": True,
-                "details": {"settings_enforced": True},
+                "compliant": None,  # not assessed: no automated check implemented
+                "status": "not_assessed",
                 "remediation": "Apply security configuration settings using documented baselines.",
             },
         ]

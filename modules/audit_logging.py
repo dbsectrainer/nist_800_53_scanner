@@ -284,7 +284,8 @@ class AuditLoggingScanner:
             {
                 "control_id": "AU-9",
                 "description": "Protection of Audit Information",
-                "compliant": True,
+                "compliant": None,  # not assessed: no automated check implemented
+                "status": "not_assessed",
                 "remediation": "Ensure audit logs are protected with HMAC integrity checks.",
             }
         )
@@ -293,7 +294,8 @@ class AuditLoggingScanner:
             {
                 "control_id": "AU-12",
                 "description": "Audit Record Generation",
-                "compliant": True,
+                "compliant": None,  # not assessed: no automated check implemented
+                "status": "not_assessed",
                 "remediation": "Ensure all relevant system events generate audit records.",
             }
         )
@@ -315,8 +317,8 @@ class AuditLoggingScanner:
             {
                 "control_id": "AU-7",
                 "description": "Audit Reduction and Report Generation",
-                "compliant": True,
-                "details": {"reporting_enabled": True},
+                "compliant": None,  # not assessed: no automated check implemented
+                "status": "not_assessed",
                 "remediation": "Ensure audit reduction and reporting tools are configured.",
             },
         ]

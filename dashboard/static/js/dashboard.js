@@ -175,6 +175,7 @@ function complianceBadge(pct) {
 }
 
 function severityBadge(severity) {
+  if (!severity) return "—";
   const s = (severity || "").toLowerCase();
   const map = {
     critical: "badge-critical",
@@ -184,7 +185,7 @@ function severityBadge(severity) {
     info: "badge-info",
   };
   const cls = map[s] || "badge-info";
-  return `<span class="badge ${cls}">${severity || "Unknown"}</span>`;
+  return `<span class="badge ${cls}">${severity}</span>`;
 }
 
 function statusBadge(status) {
@@ -201,9 +202,14 @@ function statusBadge(status) {
     rejected: "badge-high",
     expired: "badge-critical",
     pending: "badge-medium",
+    satisfied: "badge-closed",
+    "other-than-satisfied": "badge-critical",
+    "not-assessed": "badge-medium",
+    "not-applicable": "badge-info",
   };
   const cls = map[s] || "badge-info";
-  return `<span class="badge ${cls}">${status || "Unknown"}</span>`;
+  const label = (status || "Unknown").replace(/_/g, " ");
+  return `<span class="badge ${cls}">${label}</span>`;
 }
 
 function showLoading(viewName) {
@@ -430,14 +436,16 @@ async function loadFamiliesView() {
         return `<tr>
         <td><strong>${f.family ?? f.id ?? ""}</strong></td>
         <td>${f.name ?? f.family_name ?? ""}</td>
-        <td>${f.total_controls ?? 0}</td>
-        <td>${f.compliant_controls ?? 0}</td>
+        <td>${f.total_controls ?? f.total ?? 0}</td>
+        <td>${f.compliant_controls ?? f.compliant ?? 0}</td>
+        <td>${f.non_compliant_controls ?? f.non_compliant ?? 0}</td>
         <td>
           ${complianceBadge(pct)}
           <div class="compliance-bar" style="background:#e5e7eb;border-radius:4px;height:6px;margin-top:4px">
             <div style="width:${Math.min(pct, 100)}%;background:${barColor};height:6px;border-radius:4px"></div>
           </div>
         </td>
+        <td>${f.risk_score != null ? Number(f.risk_score).toFixed(2) : "—"}</td>
         <td><button class="btn btn-sm btn-secondary" onclick="showFamilyDrilldown('${f.family ?? f.id ?? ""}')">Drill down</button></td>
       </tr>`;
       })
@@ -549,14 +557,15 @@ async function loadControlsView() {
           (c) => `<tr>
       <td>${c.control_id ?? ""}</td>
       <td>${c.family ?? ""}</td>
-      <td>${c.title ?? ""}</td>
-      <td>${statusBadge(c.status)}</td>
-      <td>${severityBadge(c.severity)}</td>
-      <td>${c.last_assessed ?? "—"}</td>
-      <td>${c.owner ?? "—"}</td>
+      <td>${c.title ?? c.description ?? ""}</td>
+      <td>${statusBadge(c.status)}${c.severity ? " " + severityBadge(c.severity) : ""}</td>
+      <td>${c.owner ?? c.owner_name ?? "—"}</td>
+      <td>${c.last_assessed_display ?? c.last_assessed ?? "—"}</td>
+      <td>${c.poam_id ?? "—"}</td>
+      <td>${c.remediation ?? "—"}</td>
     </tr>`,
         )
-        .join("") || '<tr><td colspan="7">No controls found.</td></tr>';
+        .join("") || '<tr><td colspan="8">No controls found.</td></tr>';
   }
 
   showContent("controls");
@@ -567,7 +576,10 @@ async function applyControlFilters() {
   const status = document.getElementById("controls-filter-status")?.value ?? "";
   const severity =
     document.getElementById("controls-filter-severity")?.value ?? "";
-  const search = document.getElementById("controls-filter-search")?.value ?? "";
+  const searchEl =
+    document.getElementById("controls-filter-search") ??
+    document.getElementById("controls-search");
+  const search = searchEl?.value ?? "";
 
   activeControlFilters = {};
   if (family) activeControlFilters.family = family;
@@ -681,22 +693,23 @@ async function loadPoamView() {
         <td>${item.poam_id ?? item.id ?? ""}</td>
         <td>${item.control_id ?? ""}</td>
         <td>${item.title ?? item.weakness ?? ""}</td>
-        <td class="editable-status">${statusBadge(item.status)}</td>
-        <td class="editable-owner">${item.owner ?? "—"}</td>
-        <td>${item.scheduled_completion ?? item.due_date ?? "—"}</td>
-        <td>${age} days</td>
         <td>${severityBadge(item.severity)}</td>
+        <td class="editable-status">${statusBadge(item.status)}</td>
+        <td class="editable-owner">${item.owner ?? item.owner_name ?? "—"}</td>
+        <td>${item.scheduled_completion ?? item.scheduled_completion_date ?? item.due_date ?? "—"}</td>
+        <td>${age} days</td>
+        <td>${item.aging_bucket ?? "—"}</td>
       </tr>`;
         })
-        .join("") || '<tr><td colspan="8">No POA&M items found.</td></tr>';
+        .join("") || '<tr><td colspan="9">No POA&M items found.</td></tr>';
 
     // Make status and owner editable
     items.forEach((item, idx) => {
       const row = tbody.rows[idx];
       if (!row) return;
       const id = item.poam_id ?? item.id ?? idx;
-      makeEditable(row.cells[3], "status", id, API.poam);
-      makeEditable(row.cells[4], "owner", id, API.poam);
+      makeEditable(row.cells[4], "status", id, API.poam);
+      makeEditable(row.cells[5], "owner", id, API.poam);
     });
   }
 
@@ -1254,7 +1267,8 @@ async function loadTrendsView() {
   }
 
   const forecastPct = data.forecast_compliance_pct ?? data.forecast_pct ?? 0;
-  const avgMttr = data.avg_mttr_days ?? data.avg_mttr ?? 0;
+  const avgMttrRaw = data.avg_mttr_days ?? data.avg_mttr;
+  const avgMttr = avgMttrRaw ?? 0;
 
   renderScorecards("trends-scorecards", [
     {
@@ -1263,14 +1277,16 @@ async function loadTrendsView() {
       colorClass: forecastPct >= 80 ? "score-good" : "score-warning",
     },
     {
-      value: `${avgMttr.toFixed(1)}d`,
+      value: avgMttrRaw == null ? "—" : `${avgMttr.toFixed(1)}d`,
       label: "Avg MTTR",
       colorClass:
-        avgMttr > 30
-          ? "score-bad"
-          : avgMttr > 14
-            ? "score-warning"
-            : "score-good",
+        avgMttrRaw == null
+          ? ""
+          : avgMttr > 30
+            ? "score-bad"
+            : avgMttr > 14
+              ? "score-warning"
+              : "score-good",
     },
   ]);
 

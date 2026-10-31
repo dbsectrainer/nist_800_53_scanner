@@ -60,7 +60,6 @@ from data_manager import (
     MetricsCalculator,
     ReportMeta,
     RiskScorer,
-    TrendAnalyzer,
     build_data_manager,
 )
 from poam_generator import sync_poam_from_report
@@ -494,25 +493,38 @@ class ComplianceDashboard:
                 "SELECT owner_name FROM control_owners WHERE control_id = ? LIMIT 1",
                 (cid,),
             ).fetchone()
-            # Fetch open poam_id
+            # Fetch open poam_id and severity
             poam_row = db.execute(
-                "SELECT poam_id FROM poam_items WHERE control_id = ? AND status IN ('open','in_progress') LIMIT 1",
+                "SELECT poam_id, severity FROM poam_items WHERE control_id = ? AND status IN ('open','in_progress') LIMIT 1",
                 (cid,),
             ).fetchone()
 
             if isinstance(ctrl, dict):
                 entry = dict(ctrl)
+                status = entry.get("status") or (
+                    "satisfied" if entry.get("compliant") else "other_than_satisfied"
+                )
+                entry["status"] = status
+                entry.setdefault("title", entry.get("description", ""))
             else:
                 entry = {
                     "control_id": ctrl.control_id,
                     "family": ctrl.family,
                     "description": ctrl.description,
+                    "title": ctrl.description,
                     "compliant": ctrl.compliant,
+                    "status": ctrl.status,
                     "remediation": ctrl.remediation,
                     "last_assessed": ctrl.scan_date.isoformat() if ctrl.scan_date else None,
+                    "last_assessed_display": (
+                        ctrl.scan_date.strftime("%Y-%m-%d") if ctrl.scan_date else None
+                    ),
                 }
-            entry["owner_name"] = owner_row["owner_name"] if owner_row else None
+            owner = owner_row["owner_name"] if owner_row else None
+            entry["owner_name"] = owner
+            entry["owner"] = owner
             entry["poam_id"] = poam_row["poam_id"] if poam_row else None
+            entry["severity"] = poam_row["severity"] if poam_row else None
             enriched.append(entry)
         return enriched
 
@@ -587,6 +599,7 @@ class ComplianceDashboard:
                 "family": fm.family,
                 "full_name": fm.full_name,
                 "pct": fm.compliance_pct,
+                "compliance_pct": fm.compliance_pct,
             }
             for fm in sorted(overall.families.values(), key=lambda f: f.family)
         ]
@@ -601,8 +614,11 @@ class ComplianceDashboard:
                 "last_scan_date": meta.scan_date.isoformat() if meta.scan_date else None,
                 "report_id": meta.report_id,
                 "open_poam_count": open_count,
+                "open_poams": open_count,
                 "critical_poam_count": critical_count,
                 "families_summary": families_summary,
+                # Aliases used by dashboard.js
+                "family_summary": families_summary,
             }
         )
 
@@ -621,9 +637,14 @@ class ComplianceDashboard:
             {
                 "family": fm.family,
                 "full_name": fm.full_name,
+                "name": fm.full_name,
+                "family_name": fm.full_name,
                 "total": fm.total,
+                "total_controls": fm.total,
                 "compliant": fm.compliant,
+                "compliant_controls": fm.compliant,
                 "non_compliant": fm.non_compliant,
+                "non_compliant_controls": fm.non_compliant,
                 "compliance_pct": fm.compliance_pct,
                 "risk_score": fm.risk_score,
             }
@@ -676,10 +697,24 @@ class ComplianceDashboard:
         flat = calc.get_control_flat_list()
         db = self.get_db()
 
-        # Query param filters
+        # Query param filters (accept both dashboard.js and legacy names)
         family_filter = request.args.get("family", "").upper() or None
         compliant_filter = request.args.get("compliant", "").lower() or None
-        search_filter = request.args.get("search", "").lower() or None
+        status_filter = request.args.get("status", "").lower() or None
+        search_filter = (
+            request.args.get("search") or request.args.get("q") or ""
+        ).lower() or None
+        severity_filter = request.args.get("severity", "").lower() or None
+
+        status_aliases = {
+            "true": "satisfied",
+            "false": "other_than_satisfied",
+            "compliant": "satisfied",
+            "non_compliant": "other_than_satisfied",
+            "failed": "other_than_satisfied",
+            "unknown": "not_assessed",
+        }
+        wanted_status = status_aliases.get(status_filter, status_filter)
 
         filtered = []
         for ctrl in flat:
@@ -689,6 +724,8 @@ class ComplianceDashboard:
                 continue
             if compliant_filter == "false" and ctrl.compliant:
                 continue
+            if wanted_status and ctrl.status != wanted_status:
+                continue
             if search_filter:
                 haystack = (ctrl.control_id + " " + ctrl.description).lower()
                 if search_filter not in haystack:
@@ -696,6 +733,10 @@ class ComplianceDashboard:
             filtered.append(ctrl)
 
         enriched = self._enrich_controls_with_db(filtered, db)
+        if severity_filter:
+            enriched = [
+                e for e in enriched if (e.get("severity") or "").lower() == severity_filter
+            ]
         return jsonify({"controls": enriched, "total": len(enriched)})
 
     def api_control_detail(self, control_id: str):
@@ -788,6 +829,9 @@ class ComplianceDashboard:
 
         for row in rows:
             item = _row_to_dict(row)
+            item["owner"] = item.get("owner_name")
+            item["scheduled_completion"] = item.get("scheduled_completion_date")
+            item["title"] = item.get("title") or item.get("description") or "(untitled)"
             created_at = item.get("created_at", "")
             try:
                 created_dt = datetime.fromisoformat(created_at)
@@ -862,7 +906,7 @@ class ComplianceDashboard:
 
         db = self.get_db()
         flat = calc.get_control_flat_list()
-        non_compliant = [c for c in flat if not c.compliant]
+        non_compliant = [c for c in flat if c.status == "other_than_satisfied"]
         created = sync_poam_from_report(non_compliant, meta.report_id, db)
 
         return jsonify(
@@ -927,8 +971,26 @@ class ComplianceDashboard:
         return jsonify(
             {
                 "families": family_risks,
+                "family_risks": [
+                    {
+                        **risk,
+                        "inherent_risk": risk["inherent_score"],
+                        "residual_risk": risk["residual_score"],
+                    }
+                    for risk in family_risks
+                ],
                 "aggregate_risk_score": aggregate,
                 "risk_level": RiskScorer.risk_level(aggregate),
+                "inherent_risk": round(
+                    sum(r["inherent_score"] for r in family_risks) / len(family_risks), 2
+                )
+                if family_risks
+                else 0.0,
+                "residual_risk": round(
+                    sum(r["residual_score"] for r in family_risks) / len(family_risks), 2
+                )
+                if family_risks
+                else 0.0,
                 "risk_trend": risk_trend,
                 "exception_count": len(exception_ids),
             }
@@ -1452,18 +1514,23 @@ class ComplianceDashboard:
             failure_recurrence.items(), key=lambda x: x[1], reverse=True
         )[:5]
 
-        avg_mttr = round(
-            sum(mttr.values()) / len(mttr), 2
-        ) if mttr else None
+        avg_mttr = round(sum(mttr.values()) / len(mttr), 2) if mttr else None
+        trend_payload = [{**entry, "compliance_pct": entry["pct"]} for entry in compliance_trend]
 
         return jsonify(
             {
-                "compliance_trend": compliance_trend,
+                "compliance_trend": trend_payload,
                 "failure_recurrence": [
                     {"control_id": cid, "count": cnt} for cid, cnt in top_recurring
                 ],
-                "mttr_by_family": mttr,
+                "mttr_by_family": [
+                    {"family": family, "mttr_days": days}
+                    for family, days in sorted(mttr.items())
+                ],
                 "forecast_next_pct": forecast,
+                "forecast_compliance_pct": forecast,
+                "forecast_pct": forecast,
+                "avg_mttr_days": avg_mttr,
                 "scorecards": {
                     "current_compliance_pct": current_pct,
                     "previous_compliance_pct": previous_pct,
@@ -1663,7 +1730,7 @@ class ComplianceDashboard:
     def api_scan_trigger(self):
         try:
             subprocess.Popen(  # noqa: S603, S607
-                ["python", "scan.py"],
+                ["python", "scan.py", "--config", os.environ.get("NIST_SCANNER_CONFIG", "config.yaml"), "--format", "json"],
                 cwd=self.project_root,
             )
         except Exception as exc:
@@ -1727,7 +1794,7 @@ class ComplianceDashboard:
 
         db = self.get_db()
         flat = calc.get_control_flat_list()
-        non_compliant = [c for c in flat if not c.compliant]
+        non_compliant = [c for c in flat if c.status == "other_than_satisfied"]
 
         # Severity breakdown from poam_items
         sev_rows = db.execute(

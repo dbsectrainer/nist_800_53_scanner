@@ -40,7 +40,8 @@ class IncidentResponseScanner:
         results.append({
             'control_id': 'IR-4',
             'description': 'AWS Incident Detection',
-            'compliant': True,  # Placeholder
+            'compliant': None,  # not assessed: no automated check implemented
+            'status': 'not_assessed',
             'remediation': 'Configure AWS Security Hub and GuardDuty'
         })
 
@@ -48,7 +49,8 @@ class IncidentResponseScanner:
         results.append({
             'control_id': 'IR-5',
             'description': 'Azure Incident Response',
-            'compliant': True,  # Placeholder
+            'compliant': None,  # not assessed: no automated check implemented
+            'status': 'not_assessed',
             'remediation': 'Implement Azure Sentinel for threat detection'
         })
 
@@ -56,7 +58,8 @@ class IncidentResponseScanner:
         results.append({
             'control_id': 'IR-6',
             'description': 'GCP Incident Reporting',
-            'compliant': True,  # Placeholder
+            'compliant': None,  # not assessed: no automated check implemented
+            'status': 'not_assessed',
             'remediation': 'Configure GCP Security Command Center alerts'
         })
 
@@ -74,7 +77,8 @@ class IncidentResponseScanner:
         results.append({
             'control_id': 'IR-8',
             'description': 'Incident Response Plan',
-            'compliant': True,  # Placeholder
+            'compliant': None,  # not assessed: no automated check implemented
+            'status': 'not_assessed',
             'remediation': 'Develop and maintain comprehensive incident response plan'
         })
 
@@ -82,7 +86,8 @@ class IncidentResponseScanner:
         results.append({
             'control_id': 'IR-4(1)',
             'description': 'Incident Detection Mechanisms',
-            'compliant': True,  # Placeholder
+            'compliant': None,  # not assessed: no automated check implemented
+            'status': 'not_assessed',
             'remediation': 'Implement centralized logging and real-time monitoring'
         })
 
@@ -90,7 +95,8 @@ class IncidentResponseScanner:
         results.append({
             'control_id': 'IR-2',
             'description': 'Incident Response Training',
-            'compliant': True,  # Placeholder
+            'compliant': None,  # not assessed: no automated check implemented
+            'status': 'not_assessed',
             'remediation': 'Conduct regular incident response training exercises'
         })
 
