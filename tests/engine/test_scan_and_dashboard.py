@@ -108,6 +108,62 @@ def test_legacy_boolean_and_placeholder_results(dm):
         ("AC-2", "satisfied", True), ("AC-3", "not_assessed", False)]
 
 
+def test_report_reader_ingests_toplevel_engine_json(dm, run, tmp_path):
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    (reports / "engine-run.json").write_text(json.dumps(run.to_dict()))
+    reader = dm.ReportReader(str(reports))
+
+    metas = reader.list_reports()
+    assert len(metas) == 1 and metas[0].total_controls == len(run.assessments)
+    latest, results = reader.load_latest_report()
+    assert results is not None
+    assert len(dm.MetricsCalculator(latest, results).get_control_flat_list()) == len(run.assessments)
+
+
+def test_report_reader_decrypts_versioned_engine_report(dm, run, tmp_path):
+    encryption = pytest.importorskip("modules.encryption")
+    versioning = pytest.importorskip("modules.report_versioning")
+    handler = encryption.SecureDataHandler(
+        encryption.SecureKeyStorage(str(tmp_path / "master.key")),
+        keys_file=str(tmp_path / "keys.json"),
+    )
+    reports = tmp_path / "reports"
+    versioning.ReportVersionManager(base_path=str(reports)).create_report_version(
+        handler.encrypt_data(run.to_dict()), metadata={"tenant_id": "t1"}
+    )
+    reader = dm.ReportReader(str(reports), encryption_handler=handler)
+    latest, results = reader.load_latest_report()
+    assert results is not None
+    assert len(dm.MetricsCalculator(latest, results).get_control_flat_list()) == len(run.assessments)
+
+
+def test_run_scans_stores_a_decryptable_report(scan_mod, dm, run, tmp_path, monkeypatch):
+    """run_scans must store the ciphertext envelope itself, not a {"results": ...} wrapper."""
+    encryption = pytest.importorskip("modules.encryption")
+    versioning = pytest.importorskip("modules.report_versioning")
+    handler = encryption.SecureDataHandler(
+        encryption.SecureKeyStorage(str(tmp_path / "master.key")),
+        keys_file=str(tmp_path / "keys.json"),
+    )
+    scanner = object.__new__(scan_mod.MultiTenantNISTComplianceScanner)
+    scanner.tenant_id = "t1"
+    scanner.tenant_config = {}
+    scanner.report_manager = versioning.ReportVersionManager(base_path=str(tmp_path / "reports"))
+    scanner.encryption_handler = handler
+    scanner.rate_limiter = SimpleNamespace(is_rate_limited=lambda *a: (False, None))
+    scanner.compliance_scan_counter = SimpleNamespace(
+        labels=lambda **k: SimpleNamespace(inc=lambda: None)
+    )
+    monkeypatch.setattr(scan_mod, "run_assessment", lambda *a, **k: run)
+
+    assert scanner.run_scans() is run
+    reader = dm.ReportReader(str(tmp_path / "reports"), encryption_handler=handler)
+    latest, results = reader.load_latest_report()
+    assert results is not None
+    assert len(dm.MetricsCalculator(latest, results).get_control_flat_list()) == len(run.assessments)
+
+
 # --- rate limiter regression -------------------------------------------
 def test_rate_limiter_does_not_deadlock(tmp_path, monkeypatch):
     from modules.rate_limiter import RateLimit, RateLimiter

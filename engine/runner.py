@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Optional
@@ -15,6 +16,7 @@ from .models import AssessmentRun
 from .rules import Policy, load_rules
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+logger = logging.getLogger(__name__)
 
 
 def run_assessment(
@@ -38,11 +40,18 @@ def run_assessment(
     if catalog_path:
         run.catalog_controls = load_catalog_ids(catalog_path)
         run.baseline = "custom-catalog"
+        known_controls = set(run.catalog_controls)
     else:
         # Denominator is a published baseline (default moderate); "rules" limits it to rule-referenced controls.
         run.baseline = baseline or engine_cfg.get("baseline") or "moderate"
         ids = [] if run.baseline == "rules" else baseline_ids(run.baseline)
         run.catalog_controls = sorted(set(ids) | rule_controls)
+        known_controls = set(baseline_ids("all"))
+
+    unknown = sorted(rule_controls - known_controls)
+    if unknown:
+        # A typo becomes a phantom control that is counted as assessed; make it visible.
+        logger.warning("Rules reference controls outside the catalog: %s", ", ".join(unknown))
 
     if parallel and len(collectors) > 1:
         with ThreadPoolExecutor(max_workers=min(8, len(collectors))) as pool:

@@ -5,12 +5,13 @@ import logging
 import os
 import yaml
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 # Assessment engine (collect -> evaluate -> prove)
 from engine.coverage import summarize
 from engine.models import AssessmentRun, Status
 from engine.oscal import to_assessment_results, to_poam
+from engine.rules import RuleError
 from engine.runner import run_assessment
 
 # New Security Modules
@@ -203,9 +204,12 @@ class MultiTenantNISTComplianceScanner:
             tenant_id=self.tenant_id or "default", cloud_provider="engine"
         ).inc()
 
-        # Encrypt and version the full run (evidence + assessments)
+        # Encrypt and version the full run (evidence + assessments). The stored
+        # "results" value must be the ciphertext envelope itself: report readers
+        # decrypt that value, and tenant context belongs in metadata.
         self.report_manager.create_report_version(
-            {"results": self.encryption_handler.encrypt_data(run.to_dict()), "tenant_id": self.tenant_id}
+            self.encryption_handler.encrypt_data(run.to_dict()),
+            metadata={"tenant_id": self.tenant_id},
         )
         return run
 
@@ -320,9 +324,13 @@ def main() -> None:
         return
 
     scanner = MultiTenantNISTComplianceScanner(args.config, args.tenant)
-    run = scanner.run_scans(api_key=args.api_key, catalog_path=args.catalog,
-                            rules_dir=args.rules_dir, policy_path=args.parameters,
-                            baseline=args.baseline)
+    try:
+        run = scanner.run_scans(api_key=args.api_key, catalog_path=args.catalog,
+                                rules_dir=args.rules_dir, policy_path=args.parameters,
+                                baseline=args.baseline)
+    except RuleError as exc:
+        # Invalid rule/policy files are configuration errors, not a 500-style traceback.
+        parser.error(str(exc))
     print(scanner.generate_report(run, fmt=args.format))
 
 

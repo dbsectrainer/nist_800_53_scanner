@@ -140,11 +140,53 @@ def test_rule_validation():
         rule(condition="__import__('os')")
     with pytest.raises(RuleError):
         rule(method="guess")
+    with pytest.raises(RuleError):
+        rule(control="AC-2(3)")  # not an OSCAL target-id token
+    with pytest.raises(RuleError):
+        rule(evidence={"type": "x.y", "max_age_hours": "not-a-number"})
+    with pytest.raises(RuleError):
+        rule(parameters=["not", "a", "mapping"])
+    with pytest.raises(RuleError):
+        rule(parameters=[])
+    with pytest.raises(RuleError):
+        rule(evidence={"type": "x.y", "required_fields": "accounts"})
+    assert rule(evidence={"type": "x.y", "max_age_hours": "24"}).max_age_hours == 24.0
 
 
 def test_shipped_rules_load():
     rules = load_rules(f"{ROOT}/rules")
     assert len({r.rule_id for r in rules}) == len(rules) >= 10
+
+
+def test_load_rules_fails_loudly_on_missing_or_empty_directory(tmp_path):
+    with pytest.raises(RuleError, match="not found"):
+        load_rules(str(tmp_path / "missing"))
+    empty = tmp_path / "rules"
+    empty.mkdir()
+    with pytest.raises(RuleError, match="no rules"):
+        load_rules(str(empty))
+
+
+def test_policy_load_rejects_invalid_shapes_and_dates(tmp_path):
+    path = tmp_path / "parameters.yaml"
+    path.write_text("exceptions:\n  - control: AC-2\n    expires: '2027-13-01'\n")
+    with pytest.raises(RuleError, match="expires"):
+        Policy.load(str(path))
+    path.write_text("exceptions:\n  - control: AC-2\n    expires: 2027-13-01\n")
+    with pytest.raises(RuleError, match="invalid YAML"):
+        Policy.load(str(path))
+    path.write_text("exceptions:\n  - owner: o\n    approved_by: a\n    expires: 2027-01-01\n")
+    with pytest.raises(RuleError, match="rule_id or control"):
+        Policy.load(str(path))
+    path.write_text("parameters: []\n")
+    with pytest.raises(RuleError, match="parameters"):
+        Policy.load(str(path))
+
+
+def test_exception_can_select_by_control():
+    exc = {"control": "AC-2", "owner": "o", "approved_by": "a", "expires": "2027-01-01"}
+    a = run_with([rule()], [ev({"n": 9})], policy=Policy(exceptions=[exc])).assessments[0]
+    assert a.status == Status.OTHER_THAN_SATISFIED and a.exception
 
 
 # --- coverage + oscal ---------------------------------------------------
@@ -196,6 +238,32 @@ def test_end_to_end_unreachable_collectors_do_not_inflate(tmp_path):
     assert summarize(run)["objective_counts"].get("satisfied", 0) == 0
 
 
+def test_oscal_finding_uuids_are_unique_and_stable():
+    from engine.models import CollectionError
+
+    err = CollectionError("c", "x.y", "boom", "a1")  # same asset as ev() below
+
+    def uuids(doc):
+        result = doc["assessment-results"]["results"][0]
+        return (
+            [f["uuid"] for f in result["findings"]],
+            [o["uuid"] for o in result["observations"]],
+        )
+
+    first = uuids(to_assessment_results(run_with([rule()], [ev({"n": 9})], [err])))
+    second = uuids(to_assessment_results(run_with([rule()], [ev({"n": 9})], [err])))
+    findings, observations = first
+    assert len(findings) == 2 and len(set(findings)) == 2  # evidence + error for one asset
+    assert findings == second[0]  # stable across runs (no run_id in the seed)
+    assert observations == second[1]
+
+
+def test_poam_omits_empty_remediation():
+    run = run_with([rule(remediation="")], [ev({"n": 9})])
+    item = to_poam(run)["plan-of-action-and-milestones"]["poam-items"][0]
+    assert [p["name"] for p in item.get("props", [])] == ["control-id"]
+
+
 # --- OSCAL schema validation (offline copies of the NIST 1.1.2 schemas) ---
 def _validator(name):
     jsonschema = pytest.importorskip("jsonschema")
@@ -214,7 +282,8 @@ def test_oscal_outputs_validate_against_nist_schema():
                    [ev({"n": 9}), ev({"n": 1}, asset="b"), stale])
     exc_policy = Policy(not_applicable=[{"rule_id": "T-1", "asset_id": "c", "rationale": "r", "decided_by": "d"}])
     run2 = run_with([rule()], [ev({"n": 1}, asset="c")], policy=exc_policy)
-    for r in (run, run2, run_with([rule()])):
+    no_fix = run_with([rule(remediation="")], [ev({"n": 9})])
+    for r in (run, run2, run_with([rule()]), no_fix):
         errs = list(_validator("oscal_assessment-results_schema_1.1.2.json").iter_errors(to_assessment_results(r)))
         assert not errs, errs[0].message
         poam = to_poam(r)

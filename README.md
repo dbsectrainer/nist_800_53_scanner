@@ -178,6 +178,10 @@ python scan.py --config config.yaml --format oscal
 
 # Choose the control universe used for coverage (default: moderate baseline)
 python scan.py --config config.yaml --baseline high
+
+# Point at custom policy/rules (required when running from an installed wheel,
+# which does not ship the repository's rules/ directory)
+python scan.py --config config.yaml --rules-dir ./rules --parameters ./parameters.yaml
 ```
 
 ### Docker Deployment

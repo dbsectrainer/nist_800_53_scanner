@@ -37,12 +37,23 @@ organizational example values (for example a 90-day inactivity limit), not
 NIST requirements. Override them in `parameters.yaml`:
 rule defaults < `parameters` (global) < `systems.<system_id>`.
 
+Control identifiers must be OSCAL-safe tokens (letters, digits, `.`, `_`, `-`;
+e.g. `AC-2.3`) because they become OSCAL `target-id` values. Parenthesized
+identifiers such as `AC-2(3)` are rejected at load time.
+
+The engine loads `rules/` from the repository root by default. A wheel install
+does not ship that directory, so pass `--rules-dir PATH` in deployments; loading
+fails loudly when the directory is missing or contains no rules.
+
 ## Exceptions and applicability (`parameters.yaml`)
 
 - Exceptions need `owner`, `approved_by` and an unexpired `expires`; they are
   recorded on the assessment but the status stays `other_than_satisfied`.
-  Risk acceptance is a human authorizing-official decision.
-- `not_applicable` entries need `rationale` and `decided_by`.
+  Risk acceptance is a human authorizing-official decision. Select a rule with
+  either `rule_id` or `control`; a matching exception that is expired or
+  incomplete is surfaced in the assessment reason, never silently ignored.
+- `not_applicable` entries need `rationale` and `decided_by` and select a rule
+  with `rule_id` or `control`.
 
 ## Coverage
 

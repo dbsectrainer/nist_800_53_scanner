@@ -14,9 +14,9 @@ import json
 import logging
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -243,10 +243,12 @@ def _parse_datetime(value: str) -> Optional[datetime]:
     if not value:
         return None
     try:
-        return datetime.fromisoformat(value)
+        dt = datetime.fromisoformat(value)
     except (ValueError, TypeError):
         logger.debug("Could not parse datetime string %r", value)
         return None
+    # Normalise naive timestamps to UTC so reports with and without offsets sort together.
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
 def _is_encrypted_envelope(obj: object) -> bool:
@@ -335,7 +337,7 @@ class ReportReader:
         for path in self._reports_dir.glob("*.json"):
             raw = self._read_json(path)
             if raw and raw.get("report_id") == report_id:
-                return self._decrypt_results(raw.get("results"))
+                return self._decrypt_results(self._results_field(raw))
 
         logger.warning("Report not found: %s", report_id)
         return None
@@ -379,6 +381,19 @@ class ReportReader:
             logger.warning("Could not read %s: %s", path, exc)
             return None
 
+    @staticmethod
+    def _results_field(raw: dict) -> Any:
+        """Return the payload a report document holds.
+
+        Versioned reports store it under ``results``. A plain engine run
+        (``scan.py --format json``) has no wrapper, so the document itself is
+        the payload when it looks like scan results.
+        """
+        results = raw.get("results")
+        if results is not None:
+            return results
+        return raw if _is_scan_results(raw) else None
+
     def _read_meta(self, path: Path) -> Optional[ReportMeta]:
         """Parse a report file into a ReportMeta, or return None."""
         raw = self._read_json(path)
@@ -386,13 +401,13 @@ class ReportReader:
             return None
 
         report_id = raw.get("report_id") or path.stem
-        scan_date = _parse_datetime(raw.get("timestamp", ""))
+        scan_date = _parse_datetime(raw.get("timestamp") or raw.get("started_at") or "")
         if scan_date is None:
-            # Fall back to file modification time
-            scan_date = datetime.fromtimestamp(path.stat().st_mtime)
+            # Fall back to file modification time (UTC-aware so mixed reports sort together)
+            scan_date = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
 
         # Quick-peek at results to get counts without full decryption
-        results_field = raw.get("results")
+        results_field = self._results_field(raw)
         total = 0
         compliant = 0
 
@@ -422,7 +437,7 @@ class ReportReader:
         raw = self._read_json(path)
         if not raw:
             return None
-        return self._decrypt_results(raw.get("results"))
+        return self._decrypt_results(self._results_field(raw))
 
     def _decrypt_results(self, results_field) -> Optional[dict]:
         """

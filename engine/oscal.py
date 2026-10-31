@@ -25,11 +25,23 @@ def _stable_uuid(*parts: str) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, "|".join(parts)))
 
 
+def _occurrence(seen: dict[tuple[str, ...], int], key: tuple[str, ...]) -> str:
+    """Return a stable ordinal for repeated (rule, asset) or evidence keys."""
+    index = seen.get(key, 0)
+    seen[key] = index + 1
+    return str(index)
+
+
 def to_assessment_results(run: AssessmentRun, title: str = "NIST SP 800-53 Assessment Results") -> dict[str, Any]:
     observations = []
+    obs_ids: dict[str, str] = {}
+    obs_seen: dict[tuple[str, ...], int] = {}
     for e in run.evidence:
+        key = (e.type, e.asset_id, e.sha256)
+        obs_uuid = _stable_uuid("obs", *key, _occurrence(obs_seen, key))
+        obs_ids[e.id] = obs_uuid
         observations.append({
-            "uuid": _stable_uuid("obs", e.id),
+            "uuid": obs_uuid,
             "title": f"{e.type} on {e.asset_id}",
             "description": f"Evidence collected by {e.collector} v{e.collector_version}",
             "methods": ["TEST"],
@@ -41,9 +53,9 @@ def to_assessment_results(run: AssessmentRun, title: str = "NIST SP 800-53 Asses
                 {"name": "asset-id", "value": e.asset_id},
             ],
         })
-    obs_ids = {e.id: _stable_uuid("obs", e.id) for e in run.evidence}
 
     findings = []
+    finding_seen: dict[tuple[str, ...], int] = {}
     for a in run.assessments:
         status = {"state": _STATE[a.status]}
         props = [{"name": "assessment-status", "value": a.status.value},
@@ -56,7 +68,8 @@ def to_assessment_results(run: AssessmentRun, title: str = "NIST SP 800-53 Asses
             status["reason"] = "other"
             status["remarks"] = a.reason or a.status.value
         finding = {
-            "uuid": _stable_uuid("finding", run.run_id, a.rule_id, a.asset_id),
+            "uuid": _stable_uuid("finding", a.rule_id, a.asset_id,
+                                 _occurrence(finding_seen, (a.rule_id, a.asset_id))),
             "title": a.title,
             "description": a.observed or a.reason or a.title,
             "props": props,
@@ -104,17 +117,28 @@ def to_assessment_results(run: AssessmentRun, title: str = "NIST SP 800-53 Asses
 
 def to_poam(run: AssessmentRun, title: str = "NIST SP 800-53 POA&M") -> dict[str, Any]:
     items = []
+    seen: dict[tuple[str, ...], int] = {}
     for a in run.assessments:
         if a.status != Status.OTHER_THAN_SATISFIED:
             continue
-        items.append({
-            "uuid": _stable_uuid("poam", run.run_id, a.rule_id, a.asset_id),
+        # OSCAL props require a non-empty value, so omit empty fields entirely.
+        props = []
+        control_id = (a.control_id or "").strip()
+        if control_id:
+            props.append({"name": "control-id", "value": control_id})
+        action = (a.recommended_action or "").strip()
+        if action:
+            props.append({"name": "recommended-action", "value": action})
+        item = {
+            "uuid": _stable_uuid("poam", a.rule_id, a.asset_id,
+                                 _occurrence(seen, (a.rule_id, a.asset_id))),
             "title": a.title,
             "description": a.observed or a.title,
-            "props": [{"name": "control-id", "value": a.control_id},
-                      {"name": "recommended-action", "value": a.recommended_action}],
             "origins": [{"actors": [{"type": "tool", "actor-uuid": _stable_uuid("tool", "nist-scanner")}]}],
-        })
+        }
+        if props:
+            item["props"] = props
+        items.append(item)
     return {
         "plan-of-action-and-milestones": {
             "uuid": _stable_uuid("poam-doc", run.run_id),
