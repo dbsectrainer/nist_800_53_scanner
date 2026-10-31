@@ -160,10 +160,7 @@ def to_poam(run: AssessmentRun, title: str = "NIST SP 800-53 POA&M") -> dict[str
                 "version": "1.0",
                 "oscal-version": OSCAL_VERSION,
             },
-            "import-ssp": {
-                "href": "urn:nist-scanner:ssp:not-provided",
-                "remarks": "No system security plan was supplied with this assessment.",
-            },
+            # import-ssp is optional and omitted: no SSP is supplied.
             # Resolve the tool actor referenced by every POA&M item.
             "local-definitions": {
                 "components": [

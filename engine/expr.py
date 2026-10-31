@@ -62,6 +62,8 @@ def make_functions(now: datetime) -> dict[str, Callable[..., Any]]:
         "lower": lambda s: str(s).lower(),
         "int": int,
         "get": lambda d, k, default=None: d.get(k, default),
+        # Check permission bits explicitly; numeric ordering alone is unsafe.
+        "mode_permits_group_other": lambda mode: (int(mode) & 0o077) != 0,
     }
 
 

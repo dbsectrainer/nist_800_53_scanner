@@ -259,9 +259,15 @@ class Policy:
         for item in self.not_applicable:
             if not isinstance(item, dict):
                 continue
-            if item.get("rule_id") not in (None, rule.rule_id) and item.get("control") != rule.control:
+            rule_ref = item.get("rule_id")
+            control_ref = item.get("control")
+            if rule_ref is None and control_ref is None:
                 continue
-            if item.get("rule_id") is None and item.get("control") is None:
+            # Both selectors must match when supplied; a control-only decision
+            # must not apply to rules for other controls.
+            if rule_ref is not None and rule_ref != rule.rule_id:
+                continue
+            if control_ref is not None and control_ref != rule.control:
                 continue
             if item.get("asset_id") not in (None, "", asset_id):
                 continue

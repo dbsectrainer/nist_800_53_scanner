@@ -111,6 +111,7 @@ def _collectors(day: datetime, *, healthy: bool, partial: bool = False, vuln_rep
                 "sudo_users": ["alice", "bob"],
                 "sudoers_users": ["deploy"],
                 "login_data_complete": True,
+                "never_logged_in_accounts": [],
             },
         ),
         StubCollector("demo_sshd", "linux.sshd_config", {"settings": sshd, "complete": True}),

@@ -103,8 +103,10 @@
   control: RA-5
   title: No open critical vulnerabilities in the latest scan
   method: examine
-  parameters: {max_critical: 0}
-  evidence: {type: vuln.scan_report, required_fields: [critical_count], max_age_hours: 720}
+  parameters: {max_critical: 0, max_scan_age_days: 30}
+  # Judge the scan's completion time, not when the JSON was imported.
+  evidence: {type: vuln.scan_report, required_fields: [critical_count, completed_at]}
+  assessable_when: age_days(completed_at) <= max_scan_age_days
   condition: critical_count <= max_critical
-  observed: "{critical_count} critical finding(s)"
+  observed: "{critical_count} critical finding(s); scan from {completed_at}"
   remediation: Remediate or formally accept critical vulnerabilities.

@@ -34,7 +34,7 @@ an assessor supplies evidence.
 
 A proprietary format (not OSCAL). Conditions are a restricted, deterministic
 expression language (no `eval`, no attribute access, whitelisted functions
-`len any all sum min max abs exists age_days split lower get int`). Rule `parameters` are
+`len any all sum min max abs exists age_days split lower get int mode_permits_group_other`). Rule `parameters` are
 organizational example values (for example a 90-day inactivity limit), not
 NIST requirements. Override them in `parameters.yaml`:
 rule defaults < `parameters` (global) < `systems.<system_id>`.
