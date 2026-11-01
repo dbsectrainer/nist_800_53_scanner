@@ -74,6 +74,15 @@ def test_out_of_range_timestamp_is_an_expression_error_not_a_crash():
         evaluate("age_days(ts) > 1", {"ts": 1e300}, NOW)
 
 
+def test_mode_permits_group_other_checks_actual_bits():
+    assert evaluate("mode_permits_group_other(m)", {"m": 0o600}, NOW) is False
+    assert evaluate("mode_permits_group_other(m)", {"m": 0o400}, NOW) is False
+    assert evaluate("mode_permits_group_other(m)", {"m": 0o640}, NOW) is True
+    assert evaluate("mode_permits_group_other(m)", {"m": 0o604}, NOW) is True
+    # 0444 is numerically smaller than 0600 but readable by others.
+    assert evaluate("mode_permits_group_other(m)", {"m": 0o444}, NOW) is True
+
+
 def test_evidence_hash_covers_provenance_not_just_payload():
     base = dict(type="x.y", collector="c", payload={"n": 1}, collected_at=NOW)
     a = Evidence(asset_id="host-a", **base)
@@ -143,6 +152,21 @@ def test_applicable_when_and_documented_na():
     assert run_with([rule()], [ev({"n": 9})], policy=pol).assessments[0].status == Status.NOT_APPLICABLE
     incomplete = Policy(not_applicable=[{"control": "AC-2", "rationale": "none"}])
     assert run_with([rule()], [ev({"n": 9})], policy=incomplete).assessments[0].status == Status.OTHER_THAN_SATISFIED
+
+
+def test_control_only_na_does_not_apply_to_other_controls():
+    # The rule under test is AC-2; an SC-8 decision must not mark it N/A.
+    other = Policy(not_applicable=[{"control": "SC-8", "rationale": "r", "decided_by": "d"}])
+    out = run_with([rule()], [ev({"n": 1})], policy=other).assessments[0]
+    assert out.status == Status.SATISFIED
+    # A matching control-only decision still applies.
+    same = Policy(not_applicable=[{"control": "AC-2", "rationale": "r", "decided_by": "d"}])
+    assert run_with([rule()], [ev({"n": 1})], policy=same).assessments[0].status == Status.NOT_APPLICABLE
+
+
+def test_missing_explicit_policy_file_is_an_error(tmp_path):
+    with pytest.raises(RuleError, match="policy file not found"):
+        run_assessment({}, collectors=[], policy_path=str(tmp_path / "missing.yaml"))
 
 
 # --- parameters and exceptions ----------------------------------------

@@ -7,8 +7,10 @@
   parameters: {max_inactive_days: 90}
   evidence:
     type: linux.accounts
-    required_fields: [accounts, login_data_complete]
-  assessable_when: login_data_complete
+    required_fields: [accounts, login_data_complete, never_logged_in_accounts]
+  # A never-logged-in account has no usable inactivity timestamp; without a
+  # creation date we cannot decide, so the objective is not assessed.
+  assessable_when: login_data_complete and len(never_logged_in_accounts) == 0
   condition: >
     len([a for a in accounts if a['last_login_epoch'] is not None
          and age_days(a['last_login_epoch']) > max_inactive_days]) == 0
@@ -37,7 +39,7 @@
     required_fields: [settings, complete]
   # Unset is version-dependent (OpenSSH later defaults to prohibit-password), so require it explicitly.
   assessable_when: complete and 'permitrootlogin' in settings
-  condition: settings['permitrootlogin'] in ['no', 'prohibit-password', 'forced-commands-only', 'without-password']
+  condition: settings['permitrootlogin'] == 'no'
   observed: "PermitRootLogin is {get(settings, 'permitrootlogin', 'unset')}"
   remediation: Set PermitRootLogin no in sshd_config.
 
@@ -51,14 +53,13 @@
   control: IA-5
   title: SSH private keys are not accessible by group or others
   method: test
-  parameters: {max_key_mode: 384}   # 0o600
   evidence:
     type: linux.ssh_keys
     required_fields: [private_keys, unreadable]
   # Any home we could not inspect is a coverage gap, not a pass.
   assessable_when: len(unreadable) == 0
-  condition: len([k for k in private_keys if k['mode'] > max_key_mode]) == 0
-  observed: "{len([k for k in private_keys if k['mode'] > max_key_mode])} key(s) with permissive modes"
+  condition: len([k for k in private_keys if mode_permits_group_other(k['mode'])]) == 0
+  observed: "{len([k for k in private_keys if mode_permits_group_other(k['mode'])])} key(s) readable by group or others"
   remediation: chmod 600 on private key files.
 
 - rule_id: IA-2-SSHPASSWORD-001

@@ -15,6 +15,8 @@ _DENY_ACTIONS = {"deny", "drop", "reject", "block"}
 def _normalise_rule(rule: dict) -> dict:
     source = str(rule.get("source") or "").strip().lower()
     action = str(rule.get("action") or "").strip().lower()
+    if not source or not action:
+        raise ValueError("firewall rule is missing source or action")
     return {
         "source": "any" if source in _ANY_SOURCES else source,
         "action": "allow" if action in _ALLOW_ACTIONS else "deny" if action in _DENY_ACTIONS else action,
@@ -46,6 +48,13 @@ class FirewallRulesCollector(Collector):
                 rules = [_normalise_rule(r) for r in data.get("rules", [])]
                 configs.append({"path": path, "rule_count": len(rules), "sha256": hashlib.sha256(body).hexdigest()})
                 flat.extend({"path": path, **r} for r in rules)
-            except (OSError, UnicodeDecodeError, json.JSONDecodeError, AttributeError, TypeError) as exc:
+            except (
+                OSError,
+                UnicodeDecodeError,
+                json.JSONDecodeError,
+                AttributeError,
+                TypeError,
+                ValueError,
+            ) as exc:
                 unreadable.append({"path": path, "error": str(exc)})
         return {"configs": configs, "rules": flat, "unreadable": unreadable}

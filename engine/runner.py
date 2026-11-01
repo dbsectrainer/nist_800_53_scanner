@@ -13,7 +13,7 @@ from .catalog import baseline_ids
 from .coverage import load_catalog_ids
 from .evaluate import evaluate_all
 from .models import AssessmentRun
-from .rules import Policy, load_rules
+from .rules import Policy, RuleError, load_rules
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 logger = logging.getLogger(__name__)
@@ -30,6 +30,8 @@ def run_assessment(
     parallel: bool = False,
 ) -> AssessmentRun:
     rules = load_rules(rules_dir or os.path.join(ROOT, "rules"))
+    if policy_path is not None and not os.path.exists(policy_path):
+        raise RuleError(f"policy file not found: {policy_path}")
     policy = Policy.load(policy_path or os.path.join(ROOT, "parameters.yaml"))
     collectors = collectors if collectors is not None else build_collectors(config)
 
@@ -54,7 +56,14 @@ def run_assessment(
         logger.warning("Rules reference controls outside the catalog: %s", ", ".join(unknown))
 
     if parallel and len(collectors) > 1:
-        with ThreadPoolExecutor(max_workers=min(8, len(collectors))) as pool:
+        scan_options = config.get("scan_options") or {}
+        configured = engine_cfg.get("max_concurrent_scans", scan_options.get("max_concurrent_scans", 8))
+        try:
+            max_workers = int(configured)
+        except (TypeError, ValueError):
+            max_workers = 8
+        max_workers = max(1, min(len(collectors), max_workers))
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
             results = list(pool.map(lambda c: c.collect(), collectors))
     else:
         results = [c.collect() for c in collectors]

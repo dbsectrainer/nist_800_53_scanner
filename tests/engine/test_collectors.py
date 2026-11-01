@@ -53,12 +53,13 @@ def test_parse_ss_marks_loopback():
     assert [(l["port"], l["loopback"]) for l in got] == [(22, False), (631, True), (8080, False)]
 
 
-def test_sshd_config_first_value_wins_and_match_ignored(tmp_path):
+def test_sshd_config_first_value_wins_and_match_marks_incomplete(tmp_path):
     f = tmp_path / "sshd_config"
     f.write_text("PermitRootLogin no\nPermitRootLogin yes\n# c\nMatch User bob\n  PasswordAuthentication yes\n")
     payload = SshdConfigCollector({"sshd_config_path": str(f)}).gather()
     assert payload["settings"]["permitrootlogin"] == "no" and "passwordauthentication" not in payload["settings"]
-    assert payload["complete"] is True
+    # Match overrides are not evaluated, so host-wide rules must not pass.
+    assert payload["complete"] is False
 
 
 def test_sshd_config_follows_include_first_value_wins(tmp_path):
@@ -127,6 +128,14 @@ def test_firewall_normalises_any_source_and_action(tmp_path):
     assert payload["rules"][0]["action"] == "allow"
 
 
+def test_firewall_rejects_rules_without_source_or_action(tmp_path):
+    fw = tmp_path / "fw.json"
+    fw.write_text(json.dumps({"rules": [{}]}))
+    payload = FirewallRulesCollector({"firewall": {"config_paths": [str(fw)]}}).gather()
+    assert payload["rules"] == []
+    assert payload["unreadable"] and "source" in payload["unreadable"][0]["error"]
+
+
 def test_vulnerability_report(tmp_path):
     f = tmp_path / "scan.json"
     f.write_text(
@@ -142,6 +151,19 @@ def test_vulnerability_report(tmp_path):
     assert len(p["report_sha256"]) == 64
     f.write_text("{}")
     assert VulnerabilityScanReportCollector({"vulnerability_scan": {"report_path": str(f)}}).collect()[1]
+
+
+def test_vulnerability_report_requires_findings_and_severities(tmp_path):
+    f = tmp_path / "scan.json"
+    collector = VulnerabilityScanReportCollector({"vulnerability_scan": {"report_path": str(f)}})
+    for payload in (
+        {"completed_at": "2026-10-20T00:00:00Z"},  # no findings array
+        {"completed_at": "2026-10-20T00:00:00Z", "findings": [{"title": "x"}]},  # no severity
+        {"completed_at": "2026-10-20T00:00:00Z", "findings": ["not-an-object"]},
+    ):
+        f.write_text(json.dumps(payload))
+        evidence, errors = collector.collect()
+        assert not evidence and errors
 
 
 def test_ssh_keys_scans_all_id_files(tmp_path, monkeypatch):
@@ -207,7 +229,7 @@ def test_linux_accounts_include_primary_group_and_sudoers(tmp_path, monkeypatch)
 def test_auditd_reports_running_state(tmp_path, monkeypatch):
     rules_dir = tmp_path / "rules.d"
     rules_dir.mkdir()
-    (rules_dir / "audit.rules").write_text("-w /etc/passwd -p wa -k identity\n# comment\n")
+    (rules_dir / "audit.rules").write_text("-D\n-b 8192\n-w /etc/passwd -p wa -k identity\n# comment\n")
     conf = tmp_path / "auditd.conf"
     conf.write_text("enabled = 1\n")
     collector = AuditdCollector(
@@ -229,6 +251,21 @@ def test_package_index_timestamp(tmp_path):
     stamp = PackageUpdatesCollector({})._index_updated_at(str(lists))
     assert stamp and stamp.endswith("+00:00")
     assert PackageUpdatesCollector({})._index_updated_at(str(tmp_path / "missing")) is None
+
+
+def test_package_manager_failure_is_a_collection_gap(monkeypatch):
+    class Failed:
+        returncode = 100
+        stdout = ""
+        stderr = "simulated failure"
+
+    monkeypatch.setattr("engine.collectors.linux.subprocess.run", lambda *a, **k: Failed())
+    monkeypatch.setattr(
+        "engine.collectors.linux.shutil.which",
+        lambda name: "/usr/bin/apt-get" if name == "apt-get" else None,
+    )
+    evidence, errors = PackageUpdatesCollector({}).collect()
+    assert not evidence and errors
 
 
 # --- cloud / windows with injected fakes (no SDKs or credentials) ---------

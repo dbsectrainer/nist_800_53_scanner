@@ -7,6 +7,7 @@ import os
 import re
 import shutil
 import subprocess
+from collections.abc import Iterable
 from datetime import datetime, timezone
 
 from .base import Collector
@@ -91,6 +92,11 @@ class LinuxAccountsCollector(Collector):
             "sudo_users": sorted(sudoers),
             "sudoers_users": sorted(self._sudoers_users()),
             "login_data_complete": complete,
+            # Never-logged-in accounts have no usable inactivity timestamp, so
+            # the rule must not silently exclude them as if they were fresh.
+            "never_logged_in_accounts": sorted(
+                account["username"] for account in accounts if account["never_logged_in"]
+            ),
         }
 
     def _sudoers_users(self) -> set[str]:
@@ -193,7 +199,10 @@ class SshdConfigCollector(Collector):
                     parts = line.split(None, 1)
                     key = parts[0].lower()
                     if key == "match":
-                        break  # settings after Match are conditional, not global
+                        # Match scopes are not evaluated here, so host-wide rules
+                        # must not claim satisfaction from the global block.
+                        complete = False
+                        break
                     if key == "include" and len(parts) == 2:
                         pattern = parts[1].strip().strip('"')
                         base = os.path.dirname(current)
@@ -213,6 +222,11 @@ class SshdConfigCollector(Collector):
 class AuditdCollector(Collector):
     name = "linux_auditd"
     evidence_type = "linux.audit"
+
+    @staticmethod
+    def _count_rules(lines: Iterable[str]) -> int:
+        """Count audit rules, not control directives such as -D, -b or -e."""
+        return sum(1 for line in lines if line.lstrip().startswith(("-w ", "-a ", "-A ")))
 
     def _auditd_running(self) -> bool | None:
         """True/False when observable; None when neither pgrep nor systemctl is available."""
@@ -245,10 +259,10 @@ class AuditdCollector(Collector):
             for f in os.listdir(rules_dir):
                 if f.endswith(".rules"):
                     with open(os.path.join(rules_dir, f), encoding="utf-8", errors="replace") as fh:
-                        rule_count += sum(1 for l in fh if l.strip() and not l.lstrip().startswith("#"))
+                        rule_count += self._count_rules(fh)
         if os.path.isfile(rules_file):
             with open(rules_file, encoding="utf-8", errors="replace") as fh:
-                rule_count += sum(1 for l in fh if l.strip() and not l.lstrip().startswith("#"))
+                rule_count += self._count_rules(fh)
         settings: dict[str, str] = {}
         if os.path.isfile(conf):
             with open(conf, encoding="utf-8", errors="replace") as fh:
@@ -329,7 +343,8 @@ class PackageUpdatesCollector(Collector):
 
     def _run(self, cmd: list[str]) -> str:
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=120, check=False)
-        if res.returncode not in (0, 100):  # dnf check-update returns 100 when updates exist
+        # These commands signal success with 0; a nonzero status is a coverage gap.
+        if res.returncode != 0:
             raise RuntimeError(f"{cmd[0]} failed: {res.stderr.strip() or res.returncode}")
         return res.stdout
 

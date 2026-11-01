@@ -24,12 +24,14 @@
 
 - rule_id: AU-12-AUDITD-001
   control: AU-12
-  title: Host audit rules are loaded and auditd is running
+  title: Host audit rules are configured and auditd is running
   method: test
   parameters: {min_audit_rules: 1}
   evidence:
     type: linux.audit
     required_fields: [audit_rule_count, auditd_running]
+  # Counts actual -w/-a/-A rules (not control directives); kernel-loaded state
+  # is not verified, so the title intentionally says "configured".
   # Running state is unknown without pgrep/systemctl; that is not a pass.
   assessable_when: auditd_running is not None
   condition: auditd_running and audit_rule_count >= min_audit_rules
