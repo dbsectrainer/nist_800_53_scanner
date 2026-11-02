@@ -75,7 +75,7 @@ dependencies = [
     "psycopg[binary]>=3.2.3",
 
     # Caching & Task Queue
-    "redis>=5.2.1",
+    "redis>=8.1.0",
     "celery>=5.4.0",
     "flower>=2.0.1",
 
