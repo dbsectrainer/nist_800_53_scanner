@@ -59,10 +59,10 @@ argon2-cffi>=23.1.0
 
 # Monitoring & Observability (Modern OpenTelemetry)
 prometheus-client>=0.26.0
-opentelemetry-api>=1.44.0
-opentelemetry-sdk>=1.44.0
-opentelemetry-exporter-otlp-proto-http>=1.44.0
-opentelemetry-instrumentation-fastapi>=0.65b0
+opentelemetry-api>=1.45.2
+opentelemetry-sdk>=1.45.2
+opentelemetry-exporter-otlp-proto-http>=1.45.2
+opentelemetry-instrumentation-fastapi>=0.66b2
 
 # Async & HTTP Client
 httpx>=0.28.1
